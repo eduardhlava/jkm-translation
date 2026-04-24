@@ -157,11 +157,9 @@ export function ConfigPanel({ initial, onSave, availableProperties }: Props) {
           <Label>Cílové jazyky</Label>
           <Select value="" onValueChange={addTargetLang}>
             <SelectTrigger className="w-40">
-              <SelectValue placeholder={
-                <span className="flex items-center gap-1 text-muted-foreground">
-                  <Plus className="w-3 h-3" /> Přidat
-                </span>
-              } />
+              <span className="flex items-center gap-1 text-muted-foreground text-sm">
+                <Plus className="w-3 h-3" /> Přidat jazyk
+              </span>
             </SelectTrigger>
             <SelectContent>
               {LANGUAGES.filter(
