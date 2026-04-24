@@ -280,7 +280,7 @@ const Index = () => {
         )}
 
         {items.length > 0 && (
-          <Card className="overflow-hidden shadow-[var(--shadow-md)]">
+          <Card key={`tbl-${successFlash}`} className="overflow-hidden shadow-[var(--shadow-md)] animate-success-flash rounded-xl">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
