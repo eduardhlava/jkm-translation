@@ -1,8 +1,8 @@
 export const LANGUAGES = [
-  { code: "cs", label: "Čeština" },
+  { code: "cz", label: "Čeština" },
+  { code: "sk", label: "Slovenčina" },
   { code: "en", label: "English" },
   { code: "de", label: "Deutsch" },
-  { code: "sk", label: "Slovenčina" },
   { code: "pl", label: "Polski" },
   { code: "fr", label: "Français" },
   { code: "es", label: "Español" },
@@ -24,31 +24,43 @@ export interface NotionItem {
   id: string;
   url: string;
   properties: Record<string, string>;
-  allProperties: NotionPropertyMeta[];
+  allProperties?: NotionPropertyMeta[];
 }
 
-export interface TranslatorConfig {
-  statusProperty: string;
-  statusValue: string;
-  doneStatusValue: string;
-  sourceLanguage: string;
-  targetLanguages: string[];
-  // Mapping: language code -> Notion property name that holds the text in that language
-  languagePropertyMap: Record<string, string>;
+export interface AppSettings {
+  // Notion property names follow conventions: {lang}, stav_{lang}, kontext_{lang}, příklad_věty_{lang}
+  statusNew: string; // value in Notion meaning "new"
+  statusReview: string; // value to write when user marks "Přeloženo"
+  pageSize: number;
 }
 
-const STORAGE_KEY = "translator-config-v1";
+const SETTINGS_KEY = "translator-settings-v2";
 
-export function loadConfig(): TranslatorConfig | null {
+export const defaultSettings: AppSettings = {
+  statusNew: "nový",
+  statusReview: "ke_kontrole",
+  pageSize: 20,
+};
+
+export function loadSettings(): AppSettings {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as TranslatorConfig;
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (!raw) return defaultSettings;
+    return { ...defaultSettings, ...JSON.parse(raw) };
   } catch {
-    return null;
+    return defaultSettings;
   }
 }
 
-export function saveConfig(config: TranslatorConfig) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+export function saveSettings(s: AppSettings) {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
 }
+
+// Notion property name helpers
+export const propText = (lang: string) => lang;
+export const propStatus = (lang: string) => `stav_${lang}`;
+export const propContext = (lang: string) => `kontext_${lang}`;
+export const propExample = (lang: string) => `příklad_věty_${lang}`;
+
+export const langLabel = (code: string) =>
+  LANGUAGES.find((l) => l.code === code)?.label ?? code;

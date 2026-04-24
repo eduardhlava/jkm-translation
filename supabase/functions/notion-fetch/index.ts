@@ -1,5 +1,5 @@
-// Fetches pages from a Notion database, optionally filtered by a status property value.
-// Returns simplified items containing only the requested text/rich_text properties.
+// Fetches pages from a Notion database, filtered by a status property value.
+// Returns simplified items with the requested text/rich_text/select properties.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,10 +11,10 @@ const corsHeaders = {
 const NOTION_VERSION = "2022-06-28";
 
 interface FetchRequest {
-  statusProperty?: string; // e.g. "Status"
-  statusValue?: string; // e.g. "To translate"
-  textProperties?: string[]; // properties whose text should be returned
-  databaseId?: string; // override env DATABASE_ID
+  statusProperty?: string;
+  statusValue?: string;
+  textProperties?: string[];
+  databaseId?: string;
   pageSize?: number;
 }
 
@@ -44,17 +44,8 @@ function readPropertyText(prop: any): string {
   }
 }
 
-function listAllProperties(properties: Record<string, any>) {
-  return Object.entries(properties).map(([name, p]: [string, any]) => ({
-    name,
-    type: p.type,
-  }));
-}
-
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const NOTION_API_KEY = Deno.env.get("NOTION_API_KEY");
@@ -65,49 +56,32 @@ Deno.serve(async (req) => {
     const databaseId = body.databaseId || ENV_DB_ID;
     if (!databaseId) throw new Error("NOTION_DATABASE_ID is not configured");
 
-    // Build filter based on status property
     let filter: any = undefined;
+    let propMetaMap: Record<string, any> = {};
+
+    // Read DB schema once (also helps detect status vs select)
+    const dbRes = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, {
+      headers: {
+        Authorization: `Bearer ${NOTION_API_KEY}`,
+        "Notion-Version": NOTION_VERSION,
+      },
+    });
+    if (!dbRes.ok) throw new Error(`Notion DB read failed [${dbRes.status}]: ${await dbRes.text()}`);
+    const db = await dbRes.json();
+    propMetaMap = db.properties ?? {};
+
     if (body.statusProperty && body.statusValue) {
-      // Try both `status` and `select` types — Notion will reject the wrong one.
-      // We'll first attempt to read the database schema to pick the correct one.
-      const dbRes = await fetch(
-        `https://api.notion.com/v1/databases/${databaseId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${NOTION_API_KEY}`,
-            "Notion-Version": NOTION_VERSION,
-          },
-        },
-      );
-      if (!dbRes.ok) {
-        const text = await dbRes.text();
-        throw new Error(`Notion DB read failed [${dbRes.status}]: ${text}`);
-      }
-      const db = await dbRes.json();
-      const propMeta = db.properties?.[body.statusProperty];
-      if (!propMeta) {
-        throw new Error(
-          `Property "${body.statusProperty}" not found in database`,
-        );
-      }
-      if (propMeta.type === "status") {
-        filter = {
-          property: body.statusProperty,
-          status: { equals: body.statusValue },
-        };
-      } else if (propMeta.type === "select") {
-        filter = {
-          property: body.statusProperty,
-          select: { equals: body.statusValue },
-        };
+      const meta = propMetaMap[body.statusProperty];
+      if (!meta) throw new Error(`Property "${body.statusProperty}" not found in database`);
+      if (meta.type === "status") {
+        filter = { property: body.statusProperty, status: { equals: body.statusValue } };
+      } else if (meta.type === "select") {
+        filter = { property: body.statusProperty, select: { equals: body.statusValue } };
       } else {
-        throw new Error(
-          `Property "${body.statusProperty}" must be of type status or select`,
-        );
+        throw new Error(`Property "${body.statusProperty}" must be of type status or select`);
       }
     }
 
-    // Query pages
     const queryRes = await fetch(
       `https://api.notion.com/v1/databases/${databaseId}/query`,
       {
@@ -117,17 +91,11 @@ Deno.serve(async (req) => {
           "Notion-Version": NOTION_VERSION,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          filter,
-          page_size: body.pageSize ?? 100,
-        }),
+        body: JSON.stringify({ filter, page_size: body.pageSize ?? 20 }),
       },
     );
 
-    if (!queryRes.ok) {
-      const text = await queryRes.text();
-      throw new Error(`Notion query failed [${queryRes.status}]: ${text}`);
-    }
+    if (!queryRes.ok) throw new Error(`Notion query failed [${queryRes.status}]: ${await queryRes.text()}`);
 
     const data = await queryRes.json();
     const wantedProps = body.textProperties ?? [];
@@ -135,32 +103,21 @@ Deno.serve(async (req) => {
     const items = (data.results ?? []).map((page: any) => {
       const props = page.properties ?? {};
       const values: Record<string, string> = {};
-      // If no specific list, return all title + rich_text properties
       const targets =
         wantedProps.length > 0
           ? wantedProps
           : Object.entries(props)
-              .filter(([, p]: [string, any]) =>
-                ["title", "rich_text"].includes(p.type),
-              )
+              .filter(([, p]: [string, any]) => ["title", "rich_text"].includes(p.type))
               .map(([name]) => name);
       for (const name of targets) {
         values[name] = readPropertyText(props[name]);
       }
-      return {
-        id: page.id,
-        url: page.url,
-        properties: values,
-        allProperties: listAllProperties(props),
-      };
+      return { id: page.id, url: page.url, properties: values };
     });
 
     return new Response(
       JSON.stringify({ items, count: items.length }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error: unknown) {
     console.error("notion-fetch error:", error);
