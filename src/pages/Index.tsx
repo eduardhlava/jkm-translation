@@ -80,7 +80,7 @@ const Index = () => {
 
   const fetchItems = async () => {
     if (sourceLang === targetLang) {
-      toast.error("Zdrojový a cílový jazyk musí být různé");
+      toast.error(t(ui, "sameLangError"));
       return;
     }
     setLoading(true);
@@ -99,17 +99,16 @@ const Index = () => {
       if (data?.error) throw new Error(data.error);
       const fetched = (data?.items ?? []) as NotionItem[];
       setItems(fetched);
-      // prefill translations with existing target text
       const initial: Record<string, string> = {};
       fetched.forEach((it) => {
         initial[it.id] = it.properties[targetProp] ?? "";
       });
       setTranslations(initial);
-      if (fetched.length === 0) toast.info('Žádné položky se stavem „nový"');
-      else toast.success(`Načteno ${fetched.length} položek`);
+      if (fetched.length === 0) toast.info(t(ui, "noNewItems"));
+      else toast.success(t(ui, "loadedN", { n: fetched.length }));
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Neznámá chyba";
-      toast.error("Načtení selhalo", { description: msg });
+      const msg = err instanceof Error ? err.message : "Error";
+      toast.error(t(ui, "loadFailed"), { description: msg });
     } finally {
       setLoading(false);
     }
@@ -131,7 +130,7 @@ const Index = () => {
 
   const handleUpdate = async () => {
     if (toUpdate.length === 0) {
-      toast.info("Žádné potvrzené položky");
+      toast.info(t(ui, "noConfirmed"));
       return;
     }
     setSaving(true);
@@ -150,11 +149,11 @@ const Index = () => {
       if (data?.success === false) throw new Error(data.error);
 
       const okCount = data?.okCount ?? toUpdate.length;
-      toast.success(`Aktualizováno ${okCount}/${toUpdate.length} položek`);
+      toast.success(t(ui, "updatedNofM", { ok: okCount, total: toUpdate.length }));
       await fetchItems();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Neznámá chyba";
-      toast.error("Aktualizace selhala", { description: msg });
+      const msg = err instanceof Error ? err.message : "Error";
+      toast.error(t(ui, "updateFailed"), { description: msg });
     } finally {
       setSaving(false);
     }
