@@ -30,6 +30,7 @@ import {
   propStatus,
   propText,
 } from "@/lib/translator";
+import { t } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -55,9 +56,20 @@ const Index = () => {
   const [statusOverrides, setStatusOverrides] = useState<Record<string, LocalStatus>>({});
   const [translations, setTranslations] = useState<Record<string, string>>({});
 
+  const ui = settings.uiLang;
+
   useEffect(() => {
-    document.title = "Notion Translator – překlady přímo z databáze";
-    setSettings(loadSettings());
+    document.title = t(ui, "pageTitle");
+  }, [ui]);
+
+  useEffect(() => {
+    const handler = () => setSettings(loadSettings());
+    window.addEventListener("translator-settings-changed", handler);
+    window.addEventListener("focus", handler);
+    return () => {
+      window.removeEventListener("translator-settings-changed", handler);
+      window.removeEventListener("focus", handler);
+    };
   }, []);
 
   const sourceProp = propText(sourceLang);
