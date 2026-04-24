@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     let cursor: string | undefined = undefined;
     // Safety cap to avoid runaway loops
     for (let i = 0; i < 50; i++) {
-      const res = await fetch(
+      const res: Response = await fetch(
         `https://api.notion.com/v1/databases/${databaseId}/query`,
         {
           method: "POST",
@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
         },
       );
       if (!res.ok) throw new Error(`Notion query failed [${res.status}]: ${await res.text()}`);
-      const data = await res.json();
+      const data: any = await res.json();
       count += (data.results ?? []).length;
       if (data.has_more && data.next_cursor) cursor = data.next_cursor;
       else break;
