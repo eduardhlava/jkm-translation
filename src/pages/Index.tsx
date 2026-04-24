@@ -82,6 +82,29 @@ const Index = () => {
   const exProp = propExample(contextLang);
   const stProp = propStatus(targetLang);
 
+  const loadCount = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("notion-count", {
+        body: { statusProperty: stProp, statusValue: settings.statusNew },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setPendingCount((prev) => {
+        if (prev !== data.count) setCountBump((b) => b + 1);
+        return data.count as number;
+      });
+    } catch (err) {
+      console.error("count failed", err);
+      setPendingCount(null);
+    }
+  };
+
+  // Load count whenever target language or settings change
+  useEffect(() => {
+    loadCount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetLang, settings.statusNew]);
+
   const fetchItems = async () => {
     if (sourceLang === targetLang) {
       toast.error(t(ui, "sameLangError"));
@@ -120,11 +143,14 @@ const Index = () => {
 
   const localStatus = (id: string): LocalStatus => statusOverrides[id] ?? "new";
 
-  const toggleStatus = (id: string) =>
+  const toggleStatus = (id: string) => {
     setStatusOverrides((m) => ({
       ...m,
       [id]: m[id] === "translated" ? "new" : "translated",
     }));
+    // Trigger pop animation by bumping a counter for this row
+    setConfirmPulse((m) => ({ ...m, [id]: (m[id] ?? 0) + 1 }));
+  };
 
   const toUpdate = useMemo(
     () => items.filter((it) => localStatus(it.id) === "translated"),
@@ -154,7 +180,8 @@ const Index = () => {
 
       const okCount = data?.okCount ?? toUpdate.length;
       toast.success(t(ui, "updatedNofM", { ok: okCount, total: toUpdate.length }));
-      await fetchItems();
+      setSuccessFlash((n) => n + 1);
+      await Promise.all([fetchItems(), loadCount()]);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Error";
       toast.error(t(ui, "updateFailed"), { description: msg });
