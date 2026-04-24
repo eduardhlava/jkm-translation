@@ -32,6 +32,7 @@ export interface AppSettings {
   statusNew: string; // value in Notion meaning "new"
   statusReview: string; // value to write when user marks "Přeloženo"
   pageSize: number;
+  uiLang: "cz" | "en" | "ru" | "pl";
 }
 
 const SETTINGS_KEY = "translator-settings-v2";
@@ -40,6 +41,7 @@ export const defaultSettings: AppSettings = {
   statusNew: "nový",
   statusReview: "ke_kontrole",
   pageSize: 20,
+  uiLang: "cz",
 };
 
 export function loadSettings(): AppSettings {
