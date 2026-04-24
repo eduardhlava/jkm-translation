@@ -203,11 +203,24 @@ const Index = () => {
               <p className="text-xs text-muted-foreground">{t(ui, "appTagline")}</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/settings">
-              <SettingsIcon className="w-4 h-4 mr-1" /> {t(ui, "settings")}
-            </Link>
-          </Button>
+          <div className="flex items-center gap-3">
+            {pendingCount !== null && (
+              <Badge
+                key={countBump}
+                variant="secondary"
+                className="animate-count-bump text-sm px-3 py-1.5 gap-1.5"
+                title={t(ui, "toTranslate")}
+              >
+                <span className="text-muted-foreground">{t(ui, "toTranslate")}:</span>
+                <span className="font-semibold text-primary tabular-nums">{pendingCount}</span>
+              </Badge>
+            )}
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/settings">
+                <SettingsIcon className="w-4 h-4 mr-1" /> {t(ui, "settings")}
+              </Link>
+            </Button>
+          </div>
         </div>
       </header>
 
