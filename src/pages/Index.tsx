@@ -266,7 +266,12 @@ const Index = () => {
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
             {t(ui, "loadN", { n: settings.pageSize })}
           </Button>
-          <Button onClick={handleUpdate} disabled={saving || toUpdate.length === 0} className="gap-2">
+          <Button
+            key={`update-${successFlash}`}
+            onClick={handleUpdate}
+            disabled={saving || toUpdate.length === 0}
+            className={`gap-2 rounded-md ${successFlash > 0 ? "animate-success-flash" : ""}`}
+          >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             {t(ui, "updateBtn", { n: toUpdate.length })}
           </Button>
@@ -280,10 +285,7 @@ const Index = () => {
         )}
 
         {items.length > 0 && (
-          <Card
-            key={`tbl-${successFlash}`}
-            className={`overflow-hidden shadow-[var(--shadow-md)] rounded-xl ${successFlash > 0 ? "animate-success-flash" : ""}`}
-          >
+          <Card className="overflow-hidden shadow-[var(--shadow-md)] rounded-xl">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -322,10 +324,10 @@ const Index = () => {
                             className="min-h-[64px] text-sm"
                           />
                         </TableCell>
-                        <TableCell className="align-top whitespace-pre-wrap text-sm text-muted-foreground">
+                        <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground">
                           {it.properties[ctxProp] || "—"}
                         </TableCell>
-                        <TableCell className="align-top whitespace-pre-wrap text-sm text-muted-foreground">
+                        <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground">
                           {it.properties[exProp] || "—"}
                         </TableCell>
                         <TableCell className="align-top">
