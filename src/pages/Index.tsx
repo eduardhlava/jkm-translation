@@ -84,7 +84,7 @@ const Index = () => {
       if (data?.error) throw new Error(data.error);
       const fetched = (data?.items ?? []) as NotionItem[];
       setItems(fetched);
-      if (fetched.length === 0) toast.info("Žádné položky se stavem „nový"");
+      if (fetched.length === 0) toast.info('Žádné položky se stavem „nový"');
       else toast.success(`Načteno ${fetched.length} položek`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Neznámá chyba";
