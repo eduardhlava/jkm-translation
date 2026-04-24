@@ -55,6 +55,10 @@ const Index = () => {
   const [saving, setSaving] = useState(false);
   const [statusOverrides, setStatusOverrides] = useState<Record<string, LocalStatus>>({});
   const [translations, setTranslations] = useState<Record<string, string>>({});
+  const [pendingCount, setPendingCount] = useState<number | null>(null);
+  const [countBump, setCountBump] = useState(0);
+  const [confirmPulse, setConfirmPulse] = useState<Record<string, number>>({});
+  const [successFlash, setSuccessFlash] = useState(0);
 
   const ui = settings.uiLang;
 
@@ -77,6 +81,29 @@ const Index = () => {
   const ctxProp = propContext(contextLang);
   const exProp = propExample(contextLang);
   const stProp = propStatus(targetLang);
+
+  const loadCount = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("notion-count", {
+        body: { statusProperty: stProp, statusValue: settings.statusNew },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setPendingCount((prev) => {
+        if (prev !== data.count) setCountBump((b) => b + 1);
+        return data.count as number;
+      });
+    } catch (err) {
+      console.error("count failed", err);
+      setPendingCount(null);
+    }
+  };
+
+  // Load count whenever target language or settings change
+  useEffect(() => {
+    loadCount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetLang, settings.statusNew]);
 
   const fetchItems = async () => {
     if (sourceLang === targetLang) {
@@ -116,11 +143,14 @@ const Index = () => {
 
   const localStatus = (id: string): LocalStatus => statusOverrides[id] ?? "new";
 
-  const toggleStatus = (id: string) =>
+  const toggleStatus = (id: string) => {
     setStatusOverrides((m) => ({
       ...m,
       [id]: m[id] === "translated" ? "new" : "translated",
     }));
+    // Trigger pop animation by bumping a counter for this row
+    setConfirmPulse((m) => ({ ...m, [id]: (m[id] ?? 0) + 1 }));
+  };
 
   const toUpdate = useMemo(
     () => items.filter((it) => localStatus(it.id) === "translated"),
@@ -150,7 +180,8 @@ const Index = () => {
 
       const okCount = data?.okCount ?? toUpdate.length;
       toast.success(t(ui, "updatedNofM", { ok: okCount, total: toUpdate.length }));
-      await fetchItems();
+      setSuccessFlash((n) => n + 1);
+      await Promise.all([fetchItems(), loadCount()]);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Error";
       toast.error(t(ui, "updateFailed"), { description: msg });
@@ -172,11 +203,24 @@ const Index = () => {
               <p className="text-xs text-muted-foreground">{t(ui, "appTagline")}</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/settings">
-              <SettingsIcon className="w-4 h-4 mr-1" /> {t(ui, "settings")}
-            </Link>
-          </Button>
+          <div className="flex items-center gap-3">
+            {pendingCount !== null && (
+              <Badge
+                key={countBump}
+                variant="secondary"
+                className="animate-count-bump text-sm px-3 py-1.5 gap-1.5"
+                title={t(ui, "toTranslate")}
+              >
+                <span className="text-muted-foreground">{t(ui, "toTranslate")}:</span>
+                <span className="font-semibold text-primary tabular-nums">{pendingCount}</span>
+              </Badge>
+            )}
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/settings">
+                <SettingsIcon className="w-4 h-4 mr-1" /> {t(ui, "settings")}
+              </Link>
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -236,7 +280,10 @@ const Index = () => {
         )}
 
         {items.length > 0 && (
-          <Card className="overflow-hidden shadow-[var(--shadow-md)]">
+          <Card
+            key={`tbl-${successFlash}`}
+            className={`overflow-hidden shadow-[var(--shadow-md)] rounded-xl ${successFlash > 0 ? "animate-success-flash" : ""}`}
+          >
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -283,12 +330,17 @@ const Index = () => {
                         </TableCell>
                         <TableCell className="align-top">
                           <Button
+                            key={`btn-${it.id}-${confirmPulse[it.id] ?? 0}`}
                             variant={st === "translated" ? "default" : "outline"}
                             size="sm"
                             onClick={() => toggleStatus(it.id)}
-                            className="w-full"
+                            className={`w-full transition-colors ${confirmPulse[it.id] ? "animate-confirm-pop" : ""} ${st === "translated" ? "bg-success text-success-foreground hover:bg-success/90" : ""}`}
                           >
-                            {st === "translated" ? t(ui, "translated") : t(ui, "confirm")}
+                            {st === "translated" ? (
+                              <><CheckCircle2 className="w-4 h-4 mr-1" />{t(ui, "translated")}</>
+                            ) : (
+                              t(ui, "confirm")
+                            )}
                           </Button>
                         </TableCell>
                         <TableCell className="align-top">

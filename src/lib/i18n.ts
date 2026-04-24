@@ -46,7 +46,8 @@ export type TKey =
   | "loadedN"
   | "noNewItems"
   | "sameLangError"
-  | "pageTitle";
+  | "pageTitle"
+  | "toTranslate";
 
 type Dict = Record<TKey, string>;
 
@@ -91,6 +92,7 @@ const cz: Dict = {
   noNewItems: "Žádné položky se stavem „nový“",
   sameLangError: "Zdrojový a cílový jazyk musí být různé",
   pageTitle: "JKM Content Translator – překlady přímo z databáze",
+  toTranslate: "K překladu",
 };
 
 const en: Dict = {
@@ -134,6 +136,7 @@ const en: Dict = {
   noNewItems: "No items with status “new”",
   sameLangError: "Source and target language must differ",
   pageTitle: "JKM Content Translator – translate straight from your database",
+  toTranslate: "To translate",
 };
 
 const ru: Dict = {
@@ -177,6 +180,7 @@ const ru: Dict = {
   noNewItems: "Нет записей со статусом «новый»",
   sameLangError: "Исходный и целевой язык должны отличаться",
   pageTitle: "JKM Content Translator — переводы прямо из базы",
+  toTranslate: "К переводу",
 };
 
 const pl: Dict = {
@@ -220,6 +224,7 @@ const pl: Dict = {
   noNewItems: "Brak elementów ze statusem „nowy”",
   sameLangError: "Język źródłowy i docelowy muszą się różnić",
   pageTitle: "JKM Content Translator – tłumaczenia prosto z bazy",
+  toTranslate: "Do tłumaczenia",
 };
 
 const DICTS: Record<UiLang, Dict> = { cz, en, ru, pl };
