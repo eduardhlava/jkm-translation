@@ -56,6 +56,7 @@ export function loadSettings(): AppSettings {
 
 export function saveSettings(s: AppSettings) {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+  window.dispatchEvent(new CustomEvent("translator-settings-changed"));
 }
 
 // Notion property name helpers
