@@ -55,6 +55,10 @@ const Index = () => {
   const [saving, setSaving] = useState(false);
   const [statusOverrides, setStatusOverrides] = useState<Record<string, LocalStatus>>({});
   const [translations, setTranslations] = useState<Record<string, string>>({});
+  const [pendingCount, setPendingCount] = useState<number | null>(null);
+  const [countBump, setCountBump] = useState(0);
+  const [confirmPulse, setConfirmPulse] = useState<Record<string, number>>({});
+  const [successFlash, setSuccessFlash] = useState(0);
 
   const ui = settings.uiLang;
 
