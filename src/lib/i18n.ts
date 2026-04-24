@@ -46,7 +46,8 @@ export type TKey =
   | "loadedN"
   | "noNewItems"
   | "sameLangError"
-  | "pageTitle";
+  | "pageTitle"
+  | "toTranslate";
 
 type Dict = Record<TKey, string>;
 
