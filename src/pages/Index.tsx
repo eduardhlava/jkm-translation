@@ -168,15 +168,13 @@ const Index = () => {
               <Languages className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="font-semibold leading-tight">Notion Translator</h1>
-              <p className="text-xs text-muted-foreground">
-                Překládej položky databáze a zapisuj zpět do Notion
-              </p>
+              <h1 className="font-semibold leading-tight">{t(ui, "appName")}</h1>
+              <p className="text-xs text-muted-foreground">{t(ui, "appTagline")}</p>
             </div>
           </div>
           <Button variant="outline" size="sm" asChild>
             <Link to="/settings">
-              <SettingsIcon className="w-4 h-4 mr-1" /> Nastavení
+              <SettingsIcon className="w-4 h-4 mr-1" /> {t(ui, "settings")}
             </Link>
           </Button>
         </div>
@@ -185,7 +183,7 @@ const Index = () => {
       <main className="container max-w-7xl py-6 space-y-4">
         <Card className="p-4 flex flex-wrap items-end gap-4 shadow-[var(--shadow-md)]">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Zdrojový jazyk</label>
+            <label className="text-xs font-medium text-muted-foreground">{t(ui, "sourceLang")}</label>
             <Select value={sourceLang} onValueChange={setSourceLang}>
               <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -196,7 +194,7 @@ const Index = () => {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Cílový jazyk</label>
+            <label className="text-xs font-medium text-muted-foreground">{t(ui, "targetLang")}</label>
             <Select value={targetLang} onValueChange={setTargetLang}>
               <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -207,7 +205,7 @@ const Index = () => {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Jazyk kontextu a příkladu</label>
+            <label className="text-xs font-medium text-muted-foreground">{t(ui, "contextLang")}</label>
             <Select value={contextLang} onValueChange={setContextLang}>
               <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -222,18 +220,18 @@ const Index = () => {
 
           <Button onClick={fetchItems} disabled={loading} variant="outline" className="gap-2">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-            Načíst {settings.pageSize} položek
+            {t(ui, "loadN", { n: settings.pageSize })}
           </Button>
           <Button onClick={handleUpdate} disabled={saving || toUpdate.length === 0} className="gap-2">
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Aktualizovat ({toUpdate.length})
+            {t(ui, "updateBtn", { n: toUpdate.length })}
           </Button>
         </Card>
 
         {items.length === 0 && !loading && (
           <Card className="p-12 flex flex-col items-center gap-3 text-center text-muted-foreground">
             <CheckCircle2 className="w-10 h-10 text-success" />
-            <p>Žádné položky. Vyber jazyky a klikni na „Načíst".</p>
+            <p>{t(ui, "noItems")}</p>
           </Card>
         )}
 
@@ -245,15 +243,15 @@ const Index = () => {
                   <TableRow>
                     <TableHead className="w-[20%]">
                       <Badge className="bg-accent text-accent-foreground mr-2">{langLabel(sourceLang)}</Badge>
-                      Zdroj
+                      {t(ui, "sourceCol")}
                     </TableHead>
                     <TableHead className="w-[22%]">
                       <Badge className="bg-primary/10 text-primary mr-2">{langLabel(targetLang)}</Badge>
-                      Překlad
+                      {t(ui, "translationCol")}
                     </TableHead>
-                    <TableHead className="w-[18%]">Kontext ({langLabel(contextLang)})</TableHead>
-                    <TableHead className="w-[22%]">Příklad věty ({langLabel(contextLang)})</TableHead>
-                    <TableHead className="w-[12%]">Stav</TableHead>
+                    <TableHead className="w-[18%]">{t(ui, "contextCol")} ({langLabel(contextLang)})</TableHead>
+                    <TableHead className="w-[22%]">{t(ui, "exampleCol")} ({langLabel(contextLang)})</TableHead>
+                    <TableHead className="w-[12%]">{t(ui, "statusCol")}</TableHead>
                     <TableHead className="w-[6%]" />
                   </TableRow>
                 </TableHeader>
@@ -273,7 +271,7 @@ const Index = () => {
                             onChange={(e) =>
                               setTranslations((m) => ({ ...m, [it.id]: e.target.value }))
                             }
-                            placeholder={`Překlad (${langLabel(targetLang)})…`}
+                            placeholder={t(ui, "translationPlaceholder", { lang: langLabel(targetLang) })}
                             className="min-h-[64px] text-sm"
                           />
                         </TableCell>
@@ -290,7 +288,7 @@ const Index = () => {
                             onClick={() => toggleStatus(it.id)}
                             className="w-full"
                           >
-                            {st === "translated" ? "Přeloženo" : "Potvrdit"}
+                            {st === "translated" ? t(ui, "translated") : t(ui, "confirm")}
                           </Button>
                         </TableCell>
                         <TableCell className="align-top">
@@ -299,7 +297,7 @@ const Index = () => {
                             target="_blank"
                             rel="noreferrer"
                             className="text-muted-foreground hover:text-primary inline-flex items-center"
-                            title="Otevřít v Notion"
+                            title={t(ui, "openInNotion")}
                           >
                             <ExternalLink className="w-4 h-4" />
                           </a>
