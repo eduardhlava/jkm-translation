@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -47,11 +48,12 @@ const Index = () => {
   const [settings, setSettings] = useState<AppSettings>(loadSettings());
   const [sourceLang, setSourceLang] = useState<string>("cz");
   const [targetLang, setTargetLang] = useState<string>("en");
+  const [contextLang, setContextLang] = useState<string>("cz");
   const [items, setItems] = useState<NotionItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  // local per-item status overrides (only "translated" is interesting)
   const [statusOverrides, setStatusOverrides] = useState<Record<string, LocalStatus>>({});
+  const [translations, setTranslations] = useState<Record<string, string>>({});
 
   useEffect(() => {
     document.title = "Notion Translator – překlady přímo z databáze";
@@ -60,8 +62,8 @@ const Index = () => {
 
   const sourceProp = propText(sourceLang);
   const targetProp = propText(targetLang);
-  const ctxProp = propContext(targetLang);
-  const exProp = propExample(targetLang);
+  const ctxProp = propContext(contextLang);
+  const exProp = propExample(contextLang);
   const stProp = propStatus(targetLang);
 
   const fetchItems = async () => {
@@ -71,6 +73,7 @@ const Index = () => {
     }
     setLoading(true);
     setStatusOverrides({});
+    setTranslations({});
     try {
       const { data, error } = await supabase.functions.invoke("notion-fetch", {
         body: {
@@ -84,6 +87,12 @@ const Index = () => {
       if (data?.error) throw new Error(data.error);
       const fetched = (data?.items ?? []) as NotionItem[];
       setItems(fetched);
+      // prefill translations with existing target text
+      const initial: Record<string, string> = {};
+      fetched.forEach((it) => {
+        initial[it.id] = it.properties[targetProp] ?? "";
+      });
+      setTranslations(initial);
       if (fetched.length === 0) toast.info('Žádné položky se stavem „nový"');
       else toast.success(`Načteno ${fetched.length} položek`);
     } catch (err) {
@@ -110,14 +119,17 @@ const Index = () => {
 
   const handleUpdate = async () => {
     if (toUpdate.length === 0) {
-      toast.info("Žádné položky označené jako přeloženo");
+      toast.info("Žádné potvrzené položky");
       return;
     }
     setSaving(true);
     try {
       const updates = toUpdate.map((it) => ({
         pageId: it.id,
-        updates: { [stProp]: settings.statusReview },
+        updates: {
+          [stProp]: settings.statusReview,
+          [targetProp]: translations[it.id] ?? "",
+        },
       }));
       const { data, error } = await supabase.functions.invoke("notion-bulk-update", {
         body: { updates },
@@ -127,7 +139,6 @@ const Index = () => {
 
       const okCount = data?.okCount ?? toUpdate.length;
       toast.success(`Aktualizováno ${okCount}/${toUpdate.length} položek`);
-      // reload list — only "nový" should remain
       await fetchItems();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Neznámá chyba";
@@ -184,6 +195,17 @@ const Index = () => {
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Jazyk kontextu a příkladu</label>
+            <Select value={contextLang} onValueChange={setContextLang}>
+              <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {LANGUAGES.map((l) => (
+                  <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="flex-1" />
 
@@ -210,13 +232,17 @@ const Index = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[28%]">
+                    <TableHead className="w-[20%]">
                       <Badge className="bg-accent text-accent-foreground mr-2">{langLabel(sourceLang)}</Badge>
                       Zdroj
                     </TableHead>
-                    <TableHead className="w-[24%]">Kontext ({langLabel(targetLang)})</TableHead>
-                    <TableHead className="w-[28%]">Příklad věty ({langLabel(targetLang)})</TableHead>
-                    <TableHead className="w-[14%]">Stav</TableHead>
+                    <TableHead className="w-[22%]">
+                      <Badge className="bg-primary/10 text-primary mr-2">{langLabel(targetLang)}</Badge>
+                      Překlad
+                    </TableHead>
+                    <TableHead className="w-[18%]">Kontext ({langLabel(contextLang)})</TableHead>
+                    <TableHead className="w-[22%]">Příklad věty ({langLabel(contextLang)})</TableHead>
+                    <TableHead className="w-[12%]">Stav</TableHead>
                     <TableHead className="w-[6%]" />
                   </TableRow>
                 </TableHeader>
@@ -229,6 +255,16 @@ const Index = () => {
                           {it.properties[sourceProp] || (
                             <span className="text-muted-foreground italic">—</span>
                           )}
+                        </TableCell>
+                        <TableCell className="align-top">
+                          <Textarea
+                            value={translations[it.id] ?? ""}
+                            onChange={(e) =>
+                              setTranslations((m) => ({ ...m, [it.id]: e.target.value }))
+                            }
+                            placeholder={`Překlad (${langLabel(targetLang)})…`}
+                            className="min-h-[64px] text-sm"
+                          />
                         </TableCell>
                         <TableCell className="align-top whitespace-pre-wrap text-sm text-muted-foreground">
                           {it.properties[ctxProp] || "—"}
@@ -243,7 +279,7 @@ const Index = () => {
                             onClick={() => toggleStatus(it.id)}
                             className="w-full"
                           >
-                            {st === "translated" ? "Přeloženo" : "Nový"}
+                            {st === "translated" ? "Přeloženo" : "Potvrdit"}
                           </Button>
                         </TableCell>
                         <TableCell className="align-top">
