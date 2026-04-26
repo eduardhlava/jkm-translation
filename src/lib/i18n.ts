@@ -237,6 +237,9 @@ const pl: Dict = {
   sameLangError: "Język źródłowy i docelowy muszą się różnić",
   pageTitle: "JKM Content Translator – tłumaczenia prosto z bazy",
   toTranslate: "Do tłumaczenia",
+  machineCol: "Maszyna",
+  machineFilter: "Maszyna",
+  anyMachine: "Bez znaczenia",
 };
 
 const DICTS: Record<UiLang, Dict> = { cz, en, ru, pl };
