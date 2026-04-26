@@ -190,6 +190,9 @@ const ru: Dict = {
   sameLangError: "Исходный и целевой язык должны отличаться",
   pageTitle: "JKM Content Translator — переводы прямо из базы",
   toTranslate: "К переводу",
+  machineCol: "Станок",
+  machineFilter: "Станок",
+  anyMachine: "Не важно",
 };
 
 const pl: Dict = {
