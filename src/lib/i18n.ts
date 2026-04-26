@@ -96,6 +96,9 @@ const cz: Dict = {
   sameLangError: "Zdrojový a cílový jazyk musí být různé",
   pageTitle: "JKM Content Translator – překlady přímo z databáze",
   toTranslate: "K překladu",
+  machineCol: "Stroj",
+  machineFilter: "Stroj",
+  anyMachine: "Nezáleží",
 };
 
 const en: Dict = {
