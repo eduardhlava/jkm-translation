@@ -158,6 +158,18 @@ const Index = () => {
     [items, statusOverrides],
   );
 
+  const sortedItems = useMemo(
+    () =>
+      [...items].sort((a, b) =>
+        (a.properties[sourceProp] ?? "").localeCompare(
+          b.properties[sourceProp] ?? "",
+          undefined,
+          { sensitivity: "base", numeric: true },
+        ),
+      ),
+    [items, sourceProp],
+  );
+
   const handleUpdate = async () => {
     if (toUpdate.length === 0) {
       toast.info(t(ui, "noConfirmed"));
@@ -288,24 +300,24 @@ const Index = () => {
           <Card className="overflow-hidden shadow-[var(--shadow-md)] rounded-xl">
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[20%]">
+                <TableHeader className="bg-muted/70">
+                  <TableRow className="border-b-2 border-border">
+                    <TableHead className="w-[20%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">
                       <Badge className="bg-accent text-accent-foreground mr-2">{langLabel(sourceLang)}</Badge>
                       {t(ui, "sourceCol")}
                     </TableHead>
-                    <TableHead className="w-[22%]">
+                    <TableHead className="w-[22%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">
                       <Badge className="bg-primary/10 text-primary mr-2">{langLabel(targetLang)}</Badge>
                       {t(ui, "translationCol")}
                     </TableHead>
-                    <TableHead className="w-[18%]">{t(ui, "contextCol")} ({langLabel(contextLang)})</TableHead>
-                    <TableHead className="w-[22%]">{t(ui, "exampleCol")} ({langLabel(contextLang)})</TableHead>
-                    <TableHead className="w-[12%]">{t(ui, "statusCol")}</TableHead>
+                    <TableHead className="w-[18%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "contextCol")} ({langLabel(contextLang)})</TableHead>
+                    <TableHead className="w-[22%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "exampleCol")} ({langLabel(contextLang)})</TableHead>
+                    <TableHead className="w-[12%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "statusCol")}</TableHead>
                     <TableHead className="w-[6%]" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {items.map((it) => {
+                  {sortedItems.map((it) => {
                     const st = localStatus(it.id);
                     return (
                       <TableRow key={it.id}>
