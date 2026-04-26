@@ -16,6 +16,8 @@ interface FetchRequest {
   textProperties?: string[];
   databaseId?: string;
   pageSize?: number;
+  sortProperty?: string;
+  sortDirection?: "ascending" | "descending";
 }
 
 function readPropertyText(prop: any): string {
@@ -82,6 +84,19 @@ Deno.serve(async (req) => {
       }
     }
 
+    let sorts: any = undefined;
+    if (body.sortProperty) {
+      const sMeta = propMetaMap[body.sortProperty];
+      if (sMeta && ["title", "rich_text", "select", "status", "number", "date"].includes(sMeta.type)) {
+        sorts = [
+          {
+            property: body.sortProperty,
+            direction: body.sortDirection ?? "ascending",
+          },
+        ];
+      }
+    }
+
     const queryRes = await fetch(
       `https://api.notion.com/v1/databases/${databaseId}/query`,
       {
@@ -91,7 +106,7 @@ Deno.serve(async (req) => {
           "Notion-Version": NOTION_VERSION,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ filter, page_size: body.pageSize ?? 20 }),
+        body: JSON.stringify({ filter, sorts, page_size: body.pageSize ?? 20 }),
       },
     );
 
