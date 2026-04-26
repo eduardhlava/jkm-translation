@@ -317,7 +317,7 @@ const Index = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {items.map((it) => {
+                  {sortedItems.map((it) => {
                     const st = localStatus(it.id);
                     return (
                       <TableRow key={it.id}>
