@@ -376,6 +376,9 @@ const Index = () => {
                         <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground">
                           {it.properties[exProp] || "—"}
                         </TableCell>
+                        <TableCell className="align-top whitespace-pre-wrap text-sm">
+                          {it.properties[MACHINE_PROP] || <span className="text-muted-foreground italic">—</span>}
+                        </TableCell>
                         <TableCell className="align-top">
                           <Button
                             key={`btn-${it.id}-${confirmPulse[it.id] ?? 0}`}
