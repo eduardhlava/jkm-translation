@@ -123,6 +123,8 @@ const Index = () => {
           statusValue: settings.statusNew,
           textProperties: [sourceProp, targetProp, ctxProp, exProp, stProp, MACHINE_PROP],
           pageSize: settings.pageSize,
+          sortProperty: sourceProp,
+          sortDirection: "ascending",
         },
       });
       if (error) throw error;
