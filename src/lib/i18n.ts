@@ -143,6 +143,9 @@ const en: Dict = {
   sameLangError: "Source and target language must differ",
   pageTitle: "JKM Content Translator – translate straight from your database",
   toTranslate: "To translate",
+  machineCol: "Machine",
+  machineFilter: "Machine",
+  anyMachine: "Any",
 };
 
 const ru: Dict = {
