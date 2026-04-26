@@ -16,6 +16,8 @@ interface FetchRequest {
   textProperties?: string[];
   databaseId?: string;
   pageSize?: number;
+  sortProperty?: string;
+  sortDirection?: "ascending" | "descending";
 }
 
 function readPropertyText(prop: any): string {
