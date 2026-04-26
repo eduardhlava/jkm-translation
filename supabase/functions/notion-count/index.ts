@@ -38,8 +38,6 @@ async function queryCount(
           filter,
           page_size: 100,
           start_cursor: cursor,
-          // Request no properties to keep payload tiny
-          filter_properties: ["title"],
         }),
       },
     );
