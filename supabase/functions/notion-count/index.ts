@@ -1,5 +1,5 @@
 // Counts all pages in the Notion database matching a status filter.
-// Paginates through all results to return a true total count.
+// Tries status filter first, falls back to select if needed. Avoids extra DB metadata fetch.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,6 +14,45 @@ interface CountRequest {
   statusProperty: string;
   statusValue: string;
   databaseId?: string;
+  propertyType?: "status" | "select";
+}
+
+async function queryCount(
+  databaseId: string,
+  apiKey: string,
+  filter: any,
+): Promise<{ ok: true; count: number } | { ok: false; status: number; text: string }> {
+  let count = 0;
+  let cursor: string | undefined = undefined;
+  for (let i = 0; i < 20; i++) {
+    const res: Response = await fetch(
+      `https://api.notion.com/v1/databases/${databaseId}/query`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Notion-Version": NOTION_VERSION,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          filter,
+          page_size: 100,
+          start_cursor: cursor,
+          // Request no properties to keep payload tiny
+          filter_properties: ["title"],
+        }),
+      },
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      return { ok: false, status: res.status, text };
+    }
+    const data: any = await res.json();
+    count += (data.results ?? []).length;
+    if (data.has_more && data.next_cursor) cursor = data.next_cursor;
+    else break;
+  }
+  return { ok: true, count };
 }
 
 Deno.serve(async (req) => {
@@ -31,56 +70,28 @@ Deno.serve(async (req) => {
       throw new Error("statusProperty and statusValue are required");
     }
 
-    // Detect property type
-    const dbRes = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, {
-      headers: {
-        Authorization: `Bearer ${NOTION_API_KEY}`,
-        "Notion-Version": NOTION_VERSION,
-      },
-    });
-    if (!dbRes.ok) throw new Error(`Notion DB read failed [${dbRes.status}]: ${await dbRes.text()}`);
-    const db = await dbRes.json();
-    const meta = (db.properties ?? {})[body.statusProperty];
-    if (!meta) throw new Error(`Property "${body.statusProperty}" not found`);
+    // Try status filter first; if Notion rejects, retry as select.
+    const statusFilter = {
+      property: body.statusProperty,
+      status: { equals: body.statusValue },
+    };
 
-    let filter: any;
-    if (meta.type === "status") {
-      filter = { property: body.statusProperty, status: { equals: body.statusValue } };
-    } else if (meta.type === "select") {
-      filter = { property: body.statusProperty, select: { equals: body.statusValue } };
-    } else {
-      throw new Error(`Property "${body.statusProperty}" must be status or select`);
+    let result = await queryCount(databaseId, NOTION_API_KEY, statusFilter);
+
+    if (!result.ok && result.status === 400) {
+      const selectFilter = {
+        property: body.statusProperty,
+        select: { equals: body.statusValue },
+      };
+      result = await queryCount(databaseId, NOTION_API_KEY, selectFilter);
     }
 
-    let count = 0;
-    let cursor: string | undefined = undefined;
-    // Safety cap to avoid runaway loops
-    for (let i = 0; i < 50; i++) {
-      const res: Response = await fetch(
-        `https://api.notion.com/v1/databases/${databaseId}/query`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${NOTION_API_KEY}`,
-            "Notion-Version": NOTION_VERSION,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            filter,
-            page_size: 100,
-            start_cursor: cursor,
-          }),
-        },
-      );
-      if (!res.ok) throw new Error(`Notion query failed [${res.status}]: ${await res.text()}`);
-      const data: any = await res.json();
-      count += (data.results ?? []).length;
-      if (data.has_more && data.next_cursor) cursor = data.next_cursor;
-      else break;
+    if (!result.ok) {
+      throw new Error(`Notion query failed [${result.status}]: ${result.text}`);
     }
 
     return new Response(
-      JSON.stringify({ count }),
+      JSON.stringify({ count: result.count }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error: unknown) {
