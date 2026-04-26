@@ -158,6 +158,18 @@ const Index = () => {
     [items, statusOverrides],
   );
 
+  const sortedItems = useMemo(
+    () =>
+      [...items].sort((a, b) =>
+        (a.properties[sourceProp] ?? "").localeCompare(
+          b.properties[sourceProp] ?? "",
+          undefined,
+          { sensitivity: "base", numeric: true },
+        ),
+      ),
+    [items, sourceProp],
+  );
+
   const handleUpdate = async () => {
     if (toUpdate.length === 0) {
       toast.info(t(ui, "noConfirmed"));
