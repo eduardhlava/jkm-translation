@@ -134,6 +134,7 @@ const Index = () => {
         initial[it.id] = it.properties[targetProp] ?? "";
       });
       setTranslations(initial);
+      setMachineFilter("__any__");
       if (fetched.length === 0) toast.info(t(ui, "noNewItems"));
       else toast.success(t(ui, "loadedN", { n: fetched.length }));
     } catch (err) {
