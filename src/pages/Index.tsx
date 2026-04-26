@@ -162,16 +162,33 @@ const Index = () => {
     [items, statusOverrides],
   );
 
+  const machineOptions = useMemo(() => {
+    const set = new Set<string>();
+    items.forEach((it) => {
+      const v = (it.properties[MACHINE_PROP] ?? "").trim();
+      if (v) set.add(v);
+    });
+    return Array.from(set).sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: "base", numeric: true }),
+    );
+  }, [items]);
+
   const sortedItems = useMemo(
     () =>
-      [...items].sort((a, b) =>
-        (a.properties[sourceProp] ?? "").localeCompare(
-          b.properties[sourceProp] ?? "",
-          undefined,
-          { sensitivity: "base", numeric: true },
+      [...items]
+        .filter((it) =>
+          machineFilter === "__any__"
+            ? true
+            : (it.properties[MACHINE_PROP] ?? "") === machineFilter,
+        )
+        .sort((a, b) =>
+          (a.properties[sourceProp] ?? "").localeCompare(
+            b.properties[sourceProp] ?? "",
+            undefined,
+            { sensitivity: "base", numeric: true },
+          ),
         ),
-      ),
-    [items, sourceProp],
+    [items, sourceProp, machineFilter],
   );
 
   const handleUpdate = async () => {
