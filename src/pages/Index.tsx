@@ -59,6 +59,9 @@ const Index = () => {
   const [countBump, setCountBump] = useState(0);
   const [confirmPulse, setConfirmPulse] = useState<Record<string, number>>({});
   const [successFlash, setSuccessFlash] = useState(0);
+  const [machineFilter, setMachineFilter] = useState<string>("__any__");
+
+  const MACHINE_PROP = "stroj";
 
   const ui = settings.uiLang;
 
@@ -118,7 +121,7 @@ const Index = () => {
         body: {
           statusProperty: stProp,
           statusValue: settings.statusNew,
-          textProperties: [sourceProp, targetProp, ctxProp, exProp, stProp],
+          textProperties: [sourceProp, targetProp, ctxProp, exProp, stProp, MACHINE_PROP],
           pageSize: settings.pageSize,
         },
       });
@@ -131,6 +134,7 @@ const Index = () => {
         initial[it.id] = it.properties[targetProp] ?? "";
       });
       setTranslations(initial);
+      setMachineFilter("__any__");
       if (fetched.length === 0) toast.info(t(ui, "noNewItems"));
       else toast.success(t(ui, "loadedN", { n: fetched.length }));
     } catch (err) {
@@ -158,16 +162,33 @@ const Index = () => {
     [items, statusOverrides],
   );
 
+  const machineOptions = useMemo(() => {
+    const set = new Set<string>();
+    items.forEach((it) => {
+      const v = (it.properties[MACHINE_PROP] ?? "").trim();
+      if (v) set.add(v);
+    });
+    return Array.from(set).sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: "base", numeric: true }),
+    );
+  }, [items]);
+
   const sortedItems = useMemo(
     () =>
-      [...items].sort((a, b) =>
-        (a.properties[sourceProp] ?? "").localeCompare(
-          b.properties[sourceProp] ?? "",
-          undefined,
-          { sensitivity: "base", numeric: true },
+      [...items]
+        .filter((it) =>
+          machineFilter === "__any__"
+            ? true
+            : (it.properties[MACHINE_PROP] ?? "") === machineFilter,
+        )
+        .sort((a, b) =>
+          (a.properties[sourceProp] ?? "").localeCompare(
+            b.properties[sourceProp] ?? "",
+            undefined,
+            { sensitivity: "base", numeric: true },
+          ),
         ),
-      ),
-    [items, sourceProp],
+    [items, sourceProp, machineFilter],
   );
 
   const handleUpdate = async () => {
@@ -271,6 +292,18 @@ const Index = () => {
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">{t(ui, "machineFilter")}</label>
+            <Select value={machineFilter} onValueChange={setMachineFilter} disabled={items.length === 0}>
+              <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__any__">{t(ui, "anyMachine")}</SelectItem>
+                {machineOptions.map((m) => (
+                  <SelectItem key={m} value={m}>{m}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="flex-1" />
 
@@ -302,17 +335,18 @@ const Index = () => {
               <Table>
                 <TableHeader className="bg-muted/70">
                   <TableRow className="border-b-2 border-border">
-                    <TableHead className="w-[20%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">
+                    <TableHead className="w-[18%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">
                       <Badge className="bg-accent text-accent-foreground mr-2">{langLabel(sourceLang)}</Badge>
                       {t(ui, "sourceCol")}
                     </TableHead>
-                    <TableHead className="w-[22%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">
+                    <TableHead className="w-[20%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">
                       <Badge className="bg-primary/10 text-primary mr-2">{langLabel(targetLang)}</Badge>
                       {t(ui, "translationCol")}
                     </TableHead>
-                    <TableHead className="w-[18%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "contextCol")} ({langLabel(contextLang)})</TableHead>
-                    <TableHead className="w-[22%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "exampleCol")} ({langLabel(contextLang)})</TableHead>
-                    <TableHead className="w-[12%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "statusCol")}</TableHead>
+                    <TableHead className="w-[16%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "contextCol")} ({langLabel(contextLang)})</TableHead>
+                    <TableHead className="w-[20%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "exampleCol")} ({langLabel(contextLang)})</TableHead>
+                    <TableHead className="w-[10%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "machineCol")}</TableHead>
+                    <TableHead className="w-[10%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "statusCol")}</TableHead>
                     <TableHead className="w-[6%]" />
                   </TableRow>
                 </TableHeader>
@@ -341,6 +375,9 @@ const Index = () => {
                         </TableCell>
                         <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground">
                           {it.properties[exProp] || "—"}
+                        </TableCell>
+                        <TableCell className="align-top whitespace-pre-wrap text-sm">
+                          {it.properties[MACHINE_PROP] || <span className="text-muted-foreground italic">—</span>}
                         </TableCell>
                         <TableCell className="align-top">
                           <Button

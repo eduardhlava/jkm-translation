@@ -47,7 +47,10 @@ export type TKey =
   | "noNewItems"
   | "sameLangError"
   | "pageTitle"
-  | "toTranslate";
+  | "toTranslate"
+  | "machineCol"
+  | "machineFilter"
+  | "anyMachine";
 
 type Dict = Record<TKey, string>;
 
@@ -93,6 +96,9 @@ const cz: Dict = {
   sameLangError: "Zdrojový a cílový jazyk musí být různé",
   pageTitle: "JKM Content Translator – překlady přímo z databáze",
   toTranslate: "K překladu",
+  machineCol: "Stroj",
+  machineFilter: "Stroj",
+  anyMachine: "Nezáleží",
 };
 
 const en: Dict = {
@@ -137,6 +143,9 @@ const en: Dict = {
   sameLangError: "Source and target language must differ",
   pageTitle: "JKM Content Translator – translate straight from your database",
   toTranslate: "To translate",
+  machineCol: "Machine",
+  machineFilter: "Machine",
+  anyMachine: "Any",
 };
 
 const ru: Dict = {
@@ -181,6 +190,9 @@ const ru: Dict = {
   sameLangError: "Исходный и целевой язык должны отличаться",
   pageTitle: "JKM Content Translator — переводы прямо из базы",
   toTranslate: "К переводу",
+  machineCol: "Станок",
+  machineFilter: "Станок",
+  anyMachine: "Не важно",
 };
 
 const pl: Dict = {
@@ -225,6 +237,9 @@ const pl: Dict = {
   sameLangError: "Język źródłowy i docelowy muszą się różnić",
   pageTitle: "JKM Content Translator – tłumaczenia prosto z bazy",
   toTranslate: "Do tłumaczenia",
+  machineCol: "Maszyna",
+  machineFilter: "Maszyna",
+  anyMachine: "Bez znaczenia",
 };
 
 const DICTS: Record<UiLang, Dict> = { cz, en, ru, pl };
