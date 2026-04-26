@@ -59,6 +59,9 @@ const Index = () => {
   const [countBump, setCountBump] = useState(0);
   const [confirmPulse, setConfirmPulse] = useState<Record<string, number>>({});
   const [successFlash, setSuccessFlash] = useState(0);
+  const [machineFilter, setMachineFilter] = useState<string>("__any__");
+
+  const MACHINE_PROP = "stroj";
 
   const ui = settings.uiLang;
 
