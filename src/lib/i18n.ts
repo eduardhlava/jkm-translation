@@ -47,7 +47,10 @@ export type TKey =
   | "noNewItems"
   | "sameLangError"
   | "pageTitle"
-  | "toTranslate";
+  | "toTranslate"
+  | "machineCol"
+  | "machineFilter"
+  | "anyMachine";
 
 type Dict = Record<TKey, string>;
 
