@@ -335,17 +335,18 @@ const Index = () => {
               <Table>
                 <TableHeader className="bg-muted/70">
                   <TableRow className="border-b-2 border-border">
-                    <TableHead className="w-[20%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">
+                    <TableHead className="w-[18%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">
                       <Badge className="bg-accent text-accent-foreground mr-2">{langLabel(sourceLang)}</Badge>
                       {t(ui, "sourceCol")}
                     </TableHead>
-                    <TableHead className="w-[22%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">
+                    <TableHead className="w-[20%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">
                       <Badge className="bg-primary/10 text-primary mr-2">{langLabel(targetLang)}</Badge>
                       {t(ui, "translationCol")}
                     </TableHead>
-                    <TableHead className="w-[18%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "contextCol")} ({langLabel(contextLang)})</TableHead>
-                    <TableHead className="w-[22%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "exampleCol")} ({langLabel(contextLang)})</TableHead>
-                    <TableHead className="w-[12%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "statusCol")}</TableHead>
+                    <TableHead className="w-[16%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "contextCol")} ({langLabel(contextLang)})</TableHead>
+                    <TableHead className="w-[20%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "exampleCol")} ({langLabel(contextLang)})</TableHead>
+                    <TableHead className="w-[10%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "machineCol")}</TableHead>
+                    <TableHead className="w-[10%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "statusCol")}</TableHead>
                     <TableHead className="w-[6%]" />
                   </TableRow>
                 </TableHeader>
