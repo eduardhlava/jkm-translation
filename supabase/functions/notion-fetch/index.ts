@@ -32,7 +32,7 @@ function readPropertyText(prop: any): string {
     case "status":
       return prop.status?.name ?? "";
     case "multi_select":
-      return (prop.multi_select ?? []).map((s: any) => s.name).join(", ");
+      return (prop.multi_select ?? []).map((s: any) => s.name).join("\u0001");
     case "url":
       return prop.url ?? "";
     case "email":
