@@ -48,6 +48,7 @@ export type TKey =
   | "sameLangError"
   | "pageTitle"
   | "toTranslate"
+  | "remainingToTranslate"
   | "machineCol"
   | "machineFilter"
   | "anyMachine"
