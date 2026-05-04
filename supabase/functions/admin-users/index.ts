@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "create") {
-      const { email, password, is_admin, is_active, target_languages } = body;
+      const { email, password, is_admin, is_active, target_languages, ui_lang } = body;
       if (!email || !password) return json({ error: "email a heslo jsou povinné" }, 400);
       const { data: created, error: cErr } = await admin.auth.admin.createUser({
         email,
@@ -114,6 +114,7 @@ Deno.serve(async (req) => {
           email,
           is_active: is_active ?? true,
           target_languages: target_languages ?? [],
+          ui_lang: ui_lang ?? "cz",
         },
         { onConflict: "user_id" },
       );
