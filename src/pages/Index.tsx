@@ -114,6 +114,14 @@ const Index = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetLang, settings.statusNew]);
 
+  // Clear loaded items when source/target language changes — user must reload
+  useEffect(() => {
+    setItems([]);
+    setTranslations({});
+    setStatusOverrides({});
+    setMachineFilter("__any__");
+  }, [sourceLang, targetLang]);
+
   const fetchItems = async () => {
     if (sourceLang === targetLang) {
       toast.error(t(ui, "sameLangError"));

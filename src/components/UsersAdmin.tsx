@@ -212,7 +212,11 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>
               {form.user_id ? t(ui, "editUser") : t(ui, "newUser")}
