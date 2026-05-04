@@ -35,6 +35,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import jkLogo from "@/assets/jk-machinery-logo.png";
 import {
   CheckCircle2,
   ExternalLink,
