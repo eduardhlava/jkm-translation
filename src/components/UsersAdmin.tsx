@@ -229,18 +229,18 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
+              <Label>{t(ui, "fullName")}</Label>
+              <Input
+                value={form.full_name}
+                onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
               <Label>{t(ui, "email")}</Label>
               <Input
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>{t(ui, "fullName")}</Label>
-              <Input
-                value={form.full_name}
-                onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))}
               />
             </div>
             <div className="space-y-1.5">
