@@ -265,6 +265,14 @@ const Index = () => {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {(profile?.full_name?.trim() || profile?.email) && (
+              <div className="text-sm text-right leading-tight hidden sm:block">
+                {profile?.full_name?.trim() && (
+                  <div className="font-medium">{profile.full_name}</div>
+                )}
+                <div className="text-xs text-muted-foreground">{profile?.email}</div>
+              </div>
+            )}
             {pendingCount !== null && (
               <Badge
                 key={countBump}
