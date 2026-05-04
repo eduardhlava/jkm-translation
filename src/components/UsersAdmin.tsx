@@ -28,6 +28,7 @@ import { toast } from "sonner";
 interface UserRow {
   user_id: string;
   email: string;
+  full_name: string;
   is_active: boolean;
   is_admin: boolean;
   is_super_admin: boolean;
@@ -38,6 +39,7 @@ interface UserRow {
 interface FormState {
   user_id?: string;
   email: string;
+  full_name: string;
   password: string;
   is_active: boolean;
   is_admin: boolean;
@@ -48,6 +50,7 @@ interface FormState {
 
 const empty: FormState = {
   email: "",
+  full_name: "",
   password: "",
   is_active: true,
   is_admin: false,
