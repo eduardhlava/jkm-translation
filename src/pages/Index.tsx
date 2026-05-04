@@ -69,7 +69,7 @@ const Index = () => {
 
   const MACHINE_PROP = "stroj";
 
-  const ui = settings.uiLang;
+  const ui = (profile?.ui_lang as typeof settings.uiLang | undefined) ?? settings.uiLang;
 
   useEffect(() => {
     document.title = t(ui, "pageTitle");
