@@ -7,6 +7,7 @@ export interface AuthProfile {
   email: string;
   is_active: boolean;
   target_languages: string[];
+  ui_lang: string;
 }
 
 interface AuthState {
