@@ -28,6 +28,7 @@ import { toast } from "sonner";
 interface UserRow {
   user_id: string;
   email: string;
+  full_name: string;
   is_active: boolean;
   is_admin: boolean;
   is_super_admin: boolean;
@@ -38,6 +39,7 @@ interface UserRow {
 interface FormState {
   user_id?: string;
   email: string;
+  full_name: string;
   password: string;
   is_active: boolean;
   is_admin: boolean;
@@ -48,6 +50,7 @@ interface FormState {
 
 const empty: FormState = {
   email: "",
+  full_name: "",
   password: "",
   is_active: true,
   is_admin: false,
@@ -92,6 +95,7 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
     setForm({
       user_id: u.user_id,
       email: u.email,
+      full_name: u.full_name ?? "",
       password: "",
       is_active: u.is_active,
       is_admin: u.is_admin,
@@ -109,6 +113,7 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
       const body: Record<string, unknown> = {
         action,
         email: form.email,
+        full_name: form.full_name,
         is_active: form.is_active,
         is_admin: form.is_admin,
         target_languages: form.target_languages,
@@ -177,7 +182,7 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
             >
               <div className="min-w-0 flex-1">
                 <div className="font-medium truncate flex items-center gap-2">
-                  {u.email}
+                  {u.full_name?.trim() ? `${u.full_name} (${u.email})` : u.email}
                   {u.is_admin && (
                     <Badge variant="secondary" className="text-xs">
                       {t(ui, "isAdmin")}
@@ -229,6 +234,13 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>{t(ui, "fullName")}</Label>
+              <Input
+                value={form.full_name}
+                onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))}
               />
             </div>
             <div className="space-y-1.5">

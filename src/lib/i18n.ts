@@ -75,13 +75,15 @@ export type TKey =
   | "userCreated"
   | "userDeleted"
   | "readOnlyTranslation"
+  | "fullName"
   | "cancel";
 
 type Dict = Record<TKey, string>;
 
 const cz: Dict = {
   appName: "JKM Content Translator",
-  appTagline: "Překládej položky databáze a zapisuj zpět do Notion",
+  appTagline: "Aplikace pro překládání obsahu JK Machinery",
+  fullName: "Jméno a příjmení",
   settings: "Nastavení",
   back: "Zpět",
   save: "Uložit",
@@ -153,7 +155,8 @@ const cz: Dict = {
 
 const en: Dict = {
   appName: "JKM Content Translator",
-  appTagline: "Translate database items and write back to Notion",
+  appTagline: "App for translating JK Machinery content",
+  fullName: "Full name",
   settings: "Settings",
   back: "Back",
   save: "Save",
@@ -225,7 +228,8 @@ const en: Dict = {
 
 const ru: Dict = {
   appName: "JKM Content Translator",
-  appTagline: "Переводите записи базы и записывайте обратно в Notion",
+  appTagline: "Приложение для перевода контента JK Machinery",
+  fullName: "Имя и фамилия",
   settings: "Настройки",
   back: "Назад",
   save: "Сохранить",
@@ -297,7 +301,8 @@ const ru: Dict = {
 
 const pl: Dict = {
   appName: "JKM Content Translator",
-  appTagline: "Tłumacz elementy bazy i zapisuj z powrotem do Notion",
+  appTagline: "Aplikacja do tłumaczenia treści JK Machinery",
+  fullName: "Imię i nazwisko",
   settings: "Ustawienia",
   back: "Wstecz",
   save: "Zapisz",
