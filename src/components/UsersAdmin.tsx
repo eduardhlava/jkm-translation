@@ -95,6 +95,7 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
     setForm({
       user_id: u.user_id,
       email: u.email,
+      full_name: u.full_name ?? "",
       password: "",
       is_active: u.is_active,
       is_admin: u.is_admin,
