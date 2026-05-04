@@ -413,6 +413,7 @@ const Index = () => {
                             variant={st === "translated" ? "default" : "outline"}
                             size="sm"
                             onClick={() => toggleStatus(it.id)}
+                            disabled={!canEditTarget}
                             className={`w-full transition-colors ${confirmPulse[it.id] ? "animate-confirm-pop" : ""} ${st === "translated" ? "bg-success text-success-foreground hover:bg-success/90" : ""}`}
                           >
                             {st === "translated" ? (
