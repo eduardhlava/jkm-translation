@@ -237,6 +237,13 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
               />
             </div>
             <div className="space-y-1.5">
+              <Label>{t(ui, "fullName")}</Label>
+              <Input
+                value={form.full_name}
+                onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
               <Label>
                 {form.user_id ? t(ui, "passwordOptional") : t(ui, "password")}
               </Label>
