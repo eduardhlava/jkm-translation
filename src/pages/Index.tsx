@@ -273,17 +273,6 @@ const Index = () => {
                 <div className="text-xs text-muted-foreground">{profile?.email}</div>
               </div>
             )}
-            {pendingCount !== null && (
-              <Badge
-                key={countBump}
-                variant="secondary"
-                className="animate-count-bump text-sm px-3 py-1.5 gap-1.5"
-                title={t(ui, "toTranslate")}
-              >
-                <span className="text-muted-foreground">{t(ui, "toTranslate")}:</span>
-                <span className="font-semibold text-primary tabular-nums">{pendingCount}</span>
-              </Badge>
-            )}
             {isAdmin && (
               <Button variant="outline" size="sm" asChild>
                 <Link to="/settings">
