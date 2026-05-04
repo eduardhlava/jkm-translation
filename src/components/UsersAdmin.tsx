@@ -14,7 +14,14 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { LANGUAGES } from "@/lib/translator";
-import { UiLang, t } from "@/lib/i18n";
+import { UI_LANGUAGES, UiLang, t } from "@/lib/i18n";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -25,6 +32,7 @@ interface UserRow {
   is_admin: boolean;
   is_super_admin: boolean;
   target_languages: string[];
+  ui_lang: string;
 }
 
 interface FormState {
@@ -35,6 +43,7 @@ interface FormState {
   is_admin: boolean;
   is_super_admin: boolean;
   target_languages: string[];
+  ui_lang: string;
 }
 
 const empty: FormState = {
@@ -44,6 +53,7 @@ const empty: FormState = {
   is_admin: false,
   is_super_admin: false,
   target_languages: [],
+  ui_lang: "cz",
 };
 
 export default function UsersAdmin({ ui }: { ui: UiLang }) {
@@ -87,6 +97,7 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
       is_admin: u.is_admin,
       is_super_admin: u.is_super_admin,
       target_languages: u.target_languages ?? [],
+      ui_lang: u.ui_lang ?? "cz",
     });
     setOpen(true);
   };
@@ -101,6 +112,7 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
         is_active: form.is_active,
         is_admin: form.is_admin,
         target_languages: form.target_languages,
+        ui_lang: form.ui_lang,
       };
       if (form.user_id) body.user_id = form.user_id;
       if (form.password) body.password = form.password;
@@ -269,6 +281,20 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
                   </label>
                 ))}
               </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>{t(ui, "uiLanguage")}</Label>
+              <Select
+                value={form.ui_lang}
+                onValueChange={(v) => setForm((f) => ({ ...f, ui_lang: v }))}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {UI_LANGUAGES.map((l) => (
+                    <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>

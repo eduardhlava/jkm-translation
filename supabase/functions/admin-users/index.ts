@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
     if (action === "list") {
       const { data: profiles, error: pErr } = await admin
         .from("profiles")
-        .select("user_id, email, is_active, target_languages, created_at")
+        .select("user_id, email, is_active, target_languages, ui_lang, created_at")
         .order("email");
       if (pErr) throw pErr;
       const { data: rolesAll, error: rErr } = await admin
@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "create") {
-      const { email, password, is_admin, is_active, target_languages } = body;
+      const { email, password, is_admin, is_active, target_languages, ui_lang } = body;
       if (!email || !password) return json({ error: "email a heslo jsou povinné" }, 400);
       const { data: created, error: cErr } = await admin.auth.admin.createUser({
         email,
@@ -114,6 +114,7 @@ Deno.serve(async (req) => {
           email,
           is_active: is_active ?? true,
           target_languages: target_languages ?? [],
+          ui_lang: ui_lang ?? "cz",
         },
         { onConflict: "user_id" },
       );
@@ -127,7 +128,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "update") {
-      const { user_id, email, password, is_admin, is_active, target_languages } = body;
+      const { user_id, email, password, is_admin, is_active, target_languages, ui_lang } = body;
       if (!user_id) return json({ error: "user_id required" }, 400);
 
       const { data: existing } = await admin
@@ -142,6 +143,7 @@ Deno.serve(async (req) => {
       if (typeof is_active === "boolean")
         profilePatch.is_active = isSuper ? true : is_active;
       if (Array.isArray(target_languages)) profilePatch.target_languages = target_languages;
+      if (typeof ui_lang === "string") profilePatch.ui_lang = ui_lang;
       if (Object.keys(profilePatch).length > 0) {
         const { error } = await admin
           .from("profiles")

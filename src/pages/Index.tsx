@@ -69,7 +69,7 @@ const Index = () => {
 
   const MACHINE_PROP = "stroj";
 
-  const ui = settings.uiLang;
+  const ui = (profile?.ui_lang as typeof settings.uiLang | undefined) ?? settings.uiLang;
 
   useEffect(() => {
     document.title = t(ui, "pageTitle");
@@ -173,11 +173,16 @@ const Index = () => {
     [items, statusOverrides, canEditTarget],
   );
 
+  const splitMachines = (raw: string): string[] =>
+    raw
+      .split(/[\u0001,]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+
   const machineOptions = useMemo(() => {
     const set = new Set<string>();
     items.forEach((it) => {
-      const v = (it.properties[MACHINE_PROP] ?? "").trim();
-      if (v) set.add(v);
+      splitMachines(it.properties[MACHINE_PROP] ?? "").forEach((v) => set.add(v));
     });
     return Array.from(set).sort((a, b) =>
       a.localeCompare(b, undefined, { sensitivity: "base", numeric: true }),
@@ -187,11 +192,10 @@ const Index = () => {
   const sortedItems = useMemo(
     () =>
       [...items]
-        .filter((it) =>
-          machineFilter === "__any__"
-            ? true
-            : (it.properties[MACHINE_PROP] ?? "") === machineFilter,
-        )
+        .filter((it) => {
+          if (machineFilter === "__any__") return true;
+          return splitMachines(it.properties[MACHINE_PROP] ?? "").includes(machineFilter);
+        })
         .sort((a, b) =>
           (a.properties[sourceProp] ?? "").localeCompare(
             b.properties[sourceProp] ?? "",
@@ -373,7 +377,7 @@ const Index = () => {
                     <TableHead className="w-[20%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "exampleCol")} ({langLabel(contextLang)})</TableHead>
                     <TableHead className="w-[10%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "machineCol")}</TableHead>
                     <TableHead className="w-[10%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "statusCol")}</TableHead>
-                    <TableHead className="w-[6%]" />
+                    {isAdmin && <TableHead className="w-[6%]" />}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -393,7 +397,7 @@ const Index = () => {
                               setTranslations((m) => ({ ...m, [it.id]: e.target.value }))
                             }
                             placeholder={t(ui, "translationPlaceholder", { lang: langLabel(targetLang) })}
-                            className="min-h-[64px] text-sm"
+                            className={`min-h-[64px] text-sm ${!canEditTarget ? "text-muted-foreground bg-muted/40 cursor-not-allowed" : ""}`}
                             readOnly={!canEditTarget}
                             title={!canEditTarget ? t(ui, "readOnlyTranslation") : undefined}
                           />
@@ -404,8 +408,21 @@ const Index = () => {
                         <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground">
                           {it.properties[exProp] || "—"}
                         </TableCell>
-                        <TableCell className="align-top whitespace-pre-wrap text-sm">
-                          {it.properties[MACHINE_PROP] || <span className="text-muted-foreground italic">—</span>}
+                        <TableCell className="align-top text-sm">
+                          {(() => {
+                            const list = splitMachines(it.properties[MACHINE_PROP] ?? "");
+                            if (list.length === 0)
+                              return <span className="text-muted-foreground italic">—</span>;
+                            return (
+                              <div className="flex flex-wrap gap-1">
+                                {list.map((m) => (
+                                  <Badge key={m} variant="secondary" className="text-xs font-normal">
+                                    {m}
+                                  </Badge>
+                                ))}
+                              </div>
+                            );
+                          })()}
                         </TableCell>
                         <TableCell className="align-top">
                           <Button
@@ -423,17 +440,19 @@ const Index = () => {
                             )}
                           </Button>
                         </TableCell>
-                        <TableCell className="align-top">
-                          <a
-                            href={it.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-muted-foreground hover:text-primary inline-flex items-center"
-                            title={t(ui, "openInNotion")}
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
-                        </TableCell>
+                        {isAdmin && (
+                          <TableCell className="align-top">
+                            <a
+                              href={it.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-muted-foreground hover:text-primary inline-flex items-center"
+                              title={t(ui, "openInNotion")}
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          </TableCell>
+                        )}
                       </TableRow>
                     );
                   })}
