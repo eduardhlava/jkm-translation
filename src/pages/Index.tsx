@@ -344,6 +344,18 @@ const Index = () => {
 
           <div className="flex-1" />
 
+          {pendingCount !== null && (
+            <Badge
+              key={countBump}
+              variant="secondary"
+              className="animate-count-bump text-sm px-3 py-1.5 gap-1.5"
+              title={t(ui, "toTranslate")}
+            >
+              <span className="text-muted-foreground">{t(ui, "toTranslate")}:</span>
+              <span className="font-semibold text-primary tabular-nums">{pendingCount}</span>
+            </Badge>
+          )}
+
           <Button onClick={fetchItems} disabled={loading} variant="outline" className="gap-2">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
             {t(ui, "loadN", { n: settings.pageSize })}
