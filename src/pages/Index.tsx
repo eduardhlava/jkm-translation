@@ -394,6 +394,8 @@ const Index = () => {
                             }
                             placeholder={t(ui, "translationPlaceholder", { lang: langLabel(targetLang) })}
                             className="min-h-[64px] text-sm"
+                            readOnly={!canEditTarget}
+                            title={!canEditTarget ? t(ui, "readOnlyTranslation") : undefined}
                           />
                         </TableCell>
                         <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground">
