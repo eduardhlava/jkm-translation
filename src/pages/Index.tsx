@@ -377,7 +377,7 @@ const Index = () => {
                     <TableHead className="w-[20%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "exampleCol")} ({langLabel(contextLang)})</TableHead>
                     <TableHead className="w-[10%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "machineCol")}</TableHead>
                     <TableHead className="w-[10%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "statusCol")}</TableHead>
-                    <TableHead className="w-[6%]" />
+                    {isAdmin && <TableHead className="w-[6%]" />}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
