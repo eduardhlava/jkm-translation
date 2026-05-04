@@ -397,7 +397,7 @@ const Index = () => {
                               setTranslations((m) => ({ ...m, [it.id]: e.target.value }))
                             }
                             placeholder={t(ui, "translationPlaceholder", { lang: langLabel(targetLang) })}
-                            className="min-h-[64px] text-sm"
+                            className={`min-h-[64px] text-sm ${!canEditTarget ? "text-muted-foreground bg-muted/40 cursor-not-allowed" : ""}`}
                             readOnly={!canEditTarget}
                             title={!canEditTarget ? t(ui, "readOnlyTranslation") : undefined}
                           />
@@ -408,8 +408,21 @@ const Index = () => {
                         <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground">
                           {it.properties[exProp] || "—"}
                         </TableCell>
-                        <TableCell className="align-top whitespace-pre-wrap text-sm">
-                          {it.properties[MACHINE_PROP] || <span className="text-muted-foreground italic">—</span>}
+                        <TableCell className="align-top text-sm">
+                          {(() => {
+                            const list = splitMachines(it.properties[MACHINE_PROP] ?? "");
+                            if (list.length === 0)
+                              return <span className="text-muted-foreground italic">—</span>;
+                            return (
+                              <div className="flex flex-wrap gap-1">
+                                {list.map((m) => (
+                                  <Badge key={m} variant="secondary" className="text-xs font-normal">
+                                    {m}
+                                  </Badge>
+                                ))}
+                              </div>
+                            );
+                          })()}
                         </TableCell>
                         <TableCell className="align-top">
                           <Button
