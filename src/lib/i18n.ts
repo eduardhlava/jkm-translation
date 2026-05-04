@@ -48,6 +48,7 @@ export type TKey =
   | "sameLangError"
   | "pageTitle"
   | "toTranslate"
+  | "remainingToTranslate"
   | "machineCol"
   | "machineFilter"
   | "anyMachine"
@@ -123,6 +124,7 @@ const cz: Dict = {
   sameLangError: "Zdrojový a cílový jazyk musí být různé",
   pageTitle: "JKM Content Translator – překlady přímo z databáze",
   toTranslate: "K překladu",
+  remainingToTranslate: "Zbývá k překladu",
   machineCol: "Stroj",
   machineFilter: "Stroj",
   anyMachine: "Nezáleží",
@@ -196,6 +198,7 @@ const en: Dict = {
   sameLangError: "Source and target language must differ",
   pageTitle: "JKM Content Translator – translate straight from your database",
   toTranslate: "To translate",
+  remainingToTranslate: "Remaining to translate",
   machineCol: "Machine",
   machineFilter: "Machine",
   anyMachine: "Any",
@@ -269,6 +272,7 @@ const ru: Dict = {
   sameLangError: "Исходный и целевой язык должны отличаться",
   pageTitle: "JKM Content Translator — переводы прямо из базы",
   toTranslate: "К переводу",
+  remainingToTranslate: "Осталось перевести",
   machineCol: "Станок",
   machineFilter: "Станок",
   anyMachine: "Не важно",
@@ -342,6 +346,7 @@ const pl: Dict = {
   sameLangError: "Język źródłowy i docelowy muszą się różnić",
   pageTitle: "JKM Content Translator – tłumaczenia prosto z bazy",
   toTranslate: "Do tłumaczenia",
+  remainingToTranslate: "Pozostało do przetłumaczenia",
   machineCol: "Maszyna",
   machineFilter: "Maszyna",
   anyMachine: "Bez znaczenia",

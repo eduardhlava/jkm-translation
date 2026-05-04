@@ -346,15 +346,13 @@ const Index = () => {
 
           <div className="flex flex-col items-end gap-2">
             {pendingCount !== null && (
-              <Badge
+              <div
                 key={countBump}
-                variant="secondary"
-                className="animate-count-bump text-sm px-3 py-1.5 gap-1.5 self-end"
-                title={t(ui, "toTranslate")}
+                className="animate-count-bump text-sm self-end"
               >
-                <span className="text-muted-foreground">{t(ui, "toTranslate")}:</span>
+                <span className="text-muted-foreground">{t(ui, "remainingToTranslate")}: </span>
                 <span className="font-semibold text-primary tabular-nums">{pendingCount}</span>
-              </Badge>
+              </div>
             )}
             <div className="flex items-center gap-2">
               <Button onClick={fetchItems} disabled={loading} variant="outline" className="gap-2">
