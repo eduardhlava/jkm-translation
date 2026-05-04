@@ -112,6 +112,7 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
         is_active: form.is_active,
         is_admin: form.is_admin,
         target_languages: form.target_languages,
+        ui_lang: form.ui_lang,
       };
       if (form.user_id) body.user_id = form.user_id;
       if (form.password) body.password = form.password;
