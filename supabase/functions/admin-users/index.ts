@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "update") {
-      const { user_id, email, password, is_admin, is_active, target_languages, ui_lang } = body;
+      const { user_id, email, password, is_admin, is_active, target_languages, ui_lang, full_name } = body;
       if (!user_id) return json({ error: "user_id required" }, 400);
 
       const { data: existing } = await admin
@@ -141,6 +141,7 @@ Deno.serve(async (req) => {
 
       const profilePatch: Record<string, unknown> = {};
       if (typeof email === "string") profilePatch.email = email;
+      if (typeof full_name === "string") profilePatch.full_name = full_name;
       if (typeof is_active === "boolean")
         profilePatch.is_active = isSuper ? true : is_active;
       if (Array.isArray(target_languages)) profilePatch.target_languages = target_languages;
