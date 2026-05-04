@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
     if (action === "list") {
       const { data: profiles, error: pErr } = await admin
         .from("profiles")
-        .select("user_id, email, is_active, target_languages, ui_lang, created_at")
+        .select("user_id, email, full_name, is_active, target_languages, ui_lang, created_at")
         .order("email");
       if (pErr) throw pErr;
       const { data: rolesAll, error: rErr } = await admin
