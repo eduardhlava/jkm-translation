@@ -96,6 +96,8 @@ const Settings = () => {
             <Save className="w-4 h-4" /> {t(s.uiLang, "saveSettings")}
           </Button>
         </Card>
+
+        <UsersAdmin ui={s.uiLang} />
       </main>
     </div>
   );
