@@ -153,9 +153,12 @@ const Index = () => {
     }
   };
 
+  const canEditTarget = isAdmin || (profile?.target_languages ?? []).includes(targetLang);
+
   const localStatus = (id: string): LocalStatus => statusOverrides[id] ?? "new";
 
   const toggleStatus = (id: string) => {
+    if (!canEditTarget) return;
     setStatusOverrides((m) => ({
       ...m,
       [id]: m[id] === "translated" ? "new" : "translated",
@@ -165,9 +168,9 @@ const Index = () => {
   };
 
   const toUpdate = useMemo(
-    () => items.filter((it) => localStatus(it.id) === "translated"),
+    () => (canEditTarget ? items.filter((it) => localStatus(it.id) === "translated") : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [items, statusOverrides],
+    [items, statusOverrides, canEditTarget],
   );
 
   const machineOptions = useMemo(() => {
