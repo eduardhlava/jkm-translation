@@ -344,31 +344,34 @@ const Index = () => {
 
           <div className="flex-1" />
 
-          {pendingCount !== null && (
-            <Badge
-              key={countBump}
-              variant="secondary"
-              className="animate-count-bump text-sm px-3 py-1.5 gap-1.5"
-              title={t(ui, "toTranslate")}
-            >
-              <span className="text-muted-foreground">{t(ui, "toTranslate")}:</span>
-              <span className="font-semibold text-primary tabular-nums">{pendingCount}</span>
-            </Badge>
-          )}
-
-          <Button onClick={fetchItems} disabled={loading} variant="outline" className="gap-2">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-            {t(ui, "loadN", { n: settings.pageSize })}
-          </Button>
-          <Button
-            key={`update-${successFlash}`}
-            onClick={handleUpdate}
-            disabled={saving || toUpdate.length === 0}
-            className={`gap-2 rounded-md ${successFlash > 0 ? "animate-success-flash" : ""}`}
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {t(ui, "updateBtn", { n: toUpdate.length })}
-          </Button>
+          <div className="flex flex-col items-end gap-2">
+            {pendingCount !== null && (
+              <Badge
+                key={countBump}
+                variant="secondary"
+                className="animate-count-bump text-sm px-3 py-1.5 gap-1.5 self-end"
+                title={t(ui, "toTranslate")}
+              >
+                <span className="text-muted-foreground">{t(ui, "toTranslate")}:</span>
+                <span className="font-semibold text-primary tabular-nums">{pendingCount}</span>
+              </Badge>
+            )}
+            <div className="flex items-center gap-2">
+              <Button onClick={fetchItems} disabled={loading} variant="outline" className="gap-2">
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                {t(ui, "loadN", { n: settings.pageSize })}
+              </Button>
+              <Button
+                key={`update-${successFlash}`}
+                onClick={handleUpdate}
+                disabled={saving || toUpdate.length === 0}
+                className={`gap-2 rounded-md ${successFlash > 0 ? "animate-success-flash" : ""}`}
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {t(ui, "updateBtn", { n: toUpdate.length })}
+              </Button>
+            </div>
+          </div>
         </Card>
 
         {items.length === 0 && !loading && (
