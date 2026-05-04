@@ -50,6 +50,8 @@ import {
 type LocalStatus = "new" | "translated";
 
 const Index = () => {
+  const { profile, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [settings, setSettings] = useState<AppSettings>(loadSettings());
   const [sourceLang, setSourceLang] = useState<string>("cz");
   const [targetLang, setTargetLang] = useState<string>("en");
