@@ -251,14 +251,14 @@ const Index = () => {
     <div className="min-h-screen bg-[var(--gradient-subtle)]">
       <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-7xl py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <img
               src={jkLogo}
               alt="JK Machinery"
               className="h-9 w-auto"
               loading="lazy"
             />
-            <div className="h-8 w-px bg-border" />
+            <div className="h-8 w-px bg-border mx-1" />
             <div className="w-10 h-10 rounded-lg bg-[var(--gradient-hero)] flex items-center justify-center shadow-[var(--shadow-lg)]">
               <Languages className="w-5 h-5 text-primary-foreground" />
             </div>
