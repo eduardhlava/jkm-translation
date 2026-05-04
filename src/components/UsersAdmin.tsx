@@ -32,6 +32,7 @@ interface UserRow {
   is_admin: boolean;
   is_super_admin: boolean;
   target_languages: string[];
+  ui_lang: string;
 }
 
 interface FormState {
@@ -42,6 +43,7 @@ interface FormState {
   is_admin: boolean;
   is_super_admin: boolean;
   target_languages: string[];
+  ui_lang: string;
 }
 
 const empty: FormState = {
@@ -51,6 +53,7 @@ const empty: FormState = {
   is_admin: false,
   is_super_admin: false,
   target_languages: [],
+  ui_lang: "cz",
 };
 
 export default function UsersAdmin({ ui }: { ui: UiLang }) {
