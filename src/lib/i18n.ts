@@ -228,7 +228,8 @@ const en: Dict = {
 
 const ru: Dict = {
   appName: "JKM Content Translator",
-  appTagline: "Переводите записи базы и записывайте обратно в Notion",
+  appTagline: "Приложение для перевода контента JK Machinery",
+  fullName: "Имя и фамилия",
   settings: "Настройки",
   back: "Назад",
   save: "Сохранить",
