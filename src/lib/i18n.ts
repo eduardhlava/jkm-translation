@@ -82,7 +82,8 @@ type Dict = Record<TKey, string>;
 
 const cz: Dict = {
   appName: "JKM Content Translator",
-  appTagline: "Překládej položky databáze a zapisuj zpět do Notion",
+  appTagline: "Aplikace pro překládání obsahu JK Machinery",
+  fullName: "Jméno a příjmení",
   settings: "Nastavení",
   back: "Zpět",
   save: "Uložit",
