@@ -50,7 +50,32 @@ export type TKey =
   | "toTranslate"
   | "machineCol"
   | "machineFilter"
-  | "anyMachine";
+  | "anyMachine"
+  | "signIn"
+  | "signOut"
+  | "email"
+  | "password"
+  | "loginTitle"
+  | "loginSubtitle"
+  | "loginFailed"
+  | "accountInactive"
+  | "users"
+  | "newUser"
+  | "editUser"
+  | "deleteUser"
+  | "createUser"
+  | "saveUser"
+  | "isActive"
+  | "isAdmin"
+  | "targetLangs"
+  | "targetLangsHint"
+  | "passwordOptional"
+  | "confirmDelete"
+  | "userSaved"
+  | "userCreated"
+  | "userDeleted"
+  | "readOnlyTranslation"
+  | "cancel";
 
 type Dict = Record<TKey, string>;
 
