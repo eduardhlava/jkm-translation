@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Languages, Loader2 } from "lucide-react";
 import { loadSettings } from "@/lib/translator";
 import { t } from "@/lib/i18n";
+import jkLogo from "@/assets/jk-machinery-logo.png";
 
 const VITE_SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const VITE_SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
@@ -63,6 +64,9 @@ const Auth = () => {
   return (
     <div className="min-h-screen bg-[var(--gradient-subtle)] flex items-center justify-center p-4">
       <Card className="w-full max-w-md p-8 shadow-[var(--shadow-lg)]">
+        <div className="flex justify-center mb-6">
+          <img src={jkLogo} alt="JK Machinery" className="h-14 w-auto" />
+        </div>
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-[var(--gradient-hero)] flex items-center justify-center">
             <Languages className="w-5 h-5 text-primary-foreground" />

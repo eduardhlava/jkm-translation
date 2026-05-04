@@ -35,6 +35,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import jkLogo from "@/assets/jk-machinery-logo.png";
 import {
   CheckCircle2,
   ExternalLink,
@@ -251,6 +252,13 @@ const Index = () => {
       <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-7xl py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <img
+              src={jkLogo}
+              alt="JK Machinery"
+              className="h-9 w-auto"
+              loading="lazy"
+            />
+            <div className="h-8 w-px bg-border" />
             <div className="w-10 h-10 rounded-lg bg-[var(--gradient-hero)] flex items-center justify-center shadow-[var(--shadow-lg)]">
               <Languages className="w-5 h-5 text-primary-foreground" />
             </div>
