@@ -75,6 +75,7 @@ export type TKey =
   | "userCreated"
   | "userDeleted"
   | "readOnlyTranslation"
+  | "fullName"
   | "cancel";
 
 type Dict = Record<TKey, string>;
