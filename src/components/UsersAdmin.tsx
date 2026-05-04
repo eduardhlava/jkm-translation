@@ -282,6 +282,20 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
                 ))}
               </div>
             </div>
+            <div className="space-y-1.5">
+              <Label>{t(ui, "uiLanguage")}</Label>
+              <Select
+                value={form.ui_lang}
+                onValueChange={(v) => setForm((f) => ({ ...f, ui_lang: v }))}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {UI_LANGUAGES.map((l) => (
+                    <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>
