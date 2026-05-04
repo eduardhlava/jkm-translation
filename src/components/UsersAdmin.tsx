@@ -113,6 +113,7 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
       const body: Record<string, unknown> = {
         action,
         email: form.email,
+        full_name: form.full_name,
         is_active: form.is_active,
         is_admin: form.is_admin,
         target_languages: form.target_languages,
