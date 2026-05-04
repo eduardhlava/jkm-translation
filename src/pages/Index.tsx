@@ -437,7 +437,7 @@ const Index = () => {
                             return (
                               <div className="flex flex-wrap gap-1">
                                 {list.map((m) => (
-                                  <Badge key={m} variant="secondary" className="text-xs font-normal">
+                                  <Badge key={m} variant="secondary" className="text-[10px] font-normal px-1.5 py-0 leading-tight">
                                     {m}
                                   </Badge>
                                 ))}
