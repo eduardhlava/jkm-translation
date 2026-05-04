@@ -365,6 +365,9 @@ const Index = () => {
                     <TableHead className="w-[20%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">
                       <Badge className="bg-primary/10 text-primary mr-2">{langLabel(targetLang)}</Badge>
                       {t(ui, "translationCol")}
+                      {!canEditTarget && (
+                        <Lock className="inline w-3 h-3 ml-1 text-muted-foreground" />
+                      )}
                     </TableHead>
                     <TableHead className="w-[16%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "contextCol")} ({langLabel(contextLang)})</TableHead>
                     <TableHead className="w-[20%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "exampleCol")} ({langLabel(contextLang)})</TableHead>
