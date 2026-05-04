@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Languages, Loader2 } from "lucide-react";
 import { loadSettings } from "@/lib/translator";
 import { t } from "@/lib/i18n";
+import jkLogo from "@/assets/jk-machinery-logo.png";
 
 const VITE_SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const VITE_SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
