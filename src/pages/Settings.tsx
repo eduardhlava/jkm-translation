@@ -15,6 +15,7 @@ import { AppSettings, defaultSettings, loadSettings, saveSettings } from "@/lib/
 import { UI_LANGUAGES, UiLang, t } from "@/lib/i18n";
 import { ArrowLeft, Save, Settings2 } from "lucide-react";
 import { toast } from "sonner";
+import UsersAdmin from "@/components/UsersAdmin";
 
 const Settings = () => {
   const [s, setS] = useState<AppSettings>(defaultSettings);
