@@ -5,6 +5,7 @@ import type { Session, User } from "@supabase/supabase-js";
 export interface AuthProfile {
   user_id: string;
   email: string;
+  full_name: string;
   is_active: boolean;
   target_languages: string[];
   ui_lang: string;
