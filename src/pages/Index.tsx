@@ -440,17 +440,19 @@ const Index = () => {
                             )}
                           </Button>
                         </TableCell>
-                        <TableCell className="align-top">
-                          <a
-                            href={it.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-muted-foreground hover:text-primary inline-flex items-center"
-                            title={t(ui, "openInNotion")}
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
-                        </TableCell>
+                        {isAdmin && (
+                          <TableCell className="align-top">
+                            <a
+                              href={it.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-muted-foreground hover:text-primary inline-flex items-center"
+                              title={t(ui, "openInNotion")}
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          </TableCell>
+                        )}
                       </TableRow>
                     );
                   })}
