@@ -259,10 +259,22 @@ const Index = () => {
                 <span className="font-semibold text-primary tabular-nums">{pendingCount}</span>
               </Badge>
             )}
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/settings">
-                <SettingsIcon className="w-4 h-4 mr-1" /> {t(ui, "settings")}
-              </Link>
+            {isAdmin && (
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/settings">
+                  <SettingsIcon className="w-4 h-4 mr-1" /> {t(ui, "settings")}
+                </Link>
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                navigate("/auth", { replace: true });
+              }}
+            >
+              <LogOut className="w-4 h-4 mr-1" /> {t(ui, "signOut")}
             </Button>
           </div>
         </div>
