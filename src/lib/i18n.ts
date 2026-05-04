@@ -155,7 +155,8 @@ const cz: Dict = {
 
 const en: Dict = {
   appName: "JKM Content Translator",
-  appTagline: "Translate database items and write back to Notion",
+  appTagline: "App for translating JK Machinery content",
+  fullName: "Full name",
   settings: "Settings",
   back: "Back",
   save: "Save",
