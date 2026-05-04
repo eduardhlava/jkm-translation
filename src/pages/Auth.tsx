@@ -64,13 +64,8 @@ const Auth = () => {
   return (
     <div className="min-h-screen bg-[var(--gradient-subtle)] flex items-center justify-center p-4">
       <Card className="w-full max-w-md p-8 shadow-[var(--shadow-lg)]">
-        <div className="flex justify-center mb-6">
+        <div className="flex flex-col items-center text-center mb-6 gap-3">
           <img src={jkLogo} alt="JK Machinery" className="h-14 w-auto" />
-        </div>
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-[var(--gradient-hero)] flex items-center justify-center">
-            <Languages className="w-5 h-5 text-primary-foreground" />
-          </div>
           <div>
             <h1 className="font-semibold leading-tight">{t(ui, "loginTitle")}</h1>
             <p className="text-xs text-muted-foreground">{t(ui, "loginSubtitle")}</p>
