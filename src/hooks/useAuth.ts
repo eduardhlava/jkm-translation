@@ -34,7 +34,7 @@ export function useAuth(): AuthState & { refresh: () => Promise<void> } {
       return;
     }
     const [{ data: profile }, { data: roles }] = await Promise.all([
-      supabase.from("profiles").select("user_id,email,is_active,target_languages,ui_lang").eq("user_id", user.id).maybeSingle(),
+      supabase.from("profiles").select("user_id,email,full_name,is_active,target_languages,ui_lang").eq("user_id", user.id).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", user.id),
     ]);
     const isAdmin = (roles ?? []).some((r) => r.role === "admin");
