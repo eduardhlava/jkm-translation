@@ -182,7 +182,7 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
             >
               <div className="min-w-0 flex-1">
                 <div className="font-medium truncate flex items-center gap-2">
-                  {u.email}
+                  {u.full_name?.trim() ? `${u.full_name} (${u.email})` : u.email}
                   {u.is_admin && (
                     <Badge variant="secondary" className="text-xs">
                       {t(ui, "isAdmin")}
