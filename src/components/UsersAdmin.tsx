@@ -97,6 +97,7 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
       is_admin: u.is_admin,
       is_super_admin: u.is_super_admin,
       target_languages: u.target_languages ?? [],
+      ui_lang: u.ui_lang ?? "cz",
     });
     setOpen(true);
   };
