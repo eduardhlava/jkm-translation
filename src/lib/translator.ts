@@ -1,18 +1,14 @@
 export const LANGUAGES = [
   { code: "cz", label: "Čeština" },
-  { code: "sk", label: "Slovenčina" },
-  { code: "en", label: "English" },
   { code: "de", label: "Deutsch" },
-  { code: "pl", label: "Polski" },
-  { code: "fr", label: "Français" },
+  { code: "en", label: "English" },
   { code: "es", label: "Español" },
+  { code: "fr", label: "Français" },
   { code: "it", label: "Italiano" },
-  { code: "nl", label: "Nederlands" },
-  { code: "pt", label: "Português" },
-  { code: "hu", label: "Magyar" },
-  { code: "ro", label: "Română" },
-  { code: "uk", label: "Українська" },
+  { code: "pl", label: "Polski" },
   { code: "ru", label: "Русский" },
+  { code: "sk", label: "Slovenčina" },
+  { code: "ua", label: "Українська" },
 ];
 
 export interface NotionPropertyMeta {
