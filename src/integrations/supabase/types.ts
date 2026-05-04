@@ -21,6 +21,7 @@ export type Database = {
           id: string
           is_active: boolean
           target_languages: string[]
+          ui_lang: string
           updated_at: string
           user_id: string
         }
@@ -30,6 +31,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           target_languages?: string[]
+          ui_lang?: string
           updated_at?: string
           user_id: string
         }
@@ -39,6 +41,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           target_languages?: string[]
+          ui_lang?: string
           updated_at?: string
           user_id?: string
         }

@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN ui_lang text NOT NULL DEFAULT 'cz';
