@@ -33,11 +33,15 @@ import {
 import { t } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 import {
   CheckCircle2,
   ExternalLink,
   Languages,
   Loader2,
+  LogOut,
+  Lock,
   RefreshCw,
   Save,
   Settings as SettingsIcon,
