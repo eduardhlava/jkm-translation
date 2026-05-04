@@ -50,7 +50,32 @@ export type TKey =
   | "toTranslate"
   | "machineCol"
   | "machineFilter"
-  | "anyMachine";
+  | "anyMachine"
+  | "signIn"
+  | "signOut"
+  | "email"
+  | "password"
+  | "loginTitle"
+  | "loginSubtitle"
+  | "loginFailed"
+  | "accountInactive"
+  | "users"
+  | "newUser"
+  | "editUser"
+  | "deleteUser"
+  | "createUser"
+  | "saveUser"
+  | "isActive"
+  | "isAdmin"
+  | "targetLangs"
+  | "targetLangsHint"
+  | "passwordOptional"
+  | "confirmDelete"
+  | "userSaved"
+  | "userCreated"
+  | "userDeleted"
+  | "readOnlyTranslation"
+  | "cancel";
 
 type Dict = Record<TKey, string>;
 
@@ -99,6 +124,31 @@ const cz: Dict = {
   machineCol: "Stroj",
   machineFilter: "Stroj",
   anyMachine: "Nezáleží",
+  signIn: "Přihlásit",
+  signOut: "Odhlásit",
+  email: "E-mail",
+  password: "Heslo",
+  loginTitle: "Přihlášení",
+  loginSubtitle: "Přihlaste se ke správě překladů",
+  loginFailed: "Přihlášení selhalo",
+  accountInactive: "Účet je deaktivován",
+  users: "Uživatelé",
+  newUser: "Nový uživatel",
+  editUser: "Upravit uživatele",
+  deleteUser: "Smazat",
+  createUser: "Vytvořit",
+  saveUser: "Uložit",
+  isActive: "Aktivní",
+  isAdmin: "Administrátor",
+  targetLangs: "Cílové jazyky (může editovat překlad)",
+  targetLangsHint: "Vyberte jazyky, ve kterých uživatel může upravovat překlad. Ostatní jazyky budou jen pro čtení.",
+  passwordOptional: "Heslo (ponechte prázdné pro zachování)",
+  confirmDelete: "Opravdu smazat tohoto uživatele?",
+  userSaved: "Uživatel uložen",
+  userCreated: "Uživatel vytvořen",
+  userDeleted: "Uživatel smazán",
+  readOnlyTranslation: "Pouze pro čtení – tento jazyk nemáte přiřazen",
+  cancel: "Zrušit",
 };
 
 const en: Dict = {
@@ -146,6 +196,31 @@ const en: Dict = {
   machineCol: "Machine",
   machineFilter: "Machine",
   anyMachine: "Any",
+  signIn: "Sign in",
+  signOut: "Sign out",
+  email: "Email",
+  password: "Password",
+  loginTitle: "Sign in",
+  loginSubtitle: "Sign in to manage translations",
+  loginFailed: "Sign-in failed",
+  accountInactive: "Account is deactivated",
+  users: "Users",
+  newUser: "New user",
+  editUser: "Edit user",
+  deleteUser: "Delete",
+  createUser: "Create",
+  saveUser: "Save",
+  isActive: "Active",
+  isAdmin: "Administrator",
+  targetLangs: "Target languages (translation editable)",
+  targetLangsHint: "Pick languages the user can edit. Others will be read-only.",
+  passwordOptional: "Password (leave blank to keep)",
+  confirmDelete: "Really delete this user?",
+  userSaved: "User saved",
+  userCreated: "User created",
+  userDeleted: "User deleted",
+  readOnlyTranslation: "Read-only — this language is not assigned to you",
+  cancel: "Cancel",
 };
 
 const ru: Dict = {
@@ -193,6 +268,31 @@ const ru: Dict = {
   machineCol: "Станок",
   machineFilter: "Станок",
   anyMachine: "Не важно",
+  signIn: "Войти",
+  signOut: "Выйти",
+  email: "E-mail",
+  password: "Пароль",
+  loginTitle: "Вход",
+  loginSubtitle: "Войдите для управления переводами",
+  loginFailed: "Ошибка входа",
+  accountInactive: "Учётная запись отключена",
+  users: "Пользователи",
+  newUser: "Новый пользователь",
+  editUser: "Редактировать",
+  deleteUser: "Удалить",
+  createUser: "Создать",
+  saveUser: "Сохранить",
+  isActive: "Активен",
+  isAdmin: "Администратор",
+  targetLangs: "Целевые языки (можно редактировать перевод)",
+  targetLangsHint: "Выберите языки, которые пользователь может редактировать.",
+  passwordOptional: "Пароль (оставьте пустым, чтобы не менять)",
+  confirmDelete: "Удалить пользователя?",
+  userSaved: "Сохранено",
+  userCreated: "Создано",
+  userDeleted: "Удалено",
+  readOnlyTranslation: "Только чтение — язык не назначен",
+  cancel: "Отмена",
 };
 
 const pl: Dict = {
@@ -240,6 +340,31 @@ const pl: Dict = {
   machineCol: "Maszyna",
   machineFilter: "Maszyna",
   anyMachine: "Bez znaczenia",
+  signIn: "Zaloguj",
+  signOut: "Wyloguj",
+  email: "E-mail",
+  password: "Hasło",
+  loginTitle: "Logowanie",
+  loginSubtitle: "Zaloguj się, aby zarządzać tłumaczeniami",
+  loginFailed: "Logowanie nie powiodło się",
+  accountInactive: "Konto jest wyłączone",
+  users: "Użytkownicy",
+  newUser: "Nowy użytkownik",
+  editUser: "Edytuj",
+  deleteUser: "Usuń",
+  createUser: "Utwórz",
+  saveUser: "Zapisz",
+  isActive: "Aktywny",
+  isAdmin: "Administrator",
+  targetLangs: "Języki docelowe (edycja tłumaczenia)",
+  targetLangsHint: "Wybierz języki, w których użytkownik może edytować tłumaczenie.",
+  passwordOptional: "Hasło (puste = bez zmian)",
+  confirmDelete: "Na pewno usunąć użytkownika?",
+  userSaved: "Zapisano",
+  userCreated: "Utworzono",
+  userDeleted: "Usunięto",
+  readOnlyTranslation: "Tylko do odczytu — język nieprzypisany",
+  cancel: "Anuluj",
 };
 
 const DICTS: Record<UiLang, Dict> = { cz, en, ru, pl };

@@ -33,11 +33,15 @@ import {
 import { t } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 import {
   CheckCircle2,
   ExternalLink,
   Languages,
   Loader2,
+  LogOut,
+  Lock,
   RefreshCw,
   Save,
   Settings as SettingsIcon,
@@ -46,6 +50,8 @@ import {
 type LocalStatus = "new" | "translated";
 
 const Index = () => {
+  const { profile, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [settings, setSettings] = useState<AppSettings>(loadSettings());
   const [sourceLang, setSourceLang] = useState<string>("cz");
   const [targetLang, setTargetLang] = useState<string>("en");
@@ -147,9 +153,12 @@ const Index = () => {
     }
   };
 
+  const canEditTarget = isAdmin || (profile?.target_languages ?? []).includes(targetLang);
+
   const localStatus = (id: string): LocalStatus => statusOverrides[id] ?? "new";
 
   const toggleStatus = (id: string) => {
+    if (!canEditTarget) return;
     setStatusOverrides((m) => ({
       ...m,
       [id]: m[id] === "translated" ? "new" : "translated",
@@ -159,9 +168,9 @@ const Index = () => {
   };
 
   const toUpdate = useMemo(
-    () => items.filter((it) => localStatus(it.id) === "translated"),
+    () => (canEditTarget ? items.filter((it) => localStatus(it.id) === "translated") : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [items, statusOverrides],
+    [items, statusOverrides, canEditTarget],
   );
 
   const machineOptions = useMemo(() => {
@@ -250,10 +259,22 @@ const Index = () => {
                 <span className="font-semibold text-primary tabular-nums">{pendingCount}</span>
               </Badge>
             )}
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/settings">
-                <SettingsIcon className="w-4 h-4 mr-1" /> {t(ui, "settings")}
-              </Link>
+            {isAdmin && (
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/settings">
+                  <SettingsIcon className="w-4 h-4 mr-1" /> {t(ui, "settings")}
+                </Link>
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                navigate("/auth", { replace: true });
+              }}
+            >
+              <LogOut className="w-4 h-4 mr-1" /> {t(ui, "signOut")}
             </Button>
           </div>
         </div>
@@ -344,6 +365,9 @@ const Index = () => {
                     <TableHead className="w-[20%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">
                       <Badge className="bg-primary/10 text-primary mr-2">{langLabel(targetLang)}</Badge>
                       {t(ui, "translationCol")}
+                      {!canEditTarget && (
+                        <Lock className="inline w-3 h-3 ml-1 text-muted-foreground" />
+                      )}
                     </TableHead>
                     <TableHead className="w-[16%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "contextCol")} ({langLabel(contextLang)})</TableHead>
                     <TableHead className="w-[20%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "exampleCol")} ({langLabel(contextLang)})</TableHead>
@@ -370,6 +394,8 @@ const Index = () => {
                             }
                             placeholder={t(ui, "translationPlaceholder", { lang: langLabel(targetLang) })}
                             className="min-h-[64px] text-sm"
+                            readOnly={!canEditTarget}
+                            title={!canEditTarget ? t(ui, "readOnlyTranslation") : undefined}
                           />
                         </TableCell>
                         <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground">
@@ -387,6 +413,7 @@ const Index = () => {
                             variant={st === "translated" ? "default" : "outline"}
                             size="sm"
                             onClick={() => toggleStatus(it.id)}
+                            disabled={!canEditTarget}
                             className={`w-full transition-colors ${confirmPulse[it.id] ? "animate-confirm-pop" : ""} ${st === "translated" ? "bg-success text-success-foreground hover:bg-success/90" : ""}`}
                           >
                             {st === "translated" ? (
