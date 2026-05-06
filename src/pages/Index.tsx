@@ -419,6 +419,12 @@ const Index = () => {
                         <Lock className="inline w-3 h-3 ml-1 text-muted-foreground" />
                       )}
                     </TableHead>
+                    {helperProp && (
+                      <TableHead className="w-[16%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">
+                        <Badge className="bg-secondary text-secondary-foreground mr-2">{langLabel(helperLang)}</Badge>
+                        {t(ui, "helperCol")}
+                      </TableHead>
+                    )}
                     <TableHead className="w-[16%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "contextCol")} ({langLabel(contextLang)})</TableHead>
                     <TableHead className="w-[20%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "exampleCol")} ({langLabel(contextLang)})</TableHead>
                     <TableHead className="w-[10%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "machineCol")}</TableHead>
@@ -454,6 +460,13 @@ const Index = () => {
                         <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground">
                           {it.properties[exProp] || "—"}
                         </TableCell>
+                        {helperProp && (
+                          <TableCell className="align-top whitespace-pre-wrap text-sm text-muted-foreground">
+                            {it.properties[helperProp] || (
+                              <span className="text-muted-foreground italic">—</span>
+                            )}
+                          </TableCell>
+                        )}
                         <TableCell className="align-top text-sm">
                           {(() => {
                             const list = splitMachines(it.properties[MACHINE_PROP] ?? "");
