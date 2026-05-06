@@ -38,6 +38,7 @@ import { useNavigate } from "react-router-dom";
 import jkLogo from "@/assets/jk-machinery-logo.png";
 import {
   CheckCircle2,
+  Check,
   ExternalLink,
   Languages,
   Loader2,
@@ -56,6 +57,7 @@ const Index = () => {
   const [settings, setSettings] = useState<AppSettings>(loadSettings());
   const [sourceLang, setSourceLang] = useState<string>("cz");
   const [targetLang, setTargetLang] = useState<string>("en");
+  const [helperLang, setHelperLang] = useState<string>("__none__");
   const [contextLang, setContextLang] = useState<string>("cz");
   const [items, setItems] = useState<NotionItem[]>([]);
   const [loading, setLoading] = useState(false);
