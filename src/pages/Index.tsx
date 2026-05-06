@@ -253,7 +253,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-[var(--gradient-subtle)]">
       <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container max-w-7xl py-4 flex items-center justify-between">
+        <div className="container max-w-[105rem] py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img
               src={jkLogo}
@@ -297,7 +297,7 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="container max-w-7xl py-6 space-y-4">
+      <main className="container max-w-[105rem] py-6 space-y-4">
         <Card className="p-4 flex flex-wrap items-end gap-4 shadow-[var(--shadow-md)]">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">{t(ui, "sourceLang")}</label>
@@ -315,7 +315,27 @@ const Index = () => {
             <Select value={targetLang} onValueChange={setTargetLang}>
               <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {LANGUAGES.filter((l) => l.code !== sourceLang).map((l) => (
+                {LANGUAGES.filter((l) => l.code !== sourceLang).map((l) => {
+                  const allowed = isAdmin || (profile?.target_languages ?? []).includes(l.code);
+                  return (
+                    <SelectItem key={l.code} value={l.code}>
+                      <span className="inline-flex items-center gap-2">
+                        {l.label}
+                        {allowed && <Check className="w-3.5 h-3.5 text-success" />}
+                      </span>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">{t(ui, "helperLang")}</label>
+            <Select value={helperLang} onValueChange={setHelperLang}>
+              <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">{t(ui, "noneOption")}</SelectItem>
+                {LANGUAGES.filter((l) => l.code !== sourceLang && l.code !== targetLang).map((l) => (
                   <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
                 ))}
               </SelectContent>
