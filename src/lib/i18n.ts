@@ -77,6 +77,9 @@ export type TKey =
   | "userDeleted"
   | "readOnlyTranslation"
   | "fullName"
+  | "helperLang"
+  | "helperCol"
+  | "noneOption"
   | "cancel";
 
 type Dict = Record<TKey, string>;
@@ -152,6 +155,9 @@ const cz: Dict = {
   userCreated: "Uživatel vytvořen",
   userDeleted: "Uživatel smazán",
   readOnlyTranslation: "Pouze pro čtení – tento jazyk nemáte přiřazen",
+  helperLang: "Pomocný jazyk",
+  helperCol: "Pomocný překlad",
+  noneOption: "Žádný",
   cancel: "Zrušit",
 };
 
@@ -226,6 +232,9 @@ const en: Dict = {
   userCreated: "User created",
   userDeleted: "User deleted",
   readOnlyTranslation: "Read-only — this language is not assigned to you",
+  helperLang: "Helper language",
+  helperCol: "Helper translation",
+  noneOption: "None",
   cancel: "Cancel",
 };
 
@@ -300,6 +309,9 @@ const ru: Dict = {
   userCreated: "Создано",
   userDeleted: "Удалено",
   readOnlyTranslation: "Только чтение — язык не назначен",
+  helperLang: "Вспомогательный язык",
+  helperCol: "Вспомогательный перевод",
+  noneOption: "Нет",
   cancel: "Отмена",
 };
 
@@ -374,6 +386,9 @@ const pl: Dict = {
   userCreated: "Utworzono",
   userDeleted: "Usunięto",
   readOnlyTranslation: "Tylko do odczytu — język nieprzypisany",
+  helperLang: "Język pomocniczy",
+  helperCol: "Tłumaczenie pomocnicze",
+  noneOption: "Brak",
   cancel: "Anuluj",
 };
 
