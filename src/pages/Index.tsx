@@ -90,6 +90,7 @@ const Index = () => {
 
   const sourceProp = propText(sourceLang);
   const targetProp = propText(targetLang);
+  const helperProp = helperLang !== "__none__" ? propText(helperLang) : null;
   const ctxProp = propContext(contextLang);
   const exProp = propExample(contextLang);
   const stProp = propStatus(targetLang);
@@ -138,7 +139,7 @@ const Index = () => {
         body: {
           statusProperty: stProp,
           statusValue: settings.statusNew,
-          textProperties: [sourceProp, targetProp, ctxProp, exProp, stProp, MACHINE_PROP],
+          textProperties: [sourceProp, targetProp, ctxProp, exProp, stProp, MACHINE_PROP, ...(helperProp ? [helperProp] : [])],
           pageSize: settings.pageSize,
           sortProperty: sourceProp,
           sortDirection: "ascending",
