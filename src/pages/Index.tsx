@@ -454,12 +454,6 @@ const Index = () => {
                             title={!canEditTarget ? t(ui, "readOnlyTranslation") : undefined}
                           />
                         </TableCell>
-                        <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground">
-                          {it.properties[ctxProp] || "—"}
-                        </TableCell>
-                        <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground">
-                          {it.properties[exProp] || "—"}
-                        </TableCell>
                         {helperProp && (
                           <TableCell className="align-top whitespace-pre-wrap text-sm text-muted-foreground">
                             {it.properties[helperProp] || (
@@ -467,6 +461,12 @@ const Index = () => {
                             )}
                           </TableCell>
                         )}
+                        <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground">
+                          {it.properties[ctxProp] || "—"}
+                        </TableCell>
+                        <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground">
+                          {it.properties[exProp] || "—"}
+                        </TableCell>
                         <TableCell className="align-top text-sm">
                           {(() => {
                             const list = splitMachines(it.properties[MACHINE_PROP] ?? "");
