@@ -80,6 +80,9 @@ export type TKey =
   | "helperLang"
   | "helperCol"
   | "noneOption"
+  | "helperContextLang"
+  | "helperContextCol"
+  | "helperExampleCol"
   | "cancel";
 
 type Dict = Record<TKey, string>;
@@ -158,6 +161,9 @@ const cz: Dict = {
   helperLang: "Pomocný jazyk",
   helperCol: "Pomocný překlad",
   noneOption: "Žádný",
+  helperContextLang: "Pomocný jazyk kontextu",
+  helperContextCol: "Pomocný kontext",
+  helperExampleCol: "Pomocný příklad věty",
   cancel: "Zrušit",
 };
 
@@ -235,6 +241,9 @@ const en: Dict = {
   helperLang: "Helper language",
   helperCol: "Helper translation",
   noneOption: "None",
+  helperContextLang: "Helper context language",
+  helperContextCol: "Helper context",
+  helperExampleCol: "Helper example sentence",
   cancel: "Cancel",
 };
 
@@ -312,6 +321,9 @@ const ru: Dict = {
   helperLang: "Вспомогательный язык",
   helperCol: "Вспомогательный перевод",
   noneOption: "Нет",
+  helperContextLang: "Вспомогательный язык контекста",
+  helperContextCol: "Вспомогательный контекст",
+  helperExampleCol: "Вспомогательный пример",
   cancel: "Отмена",
 };
 
@@ -389,6 +401,9 @@ const pl: Dict = {
   helperLang: "Język pomocniczy",
   helperCol: "Tłumaczenie pomocnicze",
   noneOption: "Brak",
+  helperContextLang: "Pomocniczy język kontekstu",
+  helperContextCol: "Pomocniczy kontekst",
+  helperExampleCol: "Pomocnicze przykładowe zdanie",
   cancel: "Anuluj",
 };
 

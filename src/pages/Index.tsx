@@ -58,6 +58,7 @@ const Index = () => {
   const [sourceLang, setSourceLang] = useState<string>("cz");
   const [targetLang, setTargetLang] = useState<string>("en");
   const [helperLang, setHelperLang] = useState<string>("__none__");
+  const [helperCtxLang, setHelperCtxLang] = useState<string>("__none__");
   const [contextLang, setContextLang] = useState<string>("cz");
   const [items, setItems] = useState<NotionItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -93,6 +94,8 @@ const Index = () => {
   const helperProp = helperLang !== "__none__" ? propText(helperLang) : null;
   const ctxProp = propContext(contextLang);
   const exProp = propExample(contextLang);
+  const helperCtxProp = helperCtxLang !== "__none__" ? propContext(helperCtxLang) : null;
+  const helperExProp = helperCtxLang !== "__none__" ? propExample(helperCtxLang) : null;
   const stProp = propStatus(targetLang);
 
   const loadCount = async () => {
@@ -139,7 +142,7 @@ const Index = () => {
         body: {
           statusProperty: stProp,
           statusValue: settings.statusNew,
-          textProperties: [sourceProp, targetProp, ctxProp, exProp, stProp, MACHINE_PROP, ...(helperProp ? [helperProp] : [])],
+          textProperties: [sourceProp, targetProp, ctxProp, exProp, stProp, MACHINE_PROP, ...(helperProp ? [helperProp] : []), ...(helperCtxProp ? [helperCtxProp] : []), ...(helperExProp ? [helperExProp] : [])],
           pageSize: settings.pageSize,
           sortProperty: sourceProp,
           sortDirection: "ascending",
@@ -353,6 +356,18 @@ const Index = () => {
             </Select>
           </div>
           <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">{t(ui, "helperContextLang")}</label>
+            <Select value={helperCtxLang} onValueChange={setHelperCtxLang}>
+              <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">{t(ui, "noneOption")}</SelectItem>
+                {LANGUAGES.filter((l) => l.code !== contextLang).map((l) => (
+                  <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">{t(ui, "machineFilter")}</label>
             <Select value={machineFilter} onValueChange={setMachineFilter} disabled={items.length === 0}>
               <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
@@ -425,8 +440,14 @@ const Index = () => {
                         {t(ui, "helperCol")}
                       </TableHead>
                     )}
-                    <TableHead className="w-[16%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "contextCol")} ({langLabel(contextLang)})</TableHead>
-                    <TableHead className="w-[20%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "exampleCol")} ({langLabel(contextLang)})</TableHead>
+                    <TableHead className="w-[12%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "contextCol")} ({langLabel(contextLang)})</TableHead>
+                    <TableHead className="w-[16%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "exampleCol")} ({langLabel(contextLang)})</TableHead>
+                    {helperCtxProp && (
+                      <TableHead className="w-[12%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "helperContextCol")} ({langLabel(helperCtxLang)})</TableHead>
+                    )}
+                    {helperExProp && (
+                      <TableHead className="w-[16%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "helperExampleCol")} ({langLabel(helperCtxLang)})</TableHead>
+                    )}
                     <TableHead className="w-[10%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "machineCol")}</TableHead>
                     <TableHead className="w-[10%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "statusCol")}</TableHead>
                     {isAdmin && <TableHead className="w-[6%]" />}
@@ -467,6 +488,16 @@ const Index = () => {
                         <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground">
                           {it.properties[exProp] || "—"}
                         </TableCell>
+                        {helperCtxProp && (
+                          <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground">
+                            {it.properties[helperCtxProp] || "—"}
+                          </TableCell>
+                        )}
+                        {helperExProp && (
+                          <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground">
+                            {it.properties[helperExProp] || "—"}
+                          </TableCell>
+                        )}
                         <TableCell className="align-top text-sm">
                           {(() => {
                             const list = splitMachines(it.properties[MACHINE_PROP] ?? "");
