@@ -241,6 +241,9 @@ const en: Dict = {
   helperLang: "Helper language",
   helperCol: "Helper translation",
   noneOption: "None",
+  helperContextLang: "Helper context language",
+  helperContextCol: "Helper context",
+  helperExampleCol: "Helper example sentence",
   cancel: "Cancel",
 };
 
