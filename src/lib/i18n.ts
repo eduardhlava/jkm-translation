@@ -168,6 +168,10 @@ const cz: Dict = {
   helperContextLang: "Pomocný jazyk kontextu",
   helperContextCol: "Pomocný kontext",
   helperExampleCol: "Pomocný příklad věty",
+  reloadPromptTitle: "Změnilo se nastavení",
+  reloadPromptDesc: "Chcete znovu načíst {n} položek s aktuálním nastavením?",
+  reloadConfirm: "Načíst znovu",
+  allMachinesTitle: "Všechny stroje",
   cancel: "Zrušit",
 };
 
