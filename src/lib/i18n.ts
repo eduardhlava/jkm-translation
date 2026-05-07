@@ -80,6 +80,9 @@ export type TKey =
   | "helperLang"
   | "helperCol"
   | "noneOption"
+  | "helperContextLang"
+  | "helperContextCol"
+  | "helperExampleCol"
   | "cancel";
 
 type Dict = Record<TKey, string>;
