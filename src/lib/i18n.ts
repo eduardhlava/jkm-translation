@@ -420,6 +420,10 @@ const pl: Dict = {
   helperContextLang: "Pomocniczy język kontekstu",
   helperContextCol: "Pomocniczy kontekst",
   helperExampleCol: "Pomocnicze przykładowe zdanie",
+  reloadPromptTitle: "Ustawienia zmienione",
+  reloadPromptDesc: "Wczytać ponownie {n} elementów z nowymi ustawieniami?",
+  reloadConfirm: "Wczytaj",
+  allMachinesTitle: "Wszystkie maszyny",
   cancel: "Anuluj",
 };
 
