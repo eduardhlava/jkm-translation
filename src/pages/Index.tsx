@@ -40,6 +40,7 @@ import {
   CheckCircle2,
   Check,
   ExternalLink,
+  Info,
   Languages,
   Loader2,
   LogOut,
@@ -48,6 +49,17 @@ import {
   Save,
   Settings as SettingsIcon,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 type LocalStatus = "new" | "translated";
 
