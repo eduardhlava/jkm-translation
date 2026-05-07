@@ -392,18 +392,7 @@ const Index = () => {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">{t(ui, "machineFilter")}</label>
-            <Select value={machineFilter} onValueChange={setMachineFilter} disabled={items.length === 0}>
-              <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__any__">{t(ui, "anyMachine")}</SelectItem>
-                {machineOptions.map((m) => (
-                  <SelectItem key={m} value={m}>{m}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+
 
           <div className="flex-1" />
 
