@@ -135,13 +135,23 @@ const Index = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetLang, settings.statusNew]);
 
-  // Clear loaded items when source/target language changes — user must reload
+  // Compute a snapshot of settings that affect what's loaded
+  const currentSnapshot = JSON.stringify({
+    sourceLang,
+    targetLang,
+    helperLang,
+    contextLang,
+    helperCtxLang,
+    pageSize: settings.pageSize,
+    statusNew: settings.statusNew,
+  });
+
+  // When loaded settings differ from current ones, prompt user to reload
   useEffect(() => {
-    setItems([]);
-    setTranslations({});
-    setStatusOverrides({});
-    setMachineFilter("__any__");
-  }, [sourceLang, targetLang]);
+    if (items.length > 0 && loadedSnapshot && loadedSnapshot !== currentSnapshot) {
+      setShowReloadDialog(true);
+    }
+  }, [currentSnapshot, items.length, loadedSnapshot]);
 
   const fetchItems = async () => {
     if (sourceLang === targetLang) {
