@@ -83,6 +83,10 @@ export type TKey =
   | "helperContextLang"
   | "helperContextCol"
   | "helperExampleCol"
+  | "reloadPromptTitle"
+  | "reloadPromptDesc"
+  | "reloadConfirm"
+  | "allMachinesTitle"
   | "cancel";
 
 type Dict = Record<TKey, string>;
