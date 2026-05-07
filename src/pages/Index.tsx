@@ -94,6 +94,8 @@ const Index = () => {
   const helperProp = helperLang !== "__none__" ? propText(helperLang) : null;
   const ctxProp = propContext(contextLang);
   const exProp = propExample(contextLang);
+  const helperCtxProp = helperCtxLang !== "__none__" ? propContext(helperCtxLang) : null;
+  const helperExProp = helperCtxLang !== "__none__" ? propExample(helperCtxLang) : null;
   const stProp = propStatus(targetLang);
 
   const loadCount = async () => {
