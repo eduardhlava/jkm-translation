@@ -433,7 +433,7 @@ const Index = () => {
 
         {items.length > 0 && (
           <Card className="overflow-hidden shadow-[var(--shadow-md)] rounded-xl">
-            <div className="overflow-x-auto">
+            <div className="max-h-[calc(100vh-220px)] overflow-auto">
               <TooltipProvider delayDuration={150}>
               <Table>
                 <TableHeader className="bg-muted/70 [&_tr]:border-b-0">
