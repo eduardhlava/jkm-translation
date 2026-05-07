@@ -354,6 +354,17 @@ const Index = () => {
                 ))}
               </SelectContent>
             </Select>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">{t(ui, "helperContextLang")}</label>
+            <Select value={helperCtxLang} onValueChange={setHelperCtxLang}>
+              <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">{t(ui, "noneOption")}</SelectItem>
+                {LANGUAGES.filter((l) => l.code !== contextLang).map((l) => (
+                  <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">{t(ui, "machineFilter")}</label>
