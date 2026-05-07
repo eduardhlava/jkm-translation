@@ -182,6 +182,7 @@ const Index = () => {
       });
       setTranslations(initial);
       setMachineFilter("__any__");
+      setLoadedSnapshot(currentSnapshot);
       if (fetched.length === 0) toast.info(t(ui, "noNewItems"));
       else toast.success(t(ui, "loadedN", { n: fetched.length }));
     } catch (err) {
