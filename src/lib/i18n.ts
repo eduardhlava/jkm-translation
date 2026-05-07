@@ -336,6 +336,10 @@ const ru: Dict = {
   helperContextLang: "Вспомогательный язык контекста",
   helperContextCol: "Вспомогательный контекст",
   helperExampleCol: "Вспомогательный пример",
+  reloadPromptTitle: "Настройки изменены",
+  reloadPromptDesc: "Загрузить {n} записей заново с новыми настройками?",
+  reloadConfirm: "Загрузить",
+  allMachinesTitle: "Все станки",
   cancel: "Отмена",
 };
 
