@@ -433,11 +433,11 @@ const Index = () => {
 
         {items.length > 0 && (
           <Card className="overflow-hidden shadow-[var(--shadow-md)] rounded-xl">
-            <div className="overflow-x-auto">
+            <div className="max-h-[calc(100vh-220px)] overflow-auto">
               <TooltipProvider delayDuration={150}>
-              <Table>
-                <TableHeader className="bg-muted/70">
-                  <TableRow className="border-b-2 border-border">
+              <table className="w-full caption-bottom text-sm">
+                <TableHeader className="bg-muted/70 [&_tr]:border-b-0">
+                  <TableRow className="border-b-2 border-border [&>th]:sticky [&>th]:top-0 [&>th]:z-20 [&>th]:bg-muted [&>th]:shadow-[inset_0_-2px_0_hsl(var(--border))]">
                     <TableHead className="w-[14%] text-foreground font-semibold uppercase tracking-wide text-xs py-3 bg-primary/5">
                       <Badge className="bg-accent text-accent-foreground mr-2">{langLabel(sourceLang)}</Badge>
                       {t(ui, "sourceCol")}
@@ -599,7 +599,7 @@ const Index = () => {
                     );
                   })}
                 </TableBody>
-              </Table>
+              </table>
               </TooltipProvider>
             </div>
           </Card>
