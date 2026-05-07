@@ -440,8 +440,14 @@ const Index = () => {
                         {t(ui, "helperCol")}
                       </TableHead>
                     )}
-                    <TableHead className="w-[16%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "contextCol")} ({langLabel(contextLang)})</TableHead>
-                    <TableHead className="w-[20%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "exampleCol")} ({langLabel(contextLang)})</TableHead>
+                    <TableHead className="w-[12%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "contextCol")} ({langLabel(contextLang)})</TableHead>
+                    <TableHead className="w-[16%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "exampleCol")} ({langLabel(contextLang)})</TableHead>
+                    {helperCtxProp && (
+                      <TableHead className="w-[12%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "helperContextCol")} ({langLabel(helperCtxLang)})</TableHead>
+                    )}
+                    {helperExProp && (
+                      <TableHead className="w-[16%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "helperExampleCol")} ({langLabel(helperCtxLang)})</TableHead>
+                    )}
                     <TableHead className="w-[10%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "machineCol")}</TableHead>
                     <TableHead className="w-[10%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "statusCol")}</TableHead>
                     {isAdmin && <TableHead className="w-[6%]" />}
