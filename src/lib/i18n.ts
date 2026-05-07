@@ -321,6 +321,9 @@ const ru: Dict = {
   helperLang: "Вспомогательный язык",
   helperCol: "Вспомогательный перевод",
   noneOption: "Нет",
+  helperContextLang: "Вспомогательный язык контекста",
+  helperContextCol: "Вспомогательный контекст",
+  helperExampleCol: "Вспомогательный пример",
   cancel: "Отмена",
 };
 
