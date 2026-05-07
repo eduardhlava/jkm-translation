@@ -488,6 +488,16 @@ const Index = () => {
                         <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground">
                           {it.properties[exProp] || "—"}
                         </TableCell>
+                        {helperCtxProp && (
+                          <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground">
+                            {it.properties[helperCtxProp] || "—"}
+                          </TableCell>
+                        )}
+                        {helperExProp && (
+                          <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground">
+                            {it.properties[helperExProp] || "—"}
+                          </TableCell>
+                        )}
                         <TableCell className="align-top text-sm">
                           {(() => {
                             const list = splitMachines(it.properties[MACHINE_PROP] ?? "");
