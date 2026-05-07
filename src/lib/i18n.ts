@@ -161,6 +161,9 @@ const cz: Dict = {
   helperLang: "Pomocný jazyk",
   helperCol: "Pomocný překlad",
   noneOption: "Žádný",
+  helperContextLang: "Pomocný jazyk kontextu",
+  helperContextCol: "Pomocný kontext",
+  helperExampleCol: "Pomocný příklad věty",
   cancel: "Zrušit",
 };
 
