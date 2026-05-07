@@ -58,6 +58,7 @@ const Index = () => {
   const [sourceLang, setSourceLang] = useState<string>("cz");
   const [targetLang, setTargetLang] = useState<string>("en");
   const [helperLang, setHelperLang] = useState<string>("__none__");
+  const [helperCtxLang, setHelperCtxLang] = useState<string>("__none__");
   const [contextLang, setContextLang] = useState<string>("cz");
   const [items, setItems] = useState<NotionItem[]>([]);
   const [loading, setLoading] = useState(false);
