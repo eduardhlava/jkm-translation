@@ -83,6 +83,10 @@ export type TKey =
   | "helperContextLang"
   | "helperContextCol"
   | "helperExampleCol"
+  | "reloadPromptTitle"
+  | "reloadPromptDesc"
+  | "reloadConfirm"
+  | "allMachinesTitle"
   | "cancel";
 
 type Dict = Record<TKey, string>;
@@ -164,6 +168,10 @@ const cz: Dict = {
   helperContextLang: "Pomocný jazyk kontextu",
   helperContextCol: "Pomocný kontext",
   helperExampleCol: "Pomocný příklad věty",
+  reloadPromptTitle: "Změnilo se nastavení",
+  reloadPromptDesc: "Chcete znovu načíst {n} položek s aktuálním nastavením?",
+  reloadConfirm: "Načíst znovu",
+  allMachinesTitle: "Všechny stroje",
   cancel: "Zrušit",
 };
 
@@ -244,6 +252,10 @@ const en: Dict = {
   helperContextLang: "Helper context language",
   helperContextCol: "Helper context",
   helperExampleCol: "Helper example sentence",
+  reloadPromptTitle: "Settings changed",
+  reloadPromptDesc: "Do you want to reload {n} items with the new settings?",
+  reloadConfirm: "Reload",
+  allMachinesTitle: "All machines",
   cancel: "Cancel",
 };
 
@@ -324,6 +336,10 @@ const ru: Dict = {
   helperContextLang: "Вспомогательный язык контекста",
   helperContextCol: "Вспомогательный контекст",
   helperExampleCol: "Вспомогательный пример",
+  reloadPromptTitle: "Настройки изменены",
+  reloadPromptDesc: "Загрузить {n} записей заново с новыми настройками?",
+  reloadConfirm: "Загрузить",
+  allMachinesTitle: "Все станки",
   cancel: "Отмена",
 };
 
@@ -404,6 +420,10 @@ const pl: Dict = {
   helperContextLang: "Pomocniczy język kontekstu",
   helperContextCol: "Pomocniczy kontekst",
   helperExampleCol: "Pomocnicze przykładowe zdanie",
+  reloadPromptTitle: "Ustawienia zmienione",
+  reloadPromptDesc: "Wczytać ponownie {n} elementów z nowymi ustawieniami?",
+  reloadConfirm: "Wczytaj",
+  allMachinesTitle: "Wszystkie maszyny",
   cancel: "Anuluj",
 };
 

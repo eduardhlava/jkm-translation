@@ -40,6 +40,7 @@ import {
   CheckCircle2,
   Check,
   ExternalLink,
+  Info,
   Languages,
   Loader2,
   LogOut,
@@ -48,6 +49,17 @@ import {
   Save,
   Settings as SettingsIcon,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 type LocalStatus = "new" | "translated";
 
@@ -70,6 +82,8 @@ const Index = () => {
   const [confirmPulse, setConfirmPulse] = useState<Record<string, number>>({});
   const [successFlash, setSuccessFlash] = useState(0);
   const [machineFilter, setMachineFilter] = useState<string>("__any__");
+  const [loadedSnapshot, setLoadedSnapshot] = useState<string | null>(null);
+  const [showReloadDialog, setShowReloadDialog] = useState(false);
 
   const MACHINE_PROP = "stroj";
 
@@ -121,13 +135,23 @@ const Index = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetLang, settings.statusNew]);
 
-  // Clear loaded items when source/target language changes — user must reload
+  // Compute a snapshot of settings that affect what's loaded
+  const currentSnapshot = JSON.stringify({
+    sourceLang,
+    targetLang,
+    helperLang,
+    contextLang,
+    helperCtxLang,
+    pageSize: settings.pageSize,
+    statusNew: settings.statusNew,
+  });
+
+  // When loaded settings differ from current ones, prompt user to reload
   useEffect(() => {
-    setItems([]);
-    setTranslations({});
-    setStatusOverrides({});
-    setMachineFilter("__any__");
-  }, [sourceLang, targetLang]);
+    if (items.length > 0 && loadedSnapshot && loadedSnapshot !== currentSnapshot) {
+      setShowReloadDialog(true);
+    }
+  }, [currentSnapshot, items.length, loadedSnapshot]);
 
   const fetchItems = async () => {
     if (sourceLang === targetLang) {
@@ -158,6 +182,7 @@ const Index = () => {
       });
       setTranslations(initial);
       setMachineFilter("__any__");
+      setLoadedSnapshot(currentSnapshot);
       if (fetched.length === 0) toast.info(t(ui, "noNewItems"));
       else toast.success(t(ui, "loadedN", { n: fetched.length }));
     } catch (err) {
@@ -367,18 +392,7 @@ const Index = () => {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">{t(ui, "machineFilter")}</label>
-            <Select value={machineFilter} onValueChange={setMachineFilter} disabled={items.length === 0}>
-              <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__any__">{t(ui, "anyMachine")}</SelectItem>
-                {machineOptions.map((m) => (
-                  <SelectItem key={m} value={m}>{m}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+
 
           <div className="flex-1" />
 
@@ -420,35 +434,49 @@ const Index = () => {
         {items.length > 0 && (
           <Card className="overflow-hidden shadow-[var(--shadow-md)] rounded-xl">
             <div className="overflow-x-auto">
+              <TooltipProvider delayDuration={150}>
               <Table>
                 <TableHeader className="bg-muted/70">
                   <TableRow className="border-b-2 border-border">
-                    <TableHead className="w-[18%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">
+                    <TableHead className="w-[14%] text-foreground font-semibold uppercase tracking-wide text-xs py-3 bg-primary/5">
                       <Badge className="bg-accent text-accent-foreground mr-2">{langLabel(sourceLang)}</Badge>
                       {t(ui, "sourceCol")}
                     </TableHead>
-                    <TableHead className="w-[20%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">
+                    <TableHead className="w-[18%] text-foreground font-semibold uppercase tracking-wide text-xs py-3 bg-primary/5">
                       <Badge className="bg-primary/10 text-primary mr-2">{langLabel(targetLang)}</Badge>
                       {t(ui, "translationCol")}
                       {!canEditTarget && (
                         <Lock className="inline w-3 h-3 ml-1 text-muted-foreground" />
                       )}
                     </TableHead>
+                    <TableHead className="w-[12%] text-foreground font-semibold uppercase tracking-wide text-xs py-3 bg-primary/5">{t(ui, "contextCol")} ({langLabel(contextLang)})</TableHead>
+                    <TableHead className="w-[14%] text-foreground font-semibold uppercase tracking-wide text-xs py-3 bg-primary/5">{t(ui, "exampleCol")} ({langLabel(contextLang)})</TableHead>
                     {helperProp && (
-                      <TableHead className="w-[16%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">
+                      <TableHead className="w-[12%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">
                         <Badge className="bg-secondary text-secondary-foreground mr-2">{langLabel(helperLang)}</Badge>
                         {t(ui, "helperCol")}
                       </TableHead>
                     )}
-                    <TableHead className="w-[12%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "contextCol")} ({langLabel(contextLang)})</TableHead>
-                    <TableHead className="w-[16%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "exampleCol")} ({langLabel(contextLang)})</TableHead>
                     {helperCtxProp && (
-                      <TableHead className="w-[12%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "helperContextCol")} ({langLabel(helperCtxLang)})</TableHead>
+                      <TableHead className="w-[10%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "helperContextCol")} ({langLabel(helperCtxLang)})</TableHead>
                     )}
                     {helperExProp && (
-                      <TableHead className="w-[16%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "helperExampleCol")} ({langLabel(helperCtxLang)})</TableHead>
+                      <TableHead className="w-[12%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "helperExampleCol")} ({langLabel(helperCtxLang)})</TableHead>
                     )}
-                    <TableHead className="w-[10%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "machineCol")}</TableHead>
+                    <TableHead className="w-[12%] text-foreground font-semibold uppercase tracking-wide text-xs py-3 align-top">
+                      <div className="space-y-1.5">
+                        <div>{t(ui, "machineCol")}</div>
+                        <Select value={machineFilter} onValueChange={setMachineFilter}>
+                          <SelectTrigger className="h-7 text-xs normal-case font-normal"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__any__">{t(ui, "anyMachine")}</SelectItem>
+                            {machineOptions.map((m) => (
+                              <SelectItem key={m} value={m}>{m}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </TableHead>
                     <TableHead className="w-[10%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "statusCol")}</TableHead>
                     {isAdmin && <TableHead className="w-[6%]" />}
                   </TableRow>
@@ -458,12 +486,12 @@ const Index = () => {
                     const st = localStatus(it.id);
                     return (
                       <TableRow key={it.id}>
-                        <TableCell className="align-top whitespace-pre-wrap text-sm">
+                        <TableCell className="align-top whitespace-pre-wrap text-sm bg-primary/5">
                           {it.properties[sourceProp] || (
                             <span className="text-muted-foreground italic">—</span>
                           )}
                         </TableCell>
-                        <TableCell className="align-top">
+                        <TableCell className="align-top bg-primary/5">
                           <Textarea
                             value={translations[it.id] ?? ""}
                             onChange={(e) =>
@@ -475,6 +503,12 @@ const Index = () => {
                             title={!canEditTarget ? t(ui, "readOnlyTranslation") : undefined}
                           />
                         </TableCell>
+                        <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground bg-primary/5">
+                          {it.properties[ctxProp] || "—"}
+                        </TableCell>
+                        <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground bg-primary/5">
+                          {it.properties[exProp] || "—"}
+                        </TableCell>
                         {helperProp && (
                           <TableCell className="align-top whitespace-pre-wrap text-sm text-muted-foreground">
                             {it.properties[helperProp] || (
@@ -482,12 +516,6 @@ const Index = () => {
                             )}
                           </TableCell>
                         )}
-                        <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground">
-                          {it.properties[ctxProp] || "—"}
-                        </TableCell>
-                        <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground">
-                          {it.properties[exProp] || "—"}
-                        </TableCell>
                         {helperCtxProp && (
                           <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground">
                             {it.properties[helperCtxProp] || "—"}
@@ -503,13 +531,37 @@ const Index = () => {
                             const list = splitMachines(it.properties[MACHINE_PROP] ?? "");
                             if (list.length === 0)
                               return <span className="text-muted-foreground italic">—</span>;
+                            const visible = list.slice(0, 3);
+                            const hasMore = list.length > 3;
                             return (
-                              <div className="flex flex-wrap gap-1">
-                                {list.map((m) => (
+                              <div className="flex flex-wrap items-center gap-1">
+                                {visible.map((m) => (
                                   <Badge key={m} variant="secondary" className="text-[10px] font-normal px-1.5 py-0 leading-tight">
                                     {m}
                                   </Badge>
                                 ))}
+                                {hasMore && (
+                                  <>
+                                    <span className="text-muted-foreground text-xs">…</span>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <button type="button" className="text-muted-foreground hover:text-primary inline-flex items-center">
+                                          <Info className="w-3.5 h-3.5" />
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent className="max-w-xs">
+                                        <div className="text-xs font-medium mb-1">{t(ui, "allMachinesTitle")}</div>
+                                        <div className="flex flex-wrap gap-1">
+                                          {list.map((m) => (
+                                            <Badge key={m} variant="secondary" className="text-[10px] font-normal px-1.5 py-0 leading-tight">
+                                              {m}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </>
+                                )}
                               </div>
                             );
                           })()}
@@ -548,10 +600,35 @@ const Index = () => {
                   })}
                 </TableBody>
               </Table>
+              </TooltipProvider>
             </div>
           </Card>
         )}
       </main>
+
+      <AlertDialog open={showReloadDialog} onOpenChange={setShowReloadDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t(ui, "reloadPromptTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(ui, "reloadPromptDesc", { n: settings.pageSize })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowReloadDialog(false)}>
+              {t(ui, "cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowReloadDialog(false);
+                fetchItems();
+              }}
+            >
+              {t(ui, "reloadConfirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
