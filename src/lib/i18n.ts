@@ -401,6 +401,9 @@ const pl: Dict = {
   helperLang: "Język pomocniczy",
   helperCol: "Tłumaczenie pomocnicze",
   noneOption: "Brak",
+  helperContextLang: "Pomocniczy język kontekstu",
+  helperContextCol: "Pomocniczy kontekst",
+  helperExampleCol: "Pomocnicze przykładowe zdanie",
   cancel: "Anuluj",
 };
 
