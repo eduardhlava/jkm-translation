@@ -599,7 +599,7 @@ const Index = () => {
                     );
                   })}
                 </TableBody>
-              </Table>
+              </table>
               </TooltipProvider>
             </div>
           </Card>
