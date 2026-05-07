@@ -605,6 +605,30 @@ const Index = () => {
           </Card>
         )}
       </main>
+
+      <AlertDialog open={showReloadDialog} onOpenChange={setShowReloadDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t(ui, "reloadPromptTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(ui, "reloadPromptDesc", { n: settings.pageSize })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowReloadDialog(false)}>
+              {t(ui, "cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowReloadDialog(false);
+                fetchItems();
+              }}
+            >
+              {t(ui, "reloadConfirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
