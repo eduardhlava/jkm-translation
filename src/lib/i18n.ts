@@ -252,6 +252,10 @@ const en: Dict = {
   helperContextLang: "Helper context language",
   helperContextCol: "Helper context",
   helperExampleCol: "Helper example sentence",
+  reloadPromptTitle: "Settings changed",
+  reloadPromptDesc: "Do you want to reload {n} items with the new settings?",
+  reloadConfirm: "Reload",
+  allMachinesTitle: "All machines",
   cancel: "Cancel",
 };
 
