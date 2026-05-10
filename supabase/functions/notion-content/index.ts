@@ -405,13 +405,19 @@ Deno.serve(async (req) => {
       const html: string = body.html ?? "";
       if (!pageId) throw new Error("pageId is required");
 
-      // Delete all existing top-level children
+      // Delete all existing top-level children (parallel in batches to stay within timeout)
       const existing = await fetchBlockChildren(pageId, NOTION_API_KEY);
-      for (const b of existing) {
-        await fetch(`https://api.notion.com/v1/blocks/${b.id}`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${NOTION_API_KEY}`, "Notion-Version": NOTION_VERSION },
-        });
+      const CONCURRENCY = 10;
+      for (let i = 0; i < existing.length; i += CONCURRENCY) {
+        const batch = existing.slice(i, i + CONCURRENCY);
+        await Promise.all(
+          batch.map((b) =>
+            fetch(`https://api.notion.com/v1/blocks/${b.id}`, {
+              method: "DELETE",
+              headers: { Authorization: `Bearer ${NOTION_API_KEY}`, "Notion-Version": NOTION_VERSION },
+            }).catch((e) => console.error("delete block failed", b.id, e)),
+          ),
+        );
       }
 
       const newBlocks = htmlToBlocks(html);
