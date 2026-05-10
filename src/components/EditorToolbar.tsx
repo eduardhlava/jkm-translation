@@ -180,38 +180,38 @@ const EditorToolbar = ({ editor }: Props) => {
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-56 p-2 space-y-1" align="start" onMouseDown={stop}>
-          <Button variant="ghost" size="sm" className="w-full justify-start" onMouseDown={stop} onClick={insertTable} disabled={inTable}>
+          <Button variant="ghost" size="sm" className="w-full justify-start" onMouseDown={stop} onClick={insertTable}>
             <Plus className="w-3.5 h-3.5 mr-2" /> Vložit tabulku 3×3
           </Button>
           <div className="my-1 h-px bg-border" />
           <div className="text-xs font-medium text-muted-foreground px-2 pt-1">Řádky</div>
-          <Button variant="ghost" size="sm" className="w-full justify-start" disabled={!inTable} onMouseDown={stop} onClick={() => (editor.chain() as any).focus().addRowBefore().run()}>
+          <Button variant="ghost" size="sm" className="w-full justify-start" onMouseDown={stop} onClick={() => (editor.chain() as any).focus().addRowBefore().run()}>
             <ArrowUpToLine className="w-3.5 h-3.5 mr-2" /> Přidat nad
           </Button>
-          <Button variant="ghost" size="sm" className="w-full justify-start" disabled={!inTable} onMouseDown={stop} onClick={() => (editor.chain() as any).focus().addRowAfter().run()}>
+          <Button variant="ghost" size="sm" className="w-full justify-start" onMouseDown={stop} onClick={() => (editor.chain() as any).focus().addRowAfter().run()}>
             <ArrowDownToLine className="w-3.5 h-3.5 mr-2" /> Přidat pod
           </Button>
-          <Button variant="ghost" size="sm" className="w-full justify-start" disabled={!inTable} onMouseDown={stop} onClick={() => (editor.chain() as any).focus().deleteRow().run()}>
+          <Button variant="ghost" size="sm" className="w-full justify-start" onMouseDown={stop} onClick={() => (editor.chain() as any).focus().deleteRow().run()}>
             <Rows className="w-3.5 h-3.5 mr-2" /> Smazat řádek
           </Button>
           <div className="text-xs font-medium text-muted-foreground px-2 pt-1">Sloupce</div>
-          <Button variant="ghost" size="sm" className="w-full justify-start" disabled={!inTable} onMouseDown={stop} onClick={() => (editor.chain() as any).focus().addColumnBefore().run()}>
+          <Button variant="ghost" size="sm" className="w-full justify-start" onMouseDown={stop} onClick={() => (editor.chain() as any).focus().addColumnBefore().run()}>
             <ArrowLeftToLine className="w-3.5 h-3.5 mr-2" /> Přidat vlevo
           </Button>
-          <Button variant="ghost" size="sm" className="w-full justify-start" disabled={!inTable} onMouseDown={stop} onClick={() => (editor.chain() as any).focus().addColumnAfter().run()}>
+          <Button variant="ghost" size="sm" className="w-full justify-start" onMouseDown={stop} onClick={() => (editor.chain() as any).focus().addColumnAfter().run()}>
             <ArrowRightToLine className="w-3.5 h-3.5 mr-2" /> Přidat vpravo
           </Button>
-          <Button variant="ghost" size="sm" className="w-full justify-start" disabled={!inTable} onMouseDown={stop} onClick={() => (editor.chain() as any).focus().deleteColumn().run()}>
+          <Button variant="ghost" size="sm" className="w-full justify-start" onMouseDown={stop} onClick={() => (editor.chain() as any).focus().deleteColumn().run()}>
             <Columns className="w-3.5 h-3.5 mr-2" /> Smazat sloupec
           </Button>
           <div className="my-1 h-px bg-border" />
-          <Button variant="ghost" size="sm" className="w-full justify-start" disabled={!inTable} onMouseDown={stop} onClick={() => (editor.chain() as any).focus().toggleHeaderRow().run()}>
+          <Button variant="ghost" size="sm" className="w-full justify-start" onMouseDown={stop} onClick={() => (editor.chain() as any).focus().toggleHeaderRow().run()}>
             Přepnout hlavičku
           </Button>
-          <Button variant="ghost" size="sm" className="w-full justify-start" disabled={!inTable} onMouseDown={stop} onClick={() => (editor.chain() as any).focus().mergeOrSplit().run()}>
+          <Button variant="ghost" size="sm" className="w-full justify-start" onMouseDown={stop} onClick={() => (editor.chain() as any).focus().mergeOrSplit().run()}>
             Sloučit / rozdělit buňky
           </Button>
-          <Button variant="ghost" size="sm" className="w-full justify-start text-destructive" disabled={!inTable} onMouseDown={stop} onClick={() => (editor.chain() as any).focus().deleteTable().run()}>
+          <Button variant="ghost" size="sm" className="w-full justify-start text-destructive" onMouseDown={stop} onClick={() => (editor.chain() as any).focus().deleteTable().run()}>
             <Trash2 className="w-3.5 h-3.5 mr-2" /> Smazat tabulku
           </Button>
         </PopoverContent>
