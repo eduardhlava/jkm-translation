@@ -167,7 +167,7 @@ const Index = () => {
         body: {
           statusProperty: stProp,
           statusValue: settings.statusNew,
-          textProperties: [sourceProp, targetProp, ctxProp, exProp, stProp, MACHINE_PROP, ...(helperProp ? [helperProp] : []), ...(helperCtxProp ? [helperCtxProp] : []), ...(helperExProp ? [helperExProp] : [])],
+          textProperties: [sourceProp, targetProp, ctxProp, exProp, stProp, MACHINE_PROP, ...(helperProp ? [helperProp] : []), ...(helperStProp ? [helperStProp] : []), ...(helperCtxProp ? [helperCtxProp] : []), ...(helperExProp ? [helperExProp] : [])],
           pageSize: settings.pageSize,
           sortProperty: sourceProp,
           sortDirection: "ascending",
