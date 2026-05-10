@@ -291,8 +291,11 @@ const DocumentCreator = () => {
                               <a href={it.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="w-4 h-4" /></a>
                             </Button>
                             <Button size="sm" onClick={() => loadContent(it)} disabled={loadingContent}>
-                              {loadingContent && isActive ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
-                              Načíst obsah
+                              {loadingId === it.id ? (
+                                <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Načítám…</>
+                              ) : (
+                                <><Download className="w-4 h-4 mr-1" /> Načíst obsah</>
+                              )}
                             </Button>
                           </div>
                         </TableCell>
