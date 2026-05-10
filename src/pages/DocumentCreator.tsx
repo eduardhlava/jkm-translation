@@ -161,6 +161,8 @@ const DocumentCreator = () => {
   const saveToNotion = async () => {
     if (!activePage || !editor) return;
     setSaving(true);
+    setShowSaveNotice(true);
+    setTimeout(() => setShowSaveNotice(false), 10000);
     try {
       const html = editor.getHTML();
       const { data, error } = await supabase.functions.invoke("notion-content", {
@@ -168,7 +170,7 @@ const DocumentCreator = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast.success(`Uloženo do Notion (${data.count} bloků)`);
+      toast.success("Ukládání spuštěno na pozadí");
     } catch (e) {
       toast.error("Uložení selhalo", { description: e instanceof Error ? e.message : "" });
     } finally {
