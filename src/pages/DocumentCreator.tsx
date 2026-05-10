@@ -73,6 +73,7 @@ const DocumentCreator = () => {
   const [loadingContent, setLoadingContent] = useState(false);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [showSaveNotice, setShowSaveNotice] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
