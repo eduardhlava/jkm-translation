@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import Image from "@tiptap/extension-image";
+import ResizeImage from "tiptap-extension-resize-image";
 import { Link as LinkExt } from "@tiptap/extension-link";
 import { Table as TableExt } from "@tiptap/extension-table";
 import TableRowExt from "@tiptap/extension-table-row";
@@ -69,6 +69,7 @@ const DocumentCreator = () => {
   const [loading, setLoading] = useState(false);
   const [activePage, setActivePage] = useState<ContentItem | null>(null);
   const [loadingContent, setLoadingContent] = useState(false);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -76,7 +77,7 @@ const DocumentCreator = () => {
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Image,
+      ResizeImage,
       LinkExt.configure({ openOnClick: false, HTMLAttributes: { rel: "noopener", target: "_blank" } }),
       TableExt.configure({ resizable: true }),
       TableRowExt,
@@ -134,6 +135,7 @@ const DocumentCreator = () => {
 
   const loadContent = async (item: ContentItem) => {
     setLoadingContent(true);
+    setLoadingId(item.id);
     try {
       const { data, error } = await supabase.functions.invoke("notion-content", {
         body: { action: "get", pageId: item.id },
@@ -147,6 +149,7 @@ const DocumentCreator = () => {
       toast.error("Načtení obsahu selhalo", { description: e instanceof Error ? e.message : "" });
     } finally {
       setLoadingContent(false);
+      setLoadingId(null);
     }
   };
 
@@ -288,8 +291,11 @@ const DocumentCreator = () => {
                               <a href={it.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="w-4 h-4" /></a>
                             </Button>
                             <Button size="sm" onClick={() => loadContent(it)} disabled={loadingContent}>
-                              {loadingContent && isActive ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
-                              Načíst obsah
+                              {loadingId === it.id ? (
+                                <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Načítám…</>
+                              ) : (
+                                <><Download className="w-4 h-4 mr-1" /> Načíst obsah</>
+                              )}
                             </Button>
                           </div>
                         </TableCell>
@@ -304,8 +310,8 @@ const DocumentCreator = () => {
 
         {/* Editor */}
         {activePage && (
-          <Card className="overflow-hidden">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-muted/30 px-4 py-2">
+          <Card className="overflow-hidden flex flex-col" style={{ height: "calc(100vh - 90px)" }}>
+            <div className="flex-shrink-0 flex flex-wrap items-center justify-between gap-2 border-b bg-muted/30 px-4 py-2">
               <div className="flex items-center gap-2 text-sm">
                 <Button variant="ghost" size="sm" onClick={() => setActivePage(null)}>
                   ← Zpět na seznam
@@ -326,8 +332,10 @@ const DocumentCreator = () => {
                 </Button>
               </div>
             </div>
-            <EditorToolbar editor={editor} />
-            <div className="bg-background">
+            <div className="flex-shrink-0">
+              <EditorToolbar editor={editor} />
+            </div>
+            <div className="flex-1 min-h-0 overflow-auto bg-background">
               <EditorContent editor={editor} />
             </div>
           </Card>
