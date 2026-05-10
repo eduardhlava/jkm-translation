@@ -78,10 +78,12 @@ const DocumentCreator = () => {
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
-      ResizeImage,
+      StarterKit.configure({ link: false } as any),
+      TextStyle,
+      Color,
+      Image.configure({ inline: false, allowBase64: true, HTMLAttributes: { class: "max-w-full h-auto" } }),
       LinkExt.configure({ openOnClick: false, HTMLAttributes: { rel: "noopener", target: "_blank" } }),
-      TableExt.configure({ resizable: true }),
+      TableExt.configure({ resizable: true, HTMLAttributes: { class: "tiptap-table" } }),
       TableRowExt,
       TableHeaderExt,
       TableCellExt,
