@@ -7,6 +7,7 @@ import Index from "./pages/Index.tsx";
 import Settings from "./pages/Settings.tsx";
 import Auth from "./pages/Auth.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import DocumentCreator from "./pages/DocumentCreator.tsx";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,14 @@ const App = () => (
             element={
               <ProtectedRoute requireAdmin>
                 <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/document-creator"
+            element={
+              <ProtectedRoute requireAdmin>
+                <DocumentCreator />
               </ProtectedRoute>
             }
           />
