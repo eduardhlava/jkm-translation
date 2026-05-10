@@ -405,38 +405,47 @@ Deno.serve(async (req) => {
       const html: string = body.html ?? "";
       if (!pageId) throw new Error("pageId is required");
 
-      // Delete all existing top-level children (parallel in batches to stay within timeout)
-      const existing = await fetchBlockChildren(pageId, NOTION_API_KEY);
-      const CONCURRENCY = 10;
-      for (let i = 0; i < existing.length; i += CONCURRENCY) {
-        const batch = existing.slice(i, i + CONCURRENCY);
-        await Promise.all(
-          batch.map((b) =>
-            fetch(`https://api.notion.com/v1/blocks/${b.id}`, {
-              method: "DELETE",
-              headers: { Authorization: `Bearer ${NOTION_API_KEY}`, "Notion-Version": NOTION_VERSION },
-            }).catch((e) => console.error("delete block failed", b.id, e)),
-          ),
-        );
-      }
-
       const newBlocks = htmlToBlocks(html);
-      // Append in chunks of 100 (Notion limit)
-      for (let i = 0; i < newBlocks.length; i += 100) {
-        const chunk = newBlocks.slice(i, i + 100);
-        const res = await fetch(`https://api.notion.com/v1/blocks/${pageId}/children`, {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${NOTION_API_KEY}`,
-            "Notion-Version": NOTION_VERSION,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ children: chunk }),
-        });
-        if (!res.ok) throw new Error(`Notion append failed [${res.status}]: ${await res.text()}`);
-      }
-      return new Response(JSON.stringify({ ok: true, count: newBlocks.length }), {
-        status: 200,
+
+      // Run delete + append in background to avoid 150s idle timeout on large pages.
+      const work = (async () => {
+        try {
+          const existing = await fetchBlockChildren(pageId, NOTION_API_KEY);
+          const CONCURRENCY = 25;
+          for (let i = 0; i < existing.length; i += CONCURRENCY) {
+            const batch = existing.slice(i, i + CONCURRENCY);
+            await Promise.all(
+              batch.map((b) =>
+                fetch(`https://api.notion.com/v1/blocks/${b.id}`, {
+                  method: "DELETE",
+                  headers: { Authorization: `Bearer ${NOTION_API_KEY}`, "Notion-Version": NOTION_VERSION },
+                }).catch((e) => console.error("delete block failed", b.id, e)),
+              ),
+            );
+          }
+          for (let i = 0; i < newBlocks.length; i += 100) {
+            const chunk = newBlocks.slice(i, i + 100);
+            const res = await fetch(`https://api.notion.com/v1/blocks/${pageId}/children`, {
+              method: "PATCH",
+              headers: {
+                Authorization: `Bearer ${NOTION_API_KEY}`,
+                "Notion-Version": NOTION_VERSION,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ children: chunk }),
+            });
+            if (!res.ok) console.error(`Notion append failed [${res.status}]: ${await res.text()}`);
+          }
+          console.log("notion save completed", pageId, newBlocks.length);
+        } catch (e) {
+          console.error("notion save background error", e);
+        }
+      })();
+      // @ts-ignore EdgeRuntime is provided by Supabase edge runtime
+      if (typeof EdgeRuntime !== "undefined") EdgeRuntime.waitUntil(work);
+
+      return new Response(JSON.stringify({ ok: true, count: newBlocks.length, async: true }), {
+        status: 202,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
