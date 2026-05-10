@@ -259,52 +259,57 @@ const DocumentCreator = () => {
         </Card>
 
         {/* List */}
-        <Card className="p-0 overflow-hidden">
-          <div className="max-h-[40vh] overflow-auto">
-            <table className="w-full caption-bottom text-sm">
-              <TableHeader className="bg-muted/70 [&_tr]:border-b-0 [&>tr>th]:sticky [&>tr>th]:top-0 [&>tr>th]:z-20 [&>tr>th]:bg-muted">
-                <TableRow>
-                  {tableHeaders.map((h) => <TableHead key={h}>{h}</TableHead>)}
-                  <TableHead className="text-right">Akce</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items.length === 0 && (
-                  <TableRow><TableCell colSpan={tableHeaders.length + 1} className="text-center text-muted-foreground py-6">Žádné položky</TableCell></TableRow>
-                )}
-                {items.map((it) => {
-                  const isActive = activePage?.id === it.id;
-                  return (
-                    <TableRow key={it.id} className={isActive ? "bg-primary/5" : undefined}>
-                      {tableHeaders.map((h) => (
-                        <TableCell key={h} className={h === titleProp ? "font-medium" : "text-muted-foreground"}>
-                          {it.properties[h] || "—"}
+        {!activePage && (
+          <Card className="p-0 overflow-hidden">
+            <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 260px)" }}>
+              <table className="w-full caption-bottom text-sm">
+                <TableHeader className="bg-muted/70 [&_tr]:border-b-0 [&>tr>th]:sticky [&>tr>th]:top-0 [&>tr>th]:z-20 [&>tr>th]:bg-muted">
+                  <TableRow>
+                    {tableHeaders.map((h) => <TableHead key={h}>{h}</TableHead>)}
+                    <TableHead className="text-right">Akce</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {items.length === 0 && (
+                    <TableRow><TableCell colSpan={tableHeaders.length + 1} className="text-center text-muted-foreground py-6">Žádné položky</TableCell></TableRow>
+                  )}
+                  {items.map((it) => {
+                    const isActive = activePage?.id === it.id;
+                    return (
+                      <TableRow key={it.id} className={isActive ? "bg-primary/5" : undefined}>
+                        {tableHeaders.map((h) => (
+                          <TableCell key={h} className={h === titleProp ? "font-medium" : "text-muted-foreground"}>
+                            {it.properties[h] || "—"}
+                          </TableCell>
+                        ))}
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="sm" asChild>
+                              <a href={it.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="w-4 h-4" /></a>
+                            </Button>
+                            <Button size="sm" onClick={() => loadContent(it)} disabled={loadingContent}>
+                              {loadingContent && isActive ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
+                              Načíst obsah
+                            </Button>
+                          </div>
                         </TableCell>
-                      ))}
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm" asChild>
-                            <a href={it.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="w-4 h-4" /></a>
-                          </Button>
-                          <Button size="sm" onClick={() => loadContent(it)} disabled={loadingContent}>
-                            {loadingContent && isActive ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
-                            Načíst obsah
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </table>
-          </div>
-        </Card>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </table>
+            </div>
+          </Card>
+        )}
 
         {/* Editor */}
         {activePage && (
           <Card className="overflow-hidden">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-muted/30 px-4 py-2">
               <div className="flex items-center gap-2 text-sm">
+                <Button variant="ghost" size="sm" onClick={() => setActivePage(null)}>
+                  ← Zpět na seznam
+                </Button>
                 <FileText className="w-4 h-4 text-primary" />
                 <span className="font-medium">{activePage.properties[titleProp] || "(bez názvu)"}</span>
                 <a href={activePage.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
