@@ -106,6 +106,7 @@ const Index = () => {
   const sourceProp = propText(sourceLang);
   const targetProp = propText(targetLang);
   const helperProp = helperLang !== "__none__" ? propText(helperLang) : null;
+  const helperStProp = helperLang !== "__none__" ? propStatus(helperLang) : null;
   const ctxProp = propContext(contextLang);
   const exProp = propExample(contextLang);
   const helperCtxProp = helperCtxLang !== "__none__" ? propContext(helperCtxLang) : null;
