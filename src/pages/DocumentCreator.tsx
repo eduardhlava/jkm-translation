@@ -73,6 +73,7 @@ const DocumentCreator = () => {
   const [loadingContent, setLoadingContent] = useState(false);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [showSaveNotice, setShowSaveNotice] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -160,6 +161,8 @@ const DocumentCreator = () => {
   const saveToNotion = async () => {
     if (!activePage || !editor) return;
     setSaving(true);
+    setShowSaveNotice(true);
+    setTimeout(() => setShowSaveNotice(false), 10000);
     try {
       const html = editor.getHTML();
       const { data, error } = await supabase.functions.invoke("notion-content", {
@@ -167,7 +170,7 @@ const DocumentCreator = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast.success(`Uloženo do Notion (${data.count} bloků)`);
+      toast.success("Ukládání spuštěno na pozadí");
     } catch (e) {
       toast.error("Uložení selhalo", { description: e instanceof Error ? e.message : "" });
     } finally {
@@ -335,9 +338,9 @@ const DocumentCreator = () => {
                     {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
                     {saving ? "Ukládám…" : "Uložit do Notion"}
                   </Button>
-                  {saving && (
-                    <div className="mt-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground shadow-sm">
-                      Ukládání může trvat až 1–2 minuty
+                  {showSaveNotice && (
+                    <div className="mt-1 max-w-xs rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground shadow-sm">
+                      Ukládání probíhá na pozadí. Počkejte prosím 1–2 minuty a během této doby nezasahujte do obsahu v Notion.
                     </div>
                   )}
                 </div>
