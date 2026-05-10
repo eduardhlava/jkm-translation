@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import Image from "@tiptap/extension-image";
+import { ResizableImage } from "@/components/ResizableImage";
 import { Link as LinkExt } from "@tiptap/extension-link";
 import { Table as TableExt } from "@tiptap/extension-table";
 import TableRowExt from "@tiptap/extension-table-row";
@@ -81,21 +81,7 @@ const DocumentCreator = () => {
       StarterKit.configure({ link: false } as any),
       TextStyle,
       Color,
-      Image.extend({
-        addAttributes() {
-          return {
-            ...this.parent?.(),
-            width: {
-              default: null,
-              parseHTML: (el) => el.getAttribute("width") || (el as HTMLElement).style.width || null,
-              renderHTML: (attrs) => {
-                if (!attrs.width) return {};
-                return { width: attrs.width, style: `width: ${attrs.width}; height: auto;` };
-              },
-            },
-          };
-        },
-      }).configure({ inline: false, allowBase64: true, HTMLAttributes: { class: "max-w-full h-auto" } }),
+      ResizableImage.configure({ inline: false, allowBase64: true, HTMLAttributes: { class: "max-w-full h-auto" } }),
       LinkExt.configure({ openOnClick: false, HTMLAttributes: { rel: "noopener", target: "_blank" } }),
       TableExt.configure({ resizable: true, HTMLAttributes: { class: "tiptap-table" } }),
       TableRowExt,
