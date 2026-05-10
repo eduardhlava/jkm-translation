@@ -20,12 +20,14 @@ import {
 } from "@/components/ui/table";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import ResizeImage from "tiptap-extension-resize-image";
+import Image from "@tiptap/extension-image";
 import { Link as LinkExt } from "@tiptap/extension-link";
 import { Table as TableExt } from "@tiptap/extension-table";
 import TableRowExt from "@tiptap/extension-table-row";
 import TableCellExt from "@tiptap/extension-table-cell";
 import TableHeaderExt from "@tiptap/extension-table-header";
+import { TextStyle } from "@tiptap/extension-text-style";
+import { Color } from "@tiptap/extension-color";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -76,10 +78,12 @@ const DocumentCreator = () => {
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
-      ResizeImage,
+      StarterKit.configure({ link: false } as any),
+      TextStyle,
+      Color,
+      Image.configure({ inline: false, allowBase64: true, HTMLAttributes: { class: "max-w-full h-auto" } }),
       LinkExt.configure({ openOnClick: false, HTMLAttributes: { rel: "noopener", target: "_blank" } }),
-      TableExt.configure({ resizable: true }),
+      TableExt.configure({ resizable: true, HTMLAttributes: { class: "tiptap-table" } }),
       TableRowExt,
       TableHeaderExt,
       TableCellExt,
