@@ -297,6 +297,9 @@ const Index = () => {
               <h1 className="font-semibold leading-tight">{t(ui, "appName")}</h1>
               <p className="text-xs text-muted-foreground">{t(ui, "appTagline")}</p>
             </div>
+            <div className="hidden md:block ml-2">
+              <SectionSwitcher showCreator={isAdmin} />
+            </div>
           </div>
           <div className="flex items-center gap-3">
             {(profile?.full_name?.trim() || profile?.email) && (
