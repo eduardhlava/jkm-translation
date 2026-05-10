@@ -514,9 +514,20 @@ const Index = () => {
                         </TableCell>
                         {helperProp && (
                           <TableCell className="align-top whitespace-pre-wrap text-sm text-muted-foreground">
-                            {it.properties[helperProp] || (
-                              <span className="text-muted-foreground italic">—</span>
-                            )}
+                            <div className="flex items-start gap-1.5">
+                              {helperStProp && (() => {
+                                const st = (it.properties[helperStProp] || "").toLowerCase();
+                                if (st === "ke_kontrole") return <Hourglass className="w-3.5 h-3.5 mt-0.5 text-amber-600 shrink-0" aria-label="ke kontrole" />;
+                                if (st === "ověřeno") return <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 text-blue-600 shrink-0" aria-label="ověřeno" />;
+                                if (st === "zamítnuto") return <Ban className="w-3.5 h-3.5 mt-0.5 text-destructive shrink-0" aria-label="zamítnuto" />;
+                                return null;
+                              })()}
+                              <span className="flex-1">
+                                {it.properties[helperProp] || (
+                                  <span className="text-muted-foreground italic">—</span>
+                                )}
+                              </span>
+                            </div>
                           </TableCell>
                         )}
                         {helperCtxProp && (
