@@ -26,7 +26,7 @@ import { Table as TableExt } from "@tiptap/extension-table";
 import TableRowExt from "@tiptap/extension-table-row";
 import TableCellExt from "@tiptap/extension-table-cell";
 import TableHeaderExt from "@tiptap/extension-table-header";
-import TextStyle from "@tiptap/extension-text-style";
+import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
