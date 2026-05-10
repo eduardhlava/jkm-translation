@@ -310,8 +310,8 @@ const DocumentCreator = () => {
 
         {/* Editor */}
         {activePage && (
-          <Card className="overflow-hidden">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-muted/30 px-4 py-2">
+          <Card className="overflow-hidden flex flex-col" style={{ height: "calc(100vh - 90px)" }}>
+            <div className="flex-shrink-0 flex flex-wrap items-center justify-between gap-2 border-b bg-muted/30 px-4 py-2">
               <div className="flex items-center gap-2 text-sm">
                 <Button variant="ghost" size="sm" onClick={() => setActivePage(null)}>
                   ← Zpět na seznam
@@ -332,8 +332,10 @@ const DocumentCreator = () => {
                 </Button>
               </div>
             </div>
-            <EditorToolbar editor={editor} />
-            <div className="bg-background">
+            <div className="flex-shrink-0">
+              <EditorToolbar editor={editor} />
+            </div>
+            <div className="flex-1 min-h-0 overflow-auto bg-background">
               <EditorContent editor={editor} />
             </div>
           </Card>
