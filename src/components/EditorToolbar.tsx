@@ -43,7 +43,7 @@ const EditorToolbar = ({ editor }: Props) => {
     (editor.chain() as any).focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
 
   return (
-    <div className="flex flex-wrap items-center gap-1 border-b bg-muted/40 p-2 sticky top-0 z-10">
+    <div className="flex flex-wrap items-center gap-1 border-b bg-muted/40 p-2">
       <Button variant="ghost" size="icon" className={btn(editor.isActive("bold"))} onClick={() => (editor.chain() as any).focus().toggleBold().run()}><Bold className="w-4 h-4" /></Button>
       <Button variant="ghost" size="icon" className={btn(editor.isActive("italic"))} onClick={() => (editor.chain() as any).focus().toggleItalic().run()}><Italic className="w-4 h-4" /></Button>
       <Button variant="ghost" size="icon" className={btn(editor.isActive("strike"))} onClick={() => (editor.chain() as any).focus().toggleStrike().run()}><Strikethrough className="w-4 h-4" /></Button>
