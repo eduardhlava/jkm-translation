@@ -81,7 +81,21 @@ const DocumentCreator = () => {
       StarterKit.configure({ link: false } as any),
       TextStyle,
       Color,
-      Image.configure({ inline: false, allowBase64: true, HTMLAttributes: { class: "max-w-full h-auto" } }),
+      Image.extend({
+        addAttributes() {
+          return {
+            ...this.parent?.(),
+            width: {
+              default: null,
+              parseHTML: (el) => el.getAttribute("width") || (el as HTMLElement).style.width || null,
+              renderHTML: (attrs) => {
+                if (!attrs.width) return {};
+                return { width: attrs.width, style: `width: ${attrs.width}; height: auto;` };
+              },
+            },
+          };
+        },
+      }).configure({ inline: false, allowBase64: true, HTMLAttributes: { class: "max-w-full h-auto" } }),
       LinkExt.configure({ openOnClick: false, HTMLAttributes: { rel: "noopener", target: "_blank" } }),
       TableExt.configure({ resizable: true, HTMLAttributes: { class: "tiptap-table" } }),
       TableRowExt,
