@@ -135,6 +135,7 @@ const DocumentCreator = () => {
 
   const loadContent = async (item: ContentItem) => {
     setLoadingContent(true);
+    setLoadingId(item.id);
     try {
       const { data, error } = await supabase.functions.invoke("notion-content", {
         body: { action: "get", pageId: item.id },
@@ -148,6 +149,7 @@ const DocumentCreator = () => {
       toast.error("Načtení obsahu selhalo", { description: e instanceof Error ? e.message : "" });
     } finally {
       setLoadingContent(false);
+      setLoadingId(null);
     }
   };
 
