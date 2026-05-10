@@ -56,13 +56,13 @@ interface PropMeta {
   options?: string[];
 }
 
-const FILTER_PROPS = ["Jazyk", "Typ", "Stav", "Section", "Subsection"] as const;
+const FILTER_PROPS = ["jazyk", "typ", "stav", "section", "subsection"] as const;
 
 const DocumentCreator = () => {
   const { profile, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [schema, setSchema] = useState<Record<string, PropMeta>>({});
-  const [titleProp, setTitleProp] = useState<string>("Name");
+  const [titleProp, setTitleProp] = useState<string>("název");
   const [titleQuery, setTitleQuery] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [items, setItems] = useState<ContentItem[]>([]);
@@ -231,7 +231,7 @@ const DocumentCreator = () => {
         <Card className="p-4 space-y-3">
           <div className="flex flex-wrap items-end gap-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Jméno (obsahuje)</label>
+              <label className="text-xs font-medium text-muted-foreground">Název (obsahuje)</label>
               <Input value={titleQuery} onChange={(e) => setTitleQuery(e.target.value)} className="w-56" placeholder="Hledat…" />
             </div>
             {FILTER_PROPS.map((prop) => {
