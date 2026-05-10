@@ -81,7 +81,21 @@ const DocumentCreator = () => {
       StarterKit.configure({ link: false } as any),
       TextStyle,
       Color,
-      Image.configure({ inline: false, allowBase64: true, HTMLAttributes: { class: "max-w-full h-auto" } }),
+      Image.extend({
+        addAttributes() {
+          return {
+            ...this.parent?.(),
+            width: {
+              default: null,
+              parseHTML: (el) => el.getAttribute("width") || (el as HTMLElement).style.width || null,
+              renderHTML: (attrs) => {
+                if (!attrs.width) return {};
+                return { width: attrs.width, style: `width: ${attrs.width}; height: auto;` };
+              },
+            },
+          };
+        },
+      }).configure({ inline: false, allowBase64: true, HTMLAttributes: { class: "max-w-full h-auto" } }),
       LinkExt.configure({ openOnClick: false, HTMLAttributes: { rel: "noopener", target: "_blank" } }),
       TableExt.configure({ resizable: true, HTMLAttributes: { class: "tiptap-table" } }),
       TableRowExt,
@@ -327,13 +341,20 @@ const DocumentCreator = () => {
                 </a>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={previewPdf}>
+                <Button variant="outline" size="sm" onClick={previewPdf} disabled={saving}>
                   <Eye className="w-4 h-4 mr-1" /> Náhled PDF
                 </Button>
-                <Button size="sm" onClick={saveToNotion} disabled={saving}>
-                  {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
-                  Uložit do Notion
-                </Button>
+                <div className="flex flex-col items-end">
+                  <Button size="sm" onClick={saveToNotion} disabled={saving}>
+                    {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
+                    {saving ? "Ukládám…" : "Uložit do Notion"}
+                  </Button>
+                  {saving && (
+                    <div className="mt-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground shadow-sm">
+                      Ukládání může trvat až 1–2 minuty
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex-shrink-0">
