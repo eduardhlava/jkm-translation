@@ -179,7 +179,7 @@ const DocumentCreator = () => {
     const opt = {
       margin: [15, 15, 15, 15] as [number, number, number, number],
       filename: `${activePage?.properties[titleProp] || "dokument"}.pdf`,
-      image: { type: "jpeg", quality: 0.95 },
+      image: { type: "jpeg" as const, quality: 0.95 },
       html2canvas: { scale: 2, useCORS: true },
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" as const },
       pagebreak: { mode: ["avoid-all", "css", "legacy"] },
