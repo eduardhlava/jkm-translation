@@ -428,18 +428,31 @@ Deno.serve(async (req) => {
               ),
             );
           }
-          for (let i = 0; i < newBlocks.length; i += 100) {
-            const chunk = newBlocks.slice(i, i + 100);
-            const res = await fetch(`https://api.notion.com/v1/blocks/${pageId}/children`, {
+          const appendChildren = async (children: any[]) => {
+            const r = await fetch(`https://api.notion.com/v1/blocks/${pageId}/children`, {
               method: "PATCH",
               headers: {
                 Authorization: `Bearer ${NOTION_API_KEY}`,
                 "Notion-Version": NOTION_VERSION,
                 "Content-Type": "application/json",
               },
-              body: JSON.stringify({ children: chunk }),
+              body: JSON.stringify({ children }),
             });
-            if (!res.ok) console.error(`Notion append failed [${res.status}]: ${await res.text()}`);
+            return r;
+          };
+          const CHUNK = 50;
+          for (let i = 0; i < newBlocks.length; i += CHUNK) {
+            const chunk = newBlocks.slice(i, i + CHUNK);
+            const res = await appendChildren(chunk);
+            if (!res.ok) {
+              const errTxt = await res.text();
+              console.error(`Notion append chunk failed [${res.status}] at ${i}: ${errTxt}`);
+              // Fallback: append one-by-one to skip only the offending block
+              for (const single of chunk) {
+                const r2 = await appendChildren([single]);
+                if (!r2.ok) console.error(`skip block: ${await r2.text()}`, JSON.stringify(single).slice(0, 300));
+              }
+            }
           }
           console.log("notion save completed", pageId, newBlocks.length);
         } catch (e) {
