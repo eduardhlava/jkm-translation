@@ -76,7 +76,7 @@ const DocumentCreator = () => {
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Image,
+      ResizeImage,
       LinkExt.configure({ openOnClick: false, HTMLAttributes: { rel: "noopener", target: "_blank" } }),
       TableExt.configure({ resizable: true }),
       TableRowExt,
