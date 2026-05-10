@@ -159,7 +159,12 @@ async function blocksToHtml(blocks: any[], apiKey: string): Promise<string> {
 // ---------- HTML -> Notion blocks (basic, regex-based to avoid DOM dep) ----------
 function textToRich(text: string): any[] {
   if (!text) return [];
-  return [{ type: "text", text: { content: text } }];
+  const MAX = 2000; // Notion per-segment limit
+  const out: any[] = [];
+  for (let i = 0; i < text.length; i += MAX) {
+    out.push({ type: "text", text: { content: text.slice(i, i + MAX) } });
+  }
+  return out;
 }
 
 // Strip inline tags into plain text + simple annotations. For simplicity store as a single rich text run per block.
