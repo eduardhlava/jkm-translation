@@ -36,6 +36,14 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/document-creator"
+            element={
+              <ProtectedRoute requireAdmin>
+                <DocumentCreator />
+              </ProtectedRoute>
+            }
+          />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
