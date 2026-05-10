@@ -338,9 +338,9 @@ const DocumentCreator = () => {
                     {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
                     {saving ? "Ukládám…" : "Uložit do Notion"}
                   </Button>
-                  {saving && (
-                    <div className="mt-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground shadow-sm">
-                      Ukládání může trvat až 1–2 minuty
+                  {showSaveNotice && (
+                    <div className="mt-1 max-w-xs rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground shadow-sm">
+                      Ukládání probíhá na pozadí. Počkejte prosím 1–2 minuty a během této doby nezasahujte do obsahu v Notion.
                     </div>
                   )}
                 </div>
