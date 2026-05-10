@@ -36,6 +36,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import jkLogo from "@/assets/jk-machinery-logo.png";
+import SectionSwitcher from "@/components/SectionSwitcher";
 import {
   CheckCircle2,
   Check,
