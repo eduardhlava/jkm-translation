@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import Image from "@tiptap/extension-image";
+import ResizeImage from "tiptap-extension-resize-image";
 import { Link as LinkExt } from "@tiptap/extension-link";
 import { Table as TableExt } from "@tiptap/extension-table";
 import TableRowExt from "@tiptap/extension-table-row";
