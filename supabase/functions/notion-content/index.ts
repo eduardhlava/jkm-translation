@@ -817,6 +817,7 @@ Deno.serve(async (req) => {
         const batch = newBlocks.slice(cursor, cursor + SAVE_APPEND_BATCH_SIZE);
         let nextAfter = after;
         if (batch.length) {
+          await mirrorBlockImages(batch);
           const requestBody: any = { children: batch };
           if (nextAfter) requestBody.after = nextAfter;
           const res = await notionWrite(`https://api.notion.com/v1/blocks/${pageId}/children`, {
