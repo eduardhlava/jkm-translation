@@ -457,6 +457,7 @@ const Index = () => {
                         <Lock className="inline w-3 h-3 ml-1 text-muted-foreground" />
                       )}
                     </TableHead>
+                    <TableHead className="w-[10%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "statusCol")}</TableHead>
                     <TableHead className="w-[12%] text-foreground font-semibold uppercase tracking-wide text-xs py-3 bg-primary/5">{t(ui, "contextCol")} ({langLabel(contextLang)})</TableHead>
                     <TableHead className="w-[14%] text-foreground font-semibold uppercase tracking-wide text-xs py-3 bg-primary/5">{t(ui, "exampleCol")} ({langLabel(contextLang)})</TableHead>
                     {helperProp && (
@@ -485,7 +486,6 @@ const Index = () => {
                         </Select>
                       </div>
                     </TableHead>
-                    <TableHead className="w-[10%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "statusCol")}</TableHead>
                     {isAdmin && <TableHead className="w-[6%]" />}
                   </TableRow>
                 </TableHeader>
