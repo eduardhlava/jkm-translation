@@ -657,7 +657,7 @@ Deno.serve(async (req) => {
       const expected = blocksFingerprint(newBlocks);
       const existing = await fetchBlockChildren(pageId, NOTION_API_KEY);
       await mapWithConcurrency(existing, 3, (b) =>
-        await notionWrite(`https://api.notion.com/v1/blocks/${b.id}`, {
+        notionWrite(`https://api.notion.com/v1/blocks/${b.id}`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${NOTION_API_KEY}`, "Notion-Version": NOTION_VERSION },
         }, `delete block ${b.id}`)
