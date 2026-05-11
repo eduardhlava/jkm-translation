@@ -665,43 +665,81 @@ Deno.serve(async (req) => {
       const pageId: string = body.pageId;
       const html: string = body.html ?? "";
       const doc = body.doc as TiptapNode | undefined;
+      const phase = (body.phase ?? "delete") as "delete" | "append" | "verify";
+      const cursor = Math.max(0, Number(body.cursor ?? 0) || 0);
+      const after = typeof body.after === "string" ? body.after : undefined;
       if (!pageId) throw new Error("pageId is required");
 
       const newBlocks = doc ? tiptapDocToBlocks(doc) : htmlToBlocks(html);
-
       const expected = blocksFingerprint(newBlocks);
-      const existing = await fetchBlockChildren(pageId, NOTION_API_KEY);
-      await mapWithConcurrency(existing, 3, (b) => deleteBlock(b.id, NOTION_API_KEY));
 
-      let after: string | undefined;
-      const batches = chunk(newBlocks, 100);
-      for (let i = 0; i < batches.length; i++) {
-        const requestBody: any = { children: batches[i] };
-        if (after) requestBody.after = after;
-        const res = await notionWrite(`https://api.notion.com/v1/blocks/${pageId}/children`, {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${NOTION_API_KEY}`,
-            "Notion-Version": NOTION_VERSION,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestBody),
-        }, `append block batch ${i + 1}/${batches.length}`);
-        const saved = await res.json();
-        after = saved.results?.[saved.results.length - 1]?.id ?? after;
+      if (phase === "delete") {
+        const existing = await fetchBlockChildren(pageId, NOTION_API_KEY);
+        const deleteSlice = existing.slice(cursor, cursor + SAVE_DELETE_BATCH_SIZE);
+        await mapWithConcurrency(deleteSlice, 3, (b) => deleteBlock(b.id, NOTION_API_KEY));
+        const nextCursor = cursor + deleteSlice.length;
+        const complete = nextCursor >= existing.length;
+        return new Response(JSON.stringify({
+          ok: true,
+          phase: complete ? "append" : "delete",
+          cursor: complete ? 0 : nextCursor,
+          total: existing.length,
+          processed: nextCursor,
+          count: newBlocks.length,
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
 
-      const actual = await notionBlocksFingerprint(await fetchBlockChildren(pageId, NOTION_API_KEY), NOTION_API_KEY);
-      if (actual !== expected) {
-        console.error("notion save verification mismatch", { pageId, expectedLength: expected.length, actualLength: actual.length });
-        throw new Error("Saved Notion content does not match editor content");
+      if (phase === "append") {
+        const batch = newBlocks.slice(cursor, cursor + SAVE_APPEND_BATCH_SIZE);
+        let nextAfter = after;
+        if (batch.length) {
+          const requestBody: any = { children: batch };
+          if (nextAfter) requestBody.after = nextAfter;
+          const res = await notionWrite(`https://api.notion.com/v1/blocks/${pageId}/children`, {
+            method: "PATCH",
+            headers: {
+              Authorization: `Bearer ${NOTION_API_KEY}`,
+              "Notion-Version": NOTION_VERSION,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestBody),
+          }, `append block slice ${cursor + 1}-${cursor + batch.length}/${newBlocks.length}`);
+          const saved = await res.json();
+          nextAfter = saved.results?.[saved.results.length - 1]?.id ?? nextAfter;
+        }
+        const nextCursor = cursor + batch.length;
+        const complete = nextCursor >= newBlocks.length;
+        return new Response(JSON.stringify({
+          ok: true,
+          phase: complete ? "verify" : "append",
+          cursor: complete ? 0 : nextCursor,
+          after: nextAfter,
+          total: newBlocks.length,
+          processed: nextCursor,
+          count: newBlocks.length,
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
-      console.log("notion save completed and verified", { pageId, blocks: newBlocks.length, batches: batches.length });
 
-      return new Response(JSON.stringify({ ok: true, count: newBlocks.length, async: false }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      if (phase === "verify") {
+        const actual = await notionBlocksFingerprint(await fetchBlockChildren(pageId, NOTION_API_KEY), NOTION_API_KEY);
+        if (actual !== expected) {
+          console.error("notion save verification mismatch", { pageId, expectedLength: expected.length, actualLength: actual.length });
+          throw new Error("Saved Notion content does not match editor content");
+        }
+        console.log("notion save completed and verified", { pageId, blocks: newBlocks.length });
+        return new Response(JSON.stringify({ ok: true, phase: "done", count: newBlocks.length, async: false }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      throw new Error(`Unknown save phase: ${phase}`);
     }
 
     throw new Error(`Unknown action: ${action}`);
