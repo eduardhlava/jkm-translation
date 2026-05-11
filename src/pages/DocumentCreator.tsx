@@ -186,6 +186,7 @@ const DocumentCreator = () => {
       toast.error("Uložení selhalo", { description: e instanceof Error ? e.message : "" });
     } finally {
       setSaving(false);
+      setShowSaveNotice(false);
     }
   };
 
