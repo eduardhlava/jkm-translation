@@ -74,7 +74,7 @@ async function fetchBlockChildren(blockId: string, apiKey: string): Promise<any[
       },
     }, "blocks fetch");
     const data = await res.json();
-    all.push(...(data.results ?? []));
+    all.push(...(data.results ?? []).filter((b: any) => !b.archived && !b.in_trash));
     cursor = data.has_more ? data.next_cursor : undefined;
   } while (cursor);
   return all;
