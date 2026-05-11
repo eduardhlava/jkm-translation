@@ -306,29 +306,37 @@ function htmlToBlocks(html: string): any[] {
         break;
       }
       case "img": {
-        const srcMatch = /src\s*=\s*"([^"]+)"/i.exec(attrs);
-        if (srcMatch) {
+        const src = getAttr(attrs, "src");
+        const alt = getAttr(attrs, "alt") ?? "";
+        if (src && isNotionExternalImageUrl(src)) {
           blocks.push({
             object: "block",
             type: "image",
-            image: { type: "external", external: { url: srcMatch[1] } },
+            image: { type: "external", external: { url: src }, caption: alt ? textToRich(alt) : [] },
           });
+        } else if (src) {
+          blocks.push(imageFallbackParagraph(src, alt));
         }
         break;
       }
       case "figure": {
-        const srcMatch = /src\s*=\s*"([^"]+)"/i.exec(inner);
+        const imgMatch = /<img\b([^>]*)>/i.exec(inner);
+        const src = imgMatch ? getAttr(imgMatch[1], "src") : null;
+        const alt = imgMatch ? getAttr(imgMatch[1], "alt") ?? "" : "";
         const capMatch = /<figcaption[^>]*>([\s\S]*?)<\/figcaption>/i.exec(inner);
-        if (srcMatch) {
+        const caption = capMatch ? stripTags(capMatch[1]) : alt;
+        if (src && isNotionExternalImageUrl(src)) {
           blocks.push({
             object: "block",
             type: "image",
             image: {
               type: "external",
-              external: { url: srcMatch[1] },
-              caption: capMatch ? textToRich(stripTags(capMatch[1])) : [],
+              external: { url: src },
+              caption: caption ? textToRich(caption) : [],
             },
           });
+        } else if (src) {
+          blocks.push(imageFallbackParagraph(src, caption));
         }
         break;
       }
