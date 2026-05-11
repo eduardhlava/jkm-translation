@@ -51,6 +51,7 @@ import {
   Settings as SettingsIcon,
   Hourglass,
   Ban,
+  ArrowRight,
 } from "lucide-react";
 import {
   AlertDialog,
