@@ -522,6 +522,29 @@ function blocksFingerprint(blocks: any[]): string {
   return blocks.map(blockPlain).join("\n").replace(/\s+/g, " ").trim();
 }
 
+async function notionBlocksFingerprint(blocks: any[], apiKey: string): Promise<string> {
+  const tables = blocks.filter((b) => b.type === "table");
+  const tableRows = new Map<string, any[]>();
+  const fetchedRows = await mapWithConcurrency(tables, 6, (b) => fetchBlockChildren(b.id, apiKey));
+  tables.forEach((b, i) => tableRows.set(b.id, fetchedRows[i] ?? []));
+
+  return blocks
+    .map((block) => {
+      const type = block.type;
+      if (type === "table") {
+        return `table:${(tableRows.get(block.id) ?? [])
+          .filter((row: any) => row.type === "table_row")
+          .map((row: any) => (row.table_row?.cells ?? []).map((cell: any) => richPlain(cell)).join("|"))
+          .join("/")}`;
+      }
+      const data = block[type] ?? {};
+      return `${type}:${richPlain(data.rich_text ?? data.caption ?? [])}`;
+    })
+    .join("\n")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 // ---------- Handler ----------
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
