@@ -114,8 +114,25 @@ function chunk<T>(items: T[], size: number): T[][] {
   return out;
 }
 
+async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T, index: number) => Promise<R>): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let next = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (next < items.length) {
+      const index = next++;
+      results[index] = await fn(items[index], index);
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
+
 async function blocksToHtml(blocks: any[], apiKey: string): Promise<string> {
   const out: string[] = [];
+  const tables = blocks.filter((b) => b.type === "table");
+  const tableRows = new Map<string, any[]>();
+  const fetchedTableRows = await mapWithConcurrency(tables, 6, (b) => fetchBlockChildren(b.id, apiKey));
+  tables.forEach((b, i) => tableRows.set(b.id, fetchedTableRows[i] ?? []));
   let listBuffer: { type: "ul" | "ol"; items: string[] } | null = null;
   const flushList = () => {
     if (listBuffer) {
