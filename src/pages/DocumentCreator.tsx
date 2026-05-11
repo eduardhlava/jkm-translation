@@ -162,7 +162,6 @@ const DocumentCreator = () => {
     if (!activePage || !editor) return;
     setSaving(true);
     setShowSaveNotice(true);
-    setTimeout(() => setShowSaveNotice(false), 10000);
     try {
       const html = editor.getHTML();
       const doc = editor.getJSON();
@@ -187,6 +186,7 @@ const DocumentCreator = () => {
       toast.error("Uložení selhalo", { description: e instanceof Error ? e.message : "" });
     } finally {
       setSaving(false);
+      setShowSaveNotice(false);
     }
   };
 
