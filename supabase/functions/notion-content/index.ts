@@ -656,12 +656,12 @@ Deno.serve(async (req) => {
 
       const expected = blocksFingerprint(newBlocks);
       const existing = await fetchBlockChildren(pageId, NOTION_API_KEY);
-      for (const b of existing) {
+      await mapWithConcurrency(existing, 3, (b) =>
         await notionWrite(`https://api.notion.com/v1/blocks/${b.id}`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${NOTION_API_KEY}`, "Notion-Version": NOTION_VERSION },
-        }, `delete block ${b.id}`);
-      }
+        }, `delete block ${b.id}`)
+      );
 
       let after: string | undefined;
       const batches = chunk(newBlocks, 100);
@@ -681,8 +681,7 @@ Deno.serve(async (req) => {
         after = saved.results?.[saved.results.length - 1]?.id ?? after;
       }
 
-      const savedHtml = await blocksToHtml(await fetchBlockChildren(pageId, NOTION_API_KEY), NOTION_API_KEY);
-      const actual = blocksFingerprint(htmlToBlocks(savedHtml));
+      const actual = await notionBlocksFingerprint(await fetchBlockChildren(pageId, NOTION_API_KEY), NOTION_API_KEY);
       if (actual !== expected) {
         console.error("notion save verification mismatch", { pageId, expectedLength: expected.length, actualLength: actual.length });
         throw new Error("Saved Notion content does not match editor content");
