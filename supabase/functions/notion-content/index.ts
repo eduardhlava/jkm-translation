@@ -330,6 +330,7 @@ async function mirrorImageToStorage(url: string): Promise<string> {
     method: "POST",
     headers: {
       Authorization: `Bearer ${SERVICE_KEY}`,
+      apikey: SERVICE_KEY,
       "Content-Type": ct ?? "application/octet-stream",
       "x-upsert": "true",
       "Cache-Control": "public, max-age=31536000, immutable",
