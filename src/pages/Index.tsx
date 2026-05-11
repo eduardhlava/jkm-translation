@@ -515,13 +515,13 @@ const Index = () => {
                           <Button
                             key={`btn-${it.id}-${confirmPulse[it.id] ?? 0}`}
                             variant={st === "translated" ? "default" : "outline"}
-                            size="sm"
+                            size="icon"
                             onClick={() => toggleStatus(it.id)}
                             disabled={!canEditTarget}
-                            className={`w-full transition-colors ${confirmPulse[it.id] ? "animate-confirm-pop" : ""} ${st === "translated" ? "bg-success text-success-foreground hover:bg-success/90" : ""}`}
+                            className={`h-8 w-8 p-0 transition-colors ${confirmPulse[it.id] ? "animate-confirm-pop" : ""} ${st === "translated" ? "bg-success text-success-foreground hover:bg-success/90" : ""}`}
                           >
                             {st === "translated" ? (
-                              <><CheckCircle2 className="w-4 h-4 mr-1" />{t(ui, "translated")}</>
+                              <CheckCircle2 className="w-4 h-4" />
                             ) : (
                               <ArrowRight className="w-4 h-4" />
                             )}
