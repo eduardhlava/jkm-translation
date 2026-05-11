@@ -240,6 +240,117 @@ function imageFallbackParagraph(src: string, caption = ""): any {
   };
 }
 
+type TiptapNode = {
+  type?: string;
+  text?: string;
+  attrs?: Record<string, any>;
+  content?: TiptapNode[];
+};
+
+function tiptapText(nodes: TiptapNode[] = []): string {
+  return nodes
+    .map((node) => {
+      if (node.type === "text") return node.text ?? "";
+      if (node.type === "hardBreak") return "\n";
+      if (node.type === "image") return node.attrs?.alt || node.attrs?.title || "";
+      return tiptapText(node.content ?? []);
+    })
+    .join("")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n[ \t]+/g, "\n")
+    .trim();
+}
+
+function imageBlockFromSrc(src: string | undefined, caption = ""): any | null {
+  if (!src) return null;
+  if (!isNotionExternalImageUrl(src)) return imageFallbackParagraph(src, caption);
+  return {
+    object: "block",
+    type: "image",
+    image: {
+      type: "external",
+      external: { url: src },
+      caption: caption ? textToRich(caption) : [],
+    },
+  };
+}
+
+function listItemToBlocks(node: TiptapNode, itemType: "bulleted_list_item" | "numbered_list_item"): any[] {
+  const out: any[] = [];
+  const primaryText = (node.content ?? [])
+    .filter((child) => child.type !== "bulletList" && child.type !== "orderedList")
+    .map((child) => tiptapText(child.content ?? []))
+    .filter(Boolean)
+    .join("\n");
+
+  out.push({
+    object: "block",
+    type: itemType,
+    [itemType]: { rich_text: textToRich(primaryText) },
+  });
+
+  for (const child of node.content ?? []) {
+    if (child.type === "bulletList" || child.type === "orderedList") out.push(...tiptapNodeToBlocks(child));
+  }
+  return out;
+}
+
+function tiptapNodeToBlocks(node: TiptapNode): any[] {
+  const type = node.type;
+  switch (type) {
+    case "doc":
+      return (node.content ?? []).flatMap(tiptapNodeToBlocks);
+    case "heading": {
+      const level = Math.min(3, Math.max(1, Number(node.attrs?.level ?? 1)));
+      return [{ object: "block", type: `heading_${level}`, [`heading_${level}`]: { rich_text: textToRich(tiptapText(node.content)) } }];
+    }
+    case "paragraph":
+      return [{ object: "block", type: "paragraph", paragraph: { rich_text: textToRich(tiptapText(node.content)) } }];
+    case "blockquote":
+      return [{ object: "block", type: "quote", quote: { rich_text: textToRich(tiptapText(node.content)) } }];
+    case "codeBlock":
+      return [{ object: "block", type: "code", code: { rich_text: textToRich(tiptapText(node.content)), language: "plain text" } }];
+    case "horizontalRule":
+      return [{ object: "block", type: "divider", divider: {} }];
+    case "image": {
+      const block = imageBlockFromSrc(node.attrs?.src, node.attrs?.alt || node.attrs?.title || "");
+      return block ? [block] : [];
+    }
+    case "bulletList":
+    case "orderedList": {
+      const itemType = type === "bulletList" ? "bulleted_list_item" : "numbered_list_item";
+      return (node.content ?? []).flatMap((child) => child.type === "listItem" ? listItemToBlocks(child, itemType) : tiptapNodeToBlocks(child));
+    }
+    case "table": {
+      const rows = (node.content ?? []).filter((row) => row.type === "tableRow");
+      if (!rows.length) return [];
+      const matrix = rows.map((row) => (row.content ?? []).map((cell) => tiptapText(cell.content ?? [])));
+      const width = Math.max(1, ...matrix.map((row) => row.length));
+      return [{
+        object: "block",
+        type: "table",
+        table: {
+          table_width: width,
+          has_column_header: rows[0]?.content?.some((cell) => cell.type === "tableHeader") ?? false,
+          has_row_header: false,
+          children: matrix.map((row) => ({
+            object: "block",
+            type: "table_row",
+            table_row: { cells: Array.from({ length: width }, (_, i) => textToRich(row[i] ?? "")) },
+          })),
+        },
+      }];
+    }
+    default:
+      return (node.content ?? []).flatMap(tiptapNodeToBlocks);
+  }
+}
+
+function tiptapDocToBlocks(doc: TiptapNode | null | undefined): any[] {
+  if (!doc || typeof doc !== "object") return [];
+  return tiptapNodeToBlocks(doc);
+}
+
 function decodeHtml(s: string): string {
   return s
     .replace(/&nbsp;/g, " ")
