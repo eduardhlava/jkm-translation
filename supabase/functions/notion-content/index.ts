@@ -67,18 +67,45 @@ async function fetchBlockChildren(blockId: string, apiKey: string): Promise<any[
     const url = new URL(`https://api.notion.com/v1/blocks/${blockId}/children`);
     url.searchParams.set("page_size", "100");
     if (cursor) url.searchParams.set("start_cursor", cursor);
-    const res = await fetch(url, {
+    const res = await notionFetch(url.toString(), {
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Notion-Version": NOTION_VERSION,
       },
-    });
-    if (!res.ok) throw new Error(`Notion blocks fetch failed [${res.status}]: ${await res.text()}`);
+    }, "blocks fetch");
     const data = await res.json();
     all.push(...(data.results ?? []));
     cursor = data.has_more ? data.next_cursor : undefined;
   } while (cursor);
   return all;
+}
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function notionFetch(url: string, init: RequestInit, context: string): Promise<Response> {
+  let lastError = "";
+  for (let attempt = 0; attempt < 6; attempt++) {
+    try {
+      const res = await fetch(url, init);
+      if (res.ok) return res;
+      const text = await res.text();
+      lastError = `Notion ${context} failed [${res.status}]: ${text}`;
+      if (![429, 500, 502, 503, 504].includes(res.status)) throw new Error(lastError);
+      const retryAfter = Number(res.headers.get("retry-after"));
+      await wait(Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : Math.min(8000, 600 * 2 ** attempt));
+    } catch (e) {
+      lastError = e instanceof Error ? e.message : String(e);
+      if (attempt === 5) break;
+      await wait(Math.min(8000, 600 * 2 ** attempt));
+    }
+  }
+  throw new Error(lastError || `Notion ${context} failed`);
+}
+
+async function notionWrite(url: string, init: RequestInit, context: string): Promise<Response> {
+  const res = await notionFetch(url, init, context);
+  await wait(350); // Respect Notion's write rate limit and preserve deterministic order.
+  return res;
 }
 
 async function blocksToHtml(blocks: any[], apiKey: string): Promise<string> {
@@ -167,18 +194,39 @@ function textToRich(text: string): any[] {
   return out;
 }
 
-// Strip inline tags into plain text + simple annotations. For simplicity store as a single rich text run per block.
-function stripTags(html: string): string {
-  return html
-    .replace(/<br\s*\/?>(?!\n)/gi, "\n")
-    .replace(/<\/p>/gi, "\n")
-    .replace(/<[^>]+>/g, "")
+function richPlain(rich: any[] = []): string {
+  return rich.map((r: any) => r.plain_text ?? r.text?.content ?? "").join("");
+}
+
+function getAttr(attrs: string, name: string): string | null {
+  const re = new RegExp(`${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, "i");
+  const m = re.exec(attrs);
+  return m ? (m[1] ?? m[2] ?? m[3] ?? null) : null;
+}
+
+function decodeHtml(s: string): string {
+  return s
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
-    .trim();
+    .replace(/&#39;/g, "'");
+}
+
+// Strip inline tags into plain text + simple annotations. For simplicity store as a single rich text run per block.
+function stripTags(html: string): string {
+  return decodeHtml(html
+    .replace(/<br\s*\/?>(?!\n)/gi, "\n")
+    .replace(/<\/p>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/\s+\n/g, "\n")
+    .replace(/\n\s+/g, "\n")
+    .split("\n")
+    .map((line) => line.replace(/[ \t]+/g, " ").trim())
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim());
 }
 
 function htmlToBlocks(html: string): any[] {
@@ -304,6 +352,21 @@ function htmlToBlocks(html: string): any[] {
   return blocks;
 }
 
+function blockPlain(block: any): string {
+  const type = block.type;
+  if (type === "table") {
+    return `table:${(block.table.children ?? [])
+      .map((row: any) => (row.table_row?.cells ?? []).map((cell: any) => richPlain(cell)).join("|"))
+      .join("/")}`;
+  }
+  const data = block[type] ?? {};
+  return `${type}:${richPlain(data.rich_text ?? data.caption ?? [])}`;
+}
+
+function blocksFingerprint(blocks: any[]): string {
+  return blocks.map(blockPlain).join("\n").replace(/\s+/g, " ").trim();
+}
+
 // ---------- Handler ----------
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -415,46 +478,39 @@ Deno.serve(async (req) => {
       // Run delete + append in background to avoid 150s idle timeout on large pages.
       const work = (async () => {
         try {
+          const expected = blocksFingerprint(newBlocks);
           const existing = await fetchBlockChildren(pageId, NOTION_API_KEY);
-          const CONCURRENCY = 25;
-          for (let i = 0; i < existing.length; i += CONCURRENCY) {
-            const batch = existing.slice(i, i + CONCURRENCY);
-            await Promise.all(
-              batch.map((b) =>
-                fetch(`https://api.notion.com/v1/blocks/${b.id}`, {
-                  method: "DELETE",
-                  headers: { Authorization: `Bearer ${NOTION_API_KEY}`, "Notion-Version": NOTION_VERSION },
-                }).catch((e) => console.error("delete block failed", b.id, e)),
-              ),
-            );
+          for (const b of existing) {
+            await notionWrite(`https://api.notion.com/v1/blocks/${b.id}`, {
+              method: "DELETE",
+              headers: { Authorization: `Bearer ${NOTION_API_KEY}`, "Notion-Version": NOTION_VERSION },
+            }, `delete block ${b.id}`);
           }
-          const appendChildren = async (children: any[]) => {
-            const r = await fetch(`https://api.notion.com/v1/blocks/${pageId}/children`, {
+
+          let after: string | undefined;
+          for (let i = 0; i < newBlocks.length; i++) {
+            const body: any = { children: [newBlocks[i]] };
+            if (after) body.after = after;
+            const res = await notionWrite(`https://api.notion.com/v1/blocks/${pageId}/children`, {
               method: "PATCH",
               headers: {
                 Authorization: `Bearer ${NOTION_API_KEY}`,
                 "Notion-Version": NOTION_VERSION,
                 "Content-Type": "application/json",
               },
-              body: JSON.stringify({ children }),
-            });
-            return r;
-          };
-          const CHUNK = 50;
-          for (let i = 0; i < newBlocks.length; i += CHUNK) {
-            const chunk = newBlocks.slice(i, i + CHUNK);
-            const res = await appendChildren(chunk);
-            if (!res.ok) {
-              const errTxt = await res.text();
-              console.error(`Notion append chunk failed [${res.status}] at ${i}: ${errTxt}`);
-              // Fallback: append one-by-one to skip only the offending block
-              for (const single of chunk) {
-                const r2 = await appendChildren([single]);
-                if (!r2.ok) console.error(`skip block: ${await r2.text()}`, JSON.stringify(single).slice(0, 300));
-              }
-            }
+              body: JSON.stringify(body),
+            }, `append block ${i + 1}/${newBlocks.length}`);
+            const saved = await res.json();
+            after = saved.results?.[saved.results.length - 1]?.id ?? after;
           }
-          console.log("notion save completed", pageId, newBlocks.length);
+
+          const savedHtml = await blocksToHtml(await fetchBlockChildren(pageId, NOTION_API_KEY), NOTION_API_KEY);
+          const actual = blocksFingerprint(htmlToBlocks(savedHtml));
+          if (actual !== expected) {
+            console.error("notion save verification mismatch", { pageId, expectedLength: expected.length, actualLength: actual.length });
+            throw new Error("Saved Notion content does not match editor content");
+          }
+          console.log("notion save completed and verified", pageId, newBlocks.length);
         } catch (e) {
           console.error("notion save background error", e);
         }
