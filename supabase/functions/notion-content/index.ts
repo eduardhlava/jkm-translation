@@ -74,7 +74,7 @@ async function fetchBlockChildren(blockId: string, apiKey: string): Promise<any[
       },
     }, "blocks fetch");
     const data = await res.json();
-    all.push(...(data.results ?? []));
+    all.push(...(data.results ?? []).filter((b: any) => !b.archived && !b.in_trash));
     cursor = data.has_more ? data.next_cursor : undefined;
   } while (cursor);
   return all;
@@ -106,6 +106,19 @@ async function notionWrite(url: string, init: RequestInit, context: string): Pro
   const res = await notionFetch(url, init, context);
   await wait(280); // Respect Notion's write rate limit while keeping large saves under the edge limit.
   return res;
+}
+
+async function deleteBlock(blockId: string, apiKey: string): Promise<void> {
+  try {
+    await notionWrite(`https://api.notion.com/v1/blocks/${blockId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${apiKey}`, "Notion-Version": NOTION_VERSION },
+    }, `delete block ${blockId}`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes("archived")) return;
+    throw error;
+  }
 }
 
 function chunk<T>(items: T[], size: number): T[][] {
@@ -238,6 +251,117 @@ function imageFallbackParagraph(src: string, caption = ""): any {
     type: "paragraph",
     paragraph: { rich_text: textToRich(text) },
   };
+}
+
+type TiptapNode = {
+  type?: string;
+  text?: string;
+  attrs?: Record<string, any>;
+  content?: TiptapNode[];
+};
+
+function tiptapText(nodes: TiptapNode[] = []): string {
+  return nodes
+    .map((node) => {
+      if (node.type === "text") return node.text ?? "";
+      if (node.type === "hardBreak") return "\n";
+      if (node.type === "image") return node.attrs?.alt || node.attrs?.title || "";
+      return tiptapText(node.content ?? []);
+    })
+    .join("")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n[ \t]+/g, "\n")
+    .trim();
+}
+
+function imageBlockFromSrc(src: string | undefined, caption = ""): any | null {
+  if (!src) return null;
+  if (!isNotionExternalImageUrl(src)) return imageFallbackParagraph(src, caption);
+  return {
+    object: "block",
+    type: "image",
+    image: {
+      type: "external",
+      external: { url: src },
+      caption: caption ? textToRich(caption) : [],
+    },
+  };
+}
+
+function listItemToBlocks(node: TiptapNode, itemType: "bulleted_list_item" | "numbered_list_item"): any[] {
+  const out: any[] = [];
+  const primaryText = (node.content ?? [])
+    .filter((child) => child.type !== "bulletList" && child.type !== "orderedList")
+    .map((child) => tiptapText(child.content ?? []))
+    .filter(Boolean)
+    .join("\n");
+
+  out.push({
+    object: "block",
+    type: itemType,
+    [itemType]: { rich_text: textToRich(primaryText) },
+  });
+
+  for (const child of node.content ?? []) {
+    if (child.type === "bulletList" || child.type === "orderedList") out.push(...tiptapNodeToBlocks(child));
+  }
+  return out;
+}
+
+function tiptapNodeToBlocks(node: TiptapNode): any[] {
+  const type = node.type;
+  switch (type) {
+    case "doc":
+      return (node.content ?? []).flatMap(tiptapNodeToBlocks);
+    case "heading": {
+      const level = Math.min(3, Math.max(1, Number(node.attrs?.level ?? 1)));
+      return [{ object: "block", type: `heading_${level}`, [`heading_${level}`]: { rich_text: textToRich(tiptapText(node.content)) } }];
+    }
+    case "paragraph":
+      return [{ object: "block", type: "paragraph", paragraph: { rich_text: textToRich(tiptapText(node.content)) } }];
+    case "blockquote":
+      return [{ object: "block", type: "quote", quote: { rich_text: textToRich(tiptapText(node.content)) } }];
+    case "codeBlock":
+      return [{ object: "block", type: "code", code: { rich_text: textToRich(tiptapText(node.content)), language: "plain text" } }];
+    case "horizontalRule":
+      return [{ object: "block", type: "divider", divider: {} }];
+    case "image": {
+      const block = imageBlockFromSrc(node.attrs?.src, node.attrs?.alt || node.attrs?.title || "");
+      return block ? [block] : [];
+    }
+    case "bulletList":
+    case "orderedList": {
+      const itemType = type === "bulletList" ? "bulleted_list_item" : "numbered_list_item";
+      return (node.content ?? []).flatMap((child) => child.type === "listItem" ? listItemToBlocks(child, itemType) : tiptapNodeToBlocks(child));
+    }
+    case "table": {
+      const rows = (node.content ?? []).filter((row) => row.type === "tableRow");
+      if (!rows.length) return [];
+      const matrix = rows.map((row) => (row.content ?? []).map((cell) => tiptapText(cell.content ?? [])));
+      const width = Math.max(1, ...matrix.map((row) => row.length));
+      return [{
+        object: "block",
+        type: "table",
+        table: {
+          table_width: width,
+          has_column_header: rows[0]?.content?.some((cell) => cell.type === "tableHeader") ?? false,
+          has_row_header: false,
+          children: matrix.map((row) => ({
+            object: "block",
+            type: "table_row",
+            table_row: { cells: Array.from({ length: width }, (_, i) => textToRich(row[i] ?? "")) },
+          })),
+        },
+      }];
+    }
+    default:
+      return (node.content ?? []).flatMap(tiptapNodeToBlocks);
+  }
+}
+
+function tiptapDocToBlocks(doc: TiptapNode | null | undefined): any[] {
+  if (!doc || typeof doc !== "object") return [];
+  return tiptapNodeToBlocks(doc);
 }
 
 function decodeHtml(s: string): string {
@@ -411,6 +535,29 @@ function blocksFingerprint(blocks: any[]): string {
   return blocks.map(blockPlain).join("\n").replace(/\s+/g, " ").trim();
 }
 
+async function notionBlocksFingerprint(blocks: any[], apiKey: string): Promise<string> {
+  const tables = blocks.filter((b) => b.type === "table");
+  const tableRows = new Map<string, any[]>();
+  const fetchedRows = await mapWithConcurrency(tables, 6, (b) => fetchBlockChildren(b.id, apiKey));
+  tables.forEach((b, i) => tableRows.set(b.id, fetchedRows[i] ?? []));
+
+  return blocks
+    .map((block) => {
+      const type = block.type;
+      if (type === "table") {
+        return `table:${(tableRows.get(block.id) ?? [])
+          .filter((row: any) => row.type === "table_row")
+          .map((row: any) => (row.table_row?.cells ?? []).map((cell: any) => richPlain(cell)).join("|"))
+          .join("/")}`;
+      }
+      const data = block[type] ?? {};
+      return `${type}:${richPlain(data.rich_text ?? data.caption ?? [])}`;
+    })
+    .join("\n")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 // ---------- Handler ----------
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -515,18 +662,14 @@ Deno.serve(async (req) => {
     if (action === "save") {
       const pageId: string = body.pageId;
       const html: string = body.html ?? "";
+      const doc = body.doc as TiptapNode | undefined;
       if (!pageId) throw new Error("pageId is required");
 
-      const newBlocks = htmlToBlocks(html);
+      const newBlocks = doc ? tiptapDocToBlocks(doc) : htmlToBlocks(html);
 
       const expected = blocksFingerprint(newBlocks);
       const existing = await fetchBlockChildren(pageId, NOTION_API_KEY);
-      for (const b of existing) {
-        await notionWrite(`https://api.notion.com/v1/blocks/${b.id}`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${NOTION_API_KEY}`, "Notion-Version": NOTION_VERSION },
-        }, `delete block ${b.id}`);
-      }
+      await mapWithConcurrency(existing, 3, (b) => deleteBlock(b.id, NOTION_API_KEY));
 
       let after: string | undefined;
       const batches = chunk(newBlocks, 100);
@@ -546,8 +689,7 @@ Deno.serve(async (req) => {
         after = saved.results?.[saved.results.length - 1]?.id ?? after;
       }
 
-      const savedHtml = await blocksToHtml(await fetchBlockChildren(pageId, NOTION_API_KEY), NOTION_API_KEY);
-      const actual = blocksFingerprint(htmlToBlocks(savedHtml));
+      const actual = await notionBlocksFingerprint(await fetchBlockChildren(pageId, NOTION_API_KEY), NOTION_API_KEY);
       if (actual !== expected) {
         console.error("notion save verification mismatch", { pageId, expectedLength: expected.length, actualLength: actual.length });
         throw new Error("Saved Notion content does not match editor content");
