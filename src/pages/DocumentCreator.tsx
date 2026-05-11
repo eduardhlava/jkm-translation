@@ -165,12 +165,13 @@ const DocumentCreator = () => {
     setTimeout(() => setShowSaveNotice(false), 10000);
     try {
       const html = editor.getHTML();
+      const doc = editor.getJSON();
       const { data, error } = await supabase.functions.invoke("notion-content", {
-        body: { action: "save", pageId: activePage.id, html },
+        body: { action: "save", pageId: activePage.id, html, doc },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast.success("Ukládání spuštěno na pozadí");
+      toast.success("Obsah uložen a ověřen");
     } catch (e) {
       toast.error("Uložení selhalo", { description: e instanceof Error ? e.message : "" });
     } finally {
