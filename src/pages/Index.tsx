@@ -51,6 +51,7 @@ import {
   Settings as SettingsIcon,
   Hourglass,
   Ban,
+  ArrowRight,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -456,6 +457,7 @@ const Index = () => {
                         <Lock className="inline w-3 h-3 ml-1 text-muted-foreground" />
                       )}
                     </TableHead>
+                    <TableHead className="w-[10%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "statusCol")}</TableHead>
                     <TableHead className="w-[12%] text-foreground font-semibold uppercase tracking-wide text-xs py-3 bg-primary/5">{t(ui, "contextCol")} ({langLabel(contextLang)})</TableHead>
                     <TableHead className="w-[14%] text-foreground font-semibold uppercase tracking-wide text-xs py-3 bg-primary/5">{t(ui, "exampleCol")} ({langLabel(contextLang)})</TableHead>
                     {helperProp && (
@@ -484,7 +486,6 @@ const Index = () => {
                         </Select>
                       </div>
                     </TableHead>
-                    <TableHead className="w-[10%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "statusCol")}</TableHead>
                     {isAdmin && <TableHead className="w-[6%]" />}
                   </TableRow>
                 </TableHeader>
@@ -509,6 +510,22 @@ const Index = () => {
                             readOnly={!canEditTarget}
                             title={!canEditTarget ? t(ui, "readOnlyTranslation") : undefined}
                           />
+                        </TableCell>
+                        <TableCell className="align-top">
+                          <Button
+                            key={`btn-${it.id}-${confirmPulse[it.id] ?? 0}`}
+                            variant={st === "translated" ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => toggleStatus(it.id)}
+                            disabled={!canEditTarget}
+                            className={`w-full transition-colors ${confirmPulse[it.id] ? "animate-confirm-pop" : ""} ${st === "translated" ? "bg-success text-success-foreground hover:bg-success/90" : ""}`}
+                          >
+                            {st === "translated" ? (
+                              <><CheckCircle2 className="w-4 h-4 mr-1" />{t(ui, "translated")}</>
+                            ) : (
+                              <ArrowRight className="w-4 h-4" />
+                            )}
+                          </Button>
                         </TableCell>
                         <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground bg-primary/5">
                           {it.properties[ctxProp] || "—"}
@@ -583,22 +600,6 @@ const Index = () => {
                               </div>
                             );
                           })()}
-                        </TableCell>
-                        <TableCell className="align-top">
-                          <Button
-                            key={`btn-${it.id}-${confirmPulse[it.id] ?? 0}`}
-                            variant={st === "translated" ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => toggleStatus(it.id)}
-                            disabled={!canEditTarget}
-                            className={`w-full transition-colors ${confirmPulse[it.id] ? "animate-confirm-pop" : ""} ${st === "translated" ? "bg-success text-success-foreground hover:bg-success/90" : ""}`}
-                          >
-                            {st === "translated" ? (
-                              <><CheckCircle2 className="w-4 h-4 mr-1" />{t(ui, "translated")}</>
-                            ) : (
-                              t(ui, "confirm")
-                            )}
-                          </Button>
                         </TableCell>
                         {isAdmin && (
                           <TableCell className="align-top">
