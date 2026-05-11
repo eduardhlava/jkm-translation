@@ -259,6 +259,114 @@ function isNotionExternalImageUrl(src: string): boolean {
   return /^https?:\/\//i.test(src);
 }
 
+// ---------- Image mirroring to Supabase Storage ----------
+const IMAGE_BUCKET = "notion-images";
+
+function isNotionHostedImage(url: string): boolean {
+  try {
+    const u = new URL(url);
+    const h = u.hostname;
+    return (
+      h.endsWith("amazonaws.com") ||
+      h.endsWith("notion-static.com") ||
+      h.endsWith("notion.so") ||
+      h.endsWith("notion.site")
+    );
+  } catch {
+    return false;
+  }
+}
+
+function extFromContentType(ct: string | null): string {
+  if (!ct) return "bin";
+  const t = ct.toLowerCase();
+  if (t.includes("jpeg") || t.includes("jpg")) return "jpg";
+  if (t.includes("png")) return "png";
+  if (t.includes("webp")) return "webp";
+  if (t.includes("gif")) return "gif";
+  if (t.includes("svg")) return "svg";
+  return "bin";
+}
+
+async function sha1Hex(input: string): Promise<string> {
+  const data = new TextEncoder().encode(input);
+  const buf = await crypto.subtle.digest("SHA-1", data);
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+const mirrorCache = new Map<string, string>();
+
+async function mirrorImageToStorage(url: string): Promise<string> {
+  if (mirrorCache.has(url)) return mirrorCache.get(url)!;
+  const SUPA_URL = Deno.env.get("SUPABASE_URL");
+  const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!SUPA_URL || !SERVICE_KEY) throw new Error("Supabase storage env not configured");
+
+  // Normalize: strip query string for hashing so re-signed URLs map to same file
+  const u = new URL(url);
+  const normalized = `${u.origin}${u.pathname}`;
+  const key = await sha1Hex(normalized);
+
+  // Try to detect existing object first (HEAD)
+  for (const ext of ["jpg", "png", "webp", "gif", "svg", "bin"]) {
+    const path = `${key}.${ext}`;
+    const publicUrl = `${SUPA_URL}/storage/v1/object/public/${IMAGE_BUCKET}/${path}`;
+    const head = await fetch(publicUrl, { method: "HEAD" });
+    if (head.ok) {
+      mirrorCache.set(url, publicUrl);
+      return publicUrl;
+    }
+  }
+
+  // Download original
+  const dl = await fetch(url);
+  if (!dl.ok) throw new Error(`Image download failed [${dl.status}]: ${url}`);
+  const ct = dl.headers.get("content-type");
+  const ext = extFromContentType(ct);
+  const path = `${key}.${ext}`;
+  const bytes = new Uint8Array(await dl.arrayBuffer());
+
+  const upRes = await fetch(`${SUPA_URL}/storage/v1/object/${IMAGE_BUCKET}/${path}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${SERVICE_KEY}`,
+      "Content-Type": ct ?? "application/octet-stream",
+      "x-upsert": "true",
+      "Cache-Control": "public, max-age=31536000, immutable",
+    },
+    body: bytes,
+  });
+  if (!upRes.ok && upRes.status !== 409) {
+    throw new Error(`Image upload failed [${upRes.status}]: ${await upRes.text()}`);
+  }
+  const publicUrl = `${SUPA_URL}/storage/v1/object/public/${IMAGE_BUCKET}/${path}`;
+  mirrorCache.set(url, publicUrl);
+  return publicUrl;
+}
+
+async function mirrorBlockImages(blocks: any[]): Promise<void> {
+  const targets: any[] = [];
+  for (const b of blocks) {
+    if (b?.type === "image" && b.image?.type === "external") {
+      const src = b.image.external?.url;
+      if (src && isNotionHostedImage(src)) targets.push(b);
+    }
+  }
+  if (!targets.length) return;
+  await mapWithConcurrency(targets, 4, async (b) => {
+    try {
+      const newUrl = await mirrorImageToStorage(b.image.external.url);
+      b.image.external.url = newUrl;
+    } catch (err) {
+      console.error("mirror image failed, falling back to paragraph", err);
+      const caption = (b.image.caption ?? []).map((r: any) => r.plain_text ?? r.text?.content ?? "").join("");
+      const fallback = imageFallbackParagraph(b.image.external.url, caption || "[obrázek nelze uložit]");
+      Object.assign(b, fallback);
+      delete (b as any).image;
+    }
+  });
+}
+
 function imageFallbackParagraph(src: string, caption = ""): any {
   const text = caption || (src.startsWith("data:") ? "Obrázek vložený v editoru nelze uložit do Notion jako blok obrázku." : src);
   return {
