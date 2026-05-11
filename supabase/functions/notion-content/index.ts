@@ -11,6 +11,8 @@ const corsHeaders = {
 const NOTION_VERSION = "2022-06-28";
 // "Obsah" database ID extracted from the user-supplied URL
 const CONTENT_DB_ID = "5476ad70bdfb42eb905fe74db97627ae";
+const SAVE_DELETE_BATCH_SIZE = 36;
+const SAVE_APPEND_BATCH_SIZE = 50;
 
 function readPropText(prop: any): string {
   if (!prop) return "";
