@@ -675,10 +675,10 @@ Deno.serve(async (req) => {
 
       if (phase === "delete") {
         const existing = await fetchBlockChildren(pageId, NOTION_API_KEY);
-        const deleteSlice = existing.slice(cursor, cursor + SAVE_DELETE_BATCH_SIZE);
+        const deleteSlice = existing.slice(0, SAVE_DELETE_BATCH_SIZE);
         await mapWithConcurrency(deleteSlice, 3, (b) => deleteBlock(b.id, NOTION_API_KEY));
         const nextCursor = cursor + deleteSlice.length;
-        const complete = nextCursor >= existing.length;
+        const complete = deleteSlice.length >= existing.length;
         return new Response(JSON.stringify({
           ok: true,
           phase: complete ? "append" : "delete",
