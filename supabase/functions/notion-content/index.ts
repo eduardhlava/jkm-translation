@@ -82,6 +82,19 @@ async function fetchBlockChildren(blockId: string, apiKey: string): Promise<any[
   return all;
 }
 
+async function fetchBlockChildrenPage(blockId: string, apiKey: string, pageSize = 100): Promise<any[]> {
+  const url = new URL(`https://api.notion.com/v1/blocks/${blockId}/children`);
+  url.searchParams.set("page_size", String(pageSize));
+  const res = await notionFetch(url.toString(), {
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Notion-Version": NOTION_VERSION,
+    },
+  }, "blocks page fetch");
+  const data = await res.json();
+  return (data.results ?? []).filter((b: any) => !b.archived && !b.in_trash);
+}
+
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function notionFetch(url: string, init: RequestInit, context: string): Promise<Response> {
