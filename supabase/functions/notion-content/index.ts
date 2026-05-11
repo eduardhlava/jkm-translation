@@ -108,6 +108,19 @@ async function notionWrite(url: string, init: RequestInit, context: string): Pro
   return res;
 }
 
+async function deleteBlock(blockId: string, apiKey: string): Promise<void> {
+  try {
+    await notionWrite(`https://api.notion.com/v1/blocks/${blockId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${apiKey}`, "Notion-Version": NOTION_VERSION },
+    }, `delete block ${blockId}`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes("archived")) return;
+    throw error;
+  }
+}
+
 function chunk<T>(items: T[], size: number): T[][] {
   const out: T[][] = [];
   for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
@@ -656,12 +669,7 @@ Deno.serve(async (req) => {
 
       const expected = blocksFingerprint(newBlocks);
       const existing = await fetchBlockChildren(pageId, NOTION_API_KEY);
-      await mapWithConcurrency(existing, 3, (b) =>
-        notionWrite(`https://api.notion.com/v1/blocks/${b.id}`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${NOTION_API_KEY}`, "Notion-Version": NOTION_VERSION },
-        }, `delete block ${b.id}`)
-      );
+      await mapWithConcurrency(existing, 3, (b) => deleteBlock(b.id, NOTION_API_KEY));
 
       let after: string | undefined;
       const batches = chunk(newBlocks, 100);
