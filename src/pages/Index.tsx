@@ -511,6 +511,22 @@ const Index = () => {
                             title={!canEditTarget ? t(ui, "readOnlyTranslation") : undefined}
                           />
                         </TableCell>
+                        <TableCell className="align-top">
+                          <Button
+                            key={`btn-${it.id}-${confirmPulse[it.id] ?? 0}`}
+                            variant={st === "translated" ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => toggleStatus(it.id)}
+                            disabled={!canEditTarget}
+                            className={`w-full transition-colors ${confirmPulse[it.id] ? "animate-confirm-pop" : ""} ${st === "translated" ? "bg-success text-success-foreground hover:bg-success/90" : ""}`}
+                          >
+                            {st === "translated" ? (
+                              <><CheckCircle2 className="w-4 h-4 mr-1" />{t(ui, "translated")}</>
+                            ) : (
+                              <ArrowRight className="w-4 h-4" />
+                            )}
+                          </Button>
+                        </TableCell>
                         <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground bg-primary/5">
                           {it.properties[ctxProp] || "—"}
                         </TableCell>
