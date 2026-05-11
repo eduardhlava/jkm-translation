@@ -601,22 +601,6 @@ const Index = () => {
                             );
                           })()}
                         </TableCell>
-                        <TableCell className="align-top">
-                          <Button
-                            key={`btn-${it.id}-${confirmPulse[it.id] ?? 0}`}
-                            variant={st === "translated" ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => toggleStatus(it.id)}
-                            disabled={!canEditTarget}
-                            className={`w-full transition-colors ${confirmPulse[it.id] ? "animate-confirm-pop" : ""} ${st === "translated" ? "bg-success text-success-foreground hover:bg-success/90" : ""}`}
-                          >
-                            {st === "translated" ? (
-                              <><CheckCircle2 className="w-4 h-4 mr-1" />{t(ui, "translated")}</>
-                            ) : (
-                              t(ui, "confirm")
-                            )}
-                          </Button>
-                        </TableCell>
                         {isAdmin && (
                           <TableCell className="align-top">
                             <a
