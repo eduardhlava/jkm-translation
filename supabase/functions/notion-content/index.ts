@@ -104,8 +104,14 @@ async function notionFetch(url: string, init: RequestInit, context: string): Pro
 
 async function notionWrite(url: string, init: RequestInit, context: string): Promise<Response> {
   const res = await notionFetch(url, init, context);
-  await wait(350); // Respect Notion's write rate limit and preserve deterministic order.
+  await wait(280); // Respect Notion's write rate limit while keeping large saves under the edge limit.
   return res;
+}
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
 }
 
 async function blocksToHtml(blocks: any[], apiKey: string): Promise<string> {
