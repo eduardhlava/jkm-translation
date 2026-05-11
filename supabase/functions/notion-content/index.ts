@@ -183,7 +183,7 @@ async function blocksToHtml(blocks: any[], apiKey: string): Promise<string> {
         break;
       }
       case "table": {
-        const rows = await fetchBlockChildren(b.id, apiKey);
+        const rows = tableRows.get(b.id) ?? [];
         const hasHeader = b.table.has_column_header;
         const rowsHtml = rows
           .map((r: any, idx: number) => {
