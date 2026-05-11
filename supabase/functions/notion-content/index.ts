@@ -626,9 +626,10 @@ Deno.serve(async (req) => {
     if (action === "save") {
       const pageId: string = body.pageId;
       const html: string = body.html ?? "";
+      const doc = body.doc as TiptapNode | undefined;
       if (!pageId) throw new Error("pageId is required");
 
-      const newBlocks = htmlToBlocks(html);
+      const newBlocks = doc ? tiptapDocToBlocks(doc) : htmlToBlocks(html);
 
       const expected = blocksFingerprint(newBlocks);
       const existing = await fetchBlockChildren(pageId, NOTION_API_KEY);
