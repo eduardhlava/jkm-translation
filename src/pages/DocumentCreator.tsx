@@ -162,7 +162,6 @@ const DocumentCreator = () => {
     if (!activePage || !editor) return;
     setSaving(true);
     setShowSaveNotice(true);
-    setTimeout(() => setShowSaveNotice(false), 10000);
     try {
       const html = editor.getHTML();
       const doc = editor.getJSON();
