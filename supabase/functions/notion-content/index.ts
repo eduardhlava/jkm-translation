@@ -502,51 +502,43 @@ Deno.serve(async (req) => {
 
       const newBlocks = htmlToBlocks(html);
 
-      // Run delete + append in background to avoid 150s idle timeout on large pages.
-      const work = (async () => {
-        try {
-          const expected = blocksFingerprint(newBlocks);
-          const existing = await fetchBlockChildren(pageId, NOTION_API_KEY);
-          for (const b of existing) {
-            await notionWrite(`https://api.notion.com/v1/blocks/${b.id}`, {
-              method: "DELETE",
-              headers: { Authorization: `Bearer ${NOTION_API_KEY}`, "Notion-Version": NOTION_VERSION },
-            }, `delete block ${b.id}`);
-          }
+      const expected = blocksFingerprint(newBlocks);
+      const existing = await fetchBlockChildren(pageId, NOTION_API_KEY);
+      for (const b of existing) {
+        await notionWrite(`https://api.notion.com/v1/blocks/${b.id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${NOTION_API_KEY}`, "Notion-Version": NOTION_VERSION },
+        }, `delete block ${b.id}`);
+      }
 
-          let after: string | undefined;
-          for (let i = 0; i < newBlocks.length; i++) {
-            const body: any = { children: [newBlocks[i]] };
-            if (after) body.after = after;
-            const res = await notionWrite(`https://api.notion.com/v1/blocks/${pageId}/children`, {
-              method: "PATCH",
-              headers: {
-                Authorization: `Bearer ${NOTION_API_KEY}`,
-                "Notion-Version": NOTION_VERSION,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(body),
-            }, `append block ${i + 1}/${newBlocks.length}`);
-            const saved = await res.json();
-            after = saved.results?.[saved.results.length - 1]?.id ?? after;
-          }
+      let after: string | undefined;
+      const batches = chunk(newBlocks, 100);
+      for (let i = 0; i < batches.length; i++) {
+        const requestBody: any = { children: batches[i] };
+        if (after) requestBody.after = after;
+        const res = await notionWrite(`https://api.notion.com/v1/blocks/${pageId}/children`, {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${NOTION_API_KEY}`,
+            "Notion-Version": NOTION_VERSION,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestBody),
+        }, `append block batch ${i + 1}/${batches.length}`);
+        const saved = await res.json();
+        after = saved.results?.[saved.results.length - 1]?.id ?? after;
+      }
 
-          const savedHtml = await blocksToHtml(await fetchBlockChildren(pageId, NOTION_API_KEY), NOTION_API_KEY);
-          const actual = blocksFingerprint(htmlToBlocks(savedHtml));
-          if (actual !== expected) {
-            console.error("notion save verification mismatch", { pageId, expectedLength: expected.length, actualLength: actual.length });
-            throw new Error("Saved Notion content does not match editor content");
-          }
-          console.log("notion save completed and verified", pageId, newBlocks.length);
-        } catch (e) {
-          console.error("notion save background error", e);
-        }
-      })();
-      // @ts-ignore EdgeRuntime is provided by Supabase edge runtime
-      if (typeof EdgeRuntime !== "undefined") EdgeRuntime.waitUntil(work);
+      const savedHtml = await blocksToHtml(await fetchBlockChildren(pageId, NOTION_API_KEY), NOTION_API_KEY);
+      const actual = blocksFingerprint(htmlToBlocks(savedHtml));
+      if (actual !== expected) {
+        console.error("notion save verification mismatch", { pageId, expectedLength: expected.length, actualLength: actual.length });
+        throw new Error("Saved Notion content does not match editor content");
+      }
+      console.log("notion save completed and verified", { pageId, blocks: newBlocks.length, batches: batches.length });
 
-      return new Response(JSON.stringify({ ok: true, count: newBlocks.length, async: true }), {
-        status: 202,
+      return new Response(JSON.stringify({ ok: true, count: newBlocks.length, async: false }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
