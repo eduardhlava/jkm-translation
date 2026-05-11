@@ -104,8 +104,14 @@ async function notionFetch(url: string, init: RequestInit, context: string): Pro
 
 async function notionWrite(url: string, init: RequestInit, context: string): Promise<Response> {
   const res = await notionFetch(url, init, context);
-  await wait(350); // Respect Notion's write rate limit and preserve deterministic order.
+  await wait(280); // Respect Notion's write rate limit while keeping large saves under the edge limit.
   return res;
+}
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
 }
 
 async function blocksToHtml(blocks: any[], apiKey: string): Promise<string> {
@@ -204,6 +210,19 @@ function getAttr(attrs: string, name: string): string | null {
   return m ? (m[1] ?? m[2] ?? m[3] ?? null) : null;
 }
 
+function isNotionExternalImageUrl(src: string): boolean {
+  return /^https?:\/\//i.test(src);
+}
+
+function imageFallbackParagraph(src: string, caption = ""): any {
+  const text = caption || (src.startsWith("data:") ? "Obrázek vložený v editoru nelze uložit do Notion jako blok obrázku." : src);
+  return {
+    object: "block",
+    type: "paragraph",
+    paragraph: { rich_text: textToRich(text) },
+  };
+}
+
 function decodeHtml(s: string): string {
   return s
     .replace(/&nbsp;/g, " ")
@@ -287,29 +306,37 @@ function htmlToBlocks(html: string): any[] {
         break;
       }
       case "img": {
-        const srcMatch = /src\s*=\s*"([^"]+)"/i.exec(attrs);
-        if (srcMatch) {
+        const src = getAttr(attrs, "src");
+        const alt = getAttr(attrs, "alt") ?? "";
+        if (src && isNotionExternalImageUrl(src)) {
           blocks.push({
             object: "block",
             type: "image",
-            image: { type: "external", external: { url: srcMatch[1] } },
+            image: { type: "external", external: { url: src }, caption: alt ? textToRich(alt) : [] },
           });
+        } else if (src) {
+          blocks.push(imageFallbackParagraph(src, alt));
         }
         break;
       }
       case "figure": {
-        const srcMatch = /src\s*=\s*"([^"]+)"/i.exec(inner);
+        const imgMatch = /<img\b([^>]*)>/i.exec(inner);
+        const src = imgMatch ? getAttr(imgMatch[1], "src") : null;
+        const alt = imgMatch ? getAttr(imgMatch[1], "alt") ?? "" : "";
         const capMatch = /<figcaption[^>]*>([\s\S]*?)<\/figcaption>/i.exec(inner);
-        if (srcMatch) {
+        const caption = capMatch ? stripTags(capMatch[1]) : alt;
+        if (src && isNotionExternalImageUrl(src)) {
           blocks.push({
             object: "block",
             type: "image",
             image: {
               type: "external",
-              external: { url: srcMatch[1] },
-              caption: capMatch ? textToRich(stripTags(capMatch[1])) : [],
+              external: { url: src },
+              caption: caption ? textToRich(caption) : [],
             },
           });
+        } else if (src) {
+          blocks.push(imageFallbackParagraph(src, caption));
         }
         break;
       }
