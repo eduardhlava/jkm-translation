@@ -210,6 +210,19 @@ function getAttr(attrs: string, name: string): string | null {
   return m ? (m[1] ?? m[2] ?? m[3] ?? null) : null;
 }
 
+function isNotionExternalImageUrl(src: string): boolean {
+  return /^https?:\/\//i.test(src);
+}
+
+function imageFallbackParagraph(src: string, caption = ""): any {
+  const text = caption || (src.startsWith("data:") ? "Obrázek vložený v editoru nelze uložit do Notion jako blok obrázku." : src);
+  return {
+    object: "block",
+    type: "paragraph",
+    paragraph: { rich_text: textToRich(text) },
+  };
+}
+
 function decodeHtml(s: string): string {
   return s
     .replace(/&nbsp;/g, " ")
