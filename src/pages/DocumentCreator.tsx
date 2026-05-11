@@ -166,11 +166,22 @@ const DocumentCreator = () => {
     try {
       const html = editor.getHTML();
       const doc = editor.getJSON();
-      const { data, error } = await supabase.functions.invoke("notion-content", {
-        body: { action: "save", pageId: activePage.id, html, doc },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      let phase: "delete" | "append" | "verify" | "done" = "delete";
+      let cursor = 0;
+      let after: string | undefined;
+
+      for (let attempt = 0; attempt < 250 && phase !== "done"; attempt++) {
+        const { data, error } = await supabase.functions.invoke("notion-content", {
+          body: { action: "save", pageId: activePage.id, html, doc, phase, cursor, after },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        phase = data?.phase ?? "done";
+        cursor = data?.cursor ?? 0;
+        after = data?.after ?? after;
+      }
+
+      if (phase !== "done") throw new Error("Ukládání trvalo příliš dlouho, zkuste to prosím znovu.");
       toast.success("Obsah uložen a ověřen");
     } catch (e) {
       toast.error("Uložení selhalo", { description: e instanceof Error ? e.message : "" });
