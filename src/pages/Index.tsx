@@ -511,7 +511,7 @@ const Index = () => {
                             title={!canEditTarget ? t(ui, "readOnlyTranslation") : undefined}
                           />
                         </TableCell>
-                        <TableCell className="w-fit px-2 py-3 align-top text-center">
+                        <TableCell className="w-[1%] whitespace-nowrap px-2 py-3 align-top text-center">
                           <Button
                             key={`btn-${it.id}-${confirmPulse[it.id] ?? 0}`}
                             variant={st === "translated" ? "default" : "outline"}
