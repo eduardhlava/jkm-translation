@@ -457,7 +457,7 @@ const Index = () => {
                         <Lock className="inline w-3 h-3 ml-1 text-muted-foreground" />
                       )}
                     </TableHead>
-                    <TableHead className="w-12 px-2 text-center text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "statusCol")}</TableHead>
+                    <TableHead style={{ width: "60px", minWidth: "60px", maxWidth: "60px" }} className="px-2 text-center text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "statusCol")}</TableHead>
                     <TableHead className="w-[12%] text-foreground font-semibold uppercase tracking-wide text-xs py-3 bg-primary/5">{t(ui, "contextCol")} ({langLabel(contextLang)})</TableHead>
                     <TableHead className="w-[14%] text-foreground font-semibold uppercase tracking-wide text-xs py-3 bg-primary/5">{t(ui, "exampleCol")} ({langLabel(contextLang)})</TableHead>
                     {helperProp && (
@@ -511,7 +511,7 @@ const Index = () => {
                             title={!canEditTarget ? t(ui, "readOnlyTranslation") : undefined}
                           />
                         </TableCell>
-                        <TableCell className="w-12 px-2 align-top text-center">
+                        <TableCell style={{ width: "60px", minWidth: "60px", maxWidth: "60px" }} className="px-2 align-top text-center">
                           <Button
                             key={`btn-${it.id}-${confirmPulse[it.id] ?? 0}`}
                             variant={st === "translated" ? "default" : "outline"}
