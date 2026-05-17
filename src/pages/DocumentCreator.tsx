@@ -81,6 +81,8 @@ const DocumentCreator = () => {
   const [saving, setSaving] = useState(false);
   const [showSaveNotice, setShowSaveNotice] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
+  const [mode, setMode] = useState<EditorMode>("blocks");
+  const [blocks, setBlocks] = useState<Block[]>([]);
   const previewRef = useRef<HTMLDivElement>(null);
 
   const editor = useEditor({
