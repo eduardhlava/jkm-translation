@@ -412,7 +412,7 @@ const DocumentCreator = () => {
                 <div className="flex flex-col items-end">
                   <Button size="sm" onClick={saveToNotion} disabled={saving}>
                     {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
-                    {saving ? "Ukládám…" : "Uložit do Notion"}
+                    {saving ? "Exportuji…" : "Exportovat do Notion"}
                   </Button>
                   {showSaveNotice && (
                     <div className="mt-1 max-w-xs rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground shadow-sm">
