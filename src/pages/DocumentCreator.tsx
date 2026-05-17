@@ -197,11 +197,12 @@ const DocumentCreator = () => {
     setSaving(true);
     setShowSaveNotice(true);
     try {
+      // 1) In blocks mode: persist blocks + sync WYSIWYG first, then export
       const html = mode === "blocks" ? blocksToHtml(blocks) : editor.getHTML();
       const doc = mode === "blocks" ? undefined : editor.getJSON();
 
-      // Persist blocks structure (only meaningful in blocks mode; in wysiwyg, clear)
       if (mode === "blocks") {
+        editor.commands.setContent(html || "<p></p>");
         const { error: upErr } = await supabase
           .from("document_blocks")
           .upsert({ page_id: activePage.id, blocks: blocks as any }, { onConflict: "page_id" });
