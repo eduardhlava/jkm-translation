@@ -171,6 +171,27 @@ const DocumentCreator = () => {
     }
   };
 
+  const [savingDraft, setSavingDraft] = useState(false);
+
+  const saveDraft = async () => {
+    if (!activePage || !editor) return;
+    setSavingDraft(true);
+    try {
+      const html = blocksToHtml(blocks);
+      // Sync WYSIWYG with blocks for consistency
+      editor.commands.setContent(html || "<p></p>");
+      const { error } = await supabase
+        .from("document_blocks")
+        .upsert({ page_id: activePage.id, blocks: blocks as any }, { onConflict: "page_id" });
+      if (error) throw error;
+      toast.success("Uloženo do databáze aplikace");
+    } catch (e) {
+      toast.error("Uložení selhalo", { description: e instanceof Error ? e.message : "" });
+    } finally {
+      setSavingDraft(false);
+    }
+  };
+
   const saveToNotion = async () => {
     if (!activePage || !editor) return;
     setSaving(true);
@@ -414,6 +435,14 @@ const DocumentCreator = () => {
                 <div className="mx-auto max-w-4xl">
                   <BlockEditor blocks={blocks} onChange={setBlocks} />
                 </div>
+              </div>
+            )}
+            {mode === "blocks" && (
+              <div className="flex-shrink-0 flex items-center justify-end gap-2 border-t bg-muted/30 px-4 py-2">
+                <Button size="sm" onClick={saveDraft} disabled={savingDraft}>
+                  {savingDraft ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
+                  Uložit
+                </Button>
               </div>
             )}
           </Card>
