@@ -171,6 +171,27 @@ const DocumentCreator = () => {
     }
   };
 
+  const [savingDraft, setSavingDraft] = useState(false);
+
+  const saveDraft = async () => {
+    if (!activePage || !editor) return;
+    setSavingDraft(true);
+    try {
+      const html = blocksToHtml(blocks);
+      // Sync WYSIWYG with blocks for consistency
+      editor.commands.setContent(html || "<p></p>");
+      const { error } = await supabase
+        .from("document_blocks")
+        .upsert({ page_id: activePage.id, blocks: blocks as any }, { onConflict: "page_id" });
+      if (error) throw error;
+      toast.success("Uloženo do databáze aplikace");
+    } catch (e) {
+      toast.error("Uložení selhalo", { description: e instanceof Error ? e.message : "" });
+    } finally {
+      setSavingDraft(false);
+    }
+  };
+
   const saveToNotion = async () => {
     if (!activePage || !editor) return;
     setSaving(true);
