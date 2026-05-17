@@ -78,11 +78,18 @@ export function blockToHtml(b: Block): string {
       return `<table style="width:100%;border-collapse:collapse;border:1px solid #d1d5db;">${head}${body}</table>`;
     }
     case "alert":
-      return `<blockquote data-callout="alert">⚠️ ${escapeHtml(b.content.text)}</blockquote>`;
     case "info":
-      return `<blockquote data-callout="info">ℹ️ ${escapeHtml(b.content.text)}</blockquote>`;
-    case "warning":
-      return `<blockquote data-callout="warning">❗ ${escapeHtml(b.content.text)}</blockquote>`;
+    case "warning": {
+      const cfg = {
+        alert:   { icon: "⚠️", border: "#dc2626", bg: "#fef2f2" },
+        info:    { icon: "ℹ️", border: "#2563eb", bg: "#eff6ff" },
+        warning: { icon: "❗", border: "#d97706", bg: "#fffbeb" },
+      }[b.type];
+      const wrap = `style="display:flex;align-items:flex-start;gap:12px;border:1px solid ${cfg.border};background-color:${cfg.bg};border-left:4px solid ${cfg.border};border-radius:6px;padding:12px 14px;margin:8px 0;"`;
+      const iconS = `style="font-size:28px;line-height:1;flex-shrink:0;"`;
+      const textS = `style="flex:1;line-height:1.5;"`;
+      return `<blockquote data-callout="${b.type}" ${wrap}><span ${iconS}>${cfg.icon}</span><span ${textS}>${escapeHtml(b.content.text)}</span></blockquote>`;
+    }
   }
 }
 
