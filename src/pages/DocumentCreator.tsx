@@ -437,6 +437,14 @@ const DocumentCreator = () => {
                 </div>
               </div>
             )}
+            {mode === "blocks" && (
+              <div className="flex-shrink-0 flex items-center justify-end gap-2 border-t bg-muted/30 px-4 py-2">
+                <Button size="sm" onClick={saveDraft} disabled={savingDraft}>
+                  {savingDraft ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
+                  Uložit
+                </Button>
+              </div>
+            )}
           </Card>
         )}
       </main>
