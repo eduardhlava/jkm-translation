@@ -46,6 +46,12 @@ import {
 import jkLogo from "@/assets/jk-machinery-logo.png";
 import SectionSwitcher from "@/components/SectionSwitcher";
 import EditorToolbar from "@/components/EditorToolbar";
+import BlockEditor from "@/components/BlockEditor";
+import type { Block } from "@/components/BlockEditor/types";
+import { blocksToHtml } from "@/components/BlockEditor/serialize";
+import { Blocks, PencilLine } from "lucide-react";
+
+type EditorMode = "blocks" | "wysiwyg";
 
 interface ContentItem {
   id: string;
@@ -75,6 +81,8 @@ const DocumentCreator = () => {
   const [saving, setSaving] = useState(false);
   const [showSaveNotice, setShowSaveNotice] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
+  const [mode, setMode] = useState<EditorMode>("blocks");
+  const [blocks, setBlocks] = useState<Block[]>([]);
   const previewRef = useRef<HTMLDivElement>(null);
 
   const editor = useEditor({
@@ -142,12 +150,17 @@ const DocumentCreator = () => {
     setLoadingContent(true);
     setLoadingId(item.id);
     try {
-      const { data, error } = await supabase.functions.invoke("notion-content", {
-        body: { action: "get", pageId: item.id },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      editor?.commands.setContent(data.html || "<p></p>");
+      const [contentRes, blocksRes] = await Promise.all([
+        supabase.functions.invoke("notion-content", { body: { action: "get", pageId: item.id } }),
+        supabase.from("document_blocks").select("blocks").eq("page_id", item.id).maybeSingle(),
+      ]);
+      if (contentRes.error) throw contentRes.error;
+      if ((contentRes.data as any)?.error) throw new Error((contentRes.data as any).error);
+      editor?.commands.setContent((contentRes.data as any).html || "<p></p>");
+
+      const saved = ((blocksRes.data?.blocks as unknown) as Block[] | undefined) ?? [];
+      setBlocks(saved);
+      setMode(saved.length > 0 ? "blocks" : "wysiwyg");
       setActivePage(item);
       toast.success("Obsah načten");
     } catch (e) {
@@ -163,8 +176,17 @@ const DocumentCreator = () => {
     setSaving(true);
     setShowSaveNotice(true);
     try {
-      const html = editor.getHTML();
-      const doc = editor.getJSON();
+      const html = mode === "blocks" ? blocksToHtml(blocks) : editor.getHTML();
+      const doc = mode === "blocks" ? undefined : editor.getJSON();
+
+      // Persist blocks structure (only meaningful in blocks mode; in wysiwyg, clear)
+      if (mode === "blocks") {
+        const { error: upErr } = await supabase
+          .from("document_blocks")
+          .upsert({ page_id: activePage.id, blocks: blocks as any }, { onConflict: "page_id" });
+        if (upErr) throw upErr;
+      }
+
       let phase: "delete" | "append" | "verify" | "done" = "delete";
       let cursor = 0;
       let after: string | undefined;
@@ -342,6 +364,26 @@ const DocumentCreator = () => {
                 </a>
               </div>
               <div className="flex items-center gap-2">
+                <div className="flex items-center rounded-md border bg-background p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setMode("blocks")}
+                    className={`flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                      mode === "blocks" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
+                    }`}
+                  >
+                    <Blocks className="w-3.5 h-3.5" /> Bloky
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMode("wysiwyg")}
+                    className={`flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                      mode === "wysiwyg" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
+                    }`}
+                  >
+                    <PencilLine className="w-3.5 h-3.5" /> WYSIWYG
+                  </button>
+                </div>
                 <Button variant="outline" size="sm" onClick={previewPdf} disabled={saving}>
                   <Eye className="w-4 h-4 mr-1" /> Náhled PDF
                 </Button>
@@ -358,12 +400,22 @@ const DocumentCreator = () => {
                 </div>
               </div>
             </div>
-            <div className="flex-shrink-0">
-              <EditorToolbar editor={editor} />
-            </div>
-            <div className="flex-1 min-h-0 overflow-auto bg-background">
-              <EditorContent editor={editor} />
-            </div>
+            {mode === "wysiwyg" ? (
+              <>
+                <div className="flex-shrink-0">
+                  <EditorToolbar editor={editor} />
+                </div>
+                <div className="flex-1 min-h-0 overflow-auto bg-background">
+                  <EditorContent editor={editor} />
+                </div>
+              </>
+            ) : (
+              <div className="flex-1 min-h-0 overflow-auto bg-muted/20 p-4">
+                <div className="mx-auto max-w-4xl">
+                  <BlockEditor blocks={blocks} onChange={setBlocks} />
+                </div>
+              </div>
+            )}
           </Card>
         )}
       </main>
@@ -382,7 +434,7 @@ const DocumentCreator = () => {
             <div className="overflow-auto p-6 bg-muted/30">
               <div ref={previewRef} className="pdf-preview bg-white mx-auto shadow-md p-10" style={{ width: "210mm", minHeight: "297mm" }}>
                 <h1 className="text-2xl font-bold mb-4">{activePage?.properties[titleProp]}</h1>
-                <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: editor.getHTML() }} />
+                <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: mode === "blocks" ? blocksToHtml(blocks) : editor.getHTML() }} />
               </div>
             </div>
           </div>
