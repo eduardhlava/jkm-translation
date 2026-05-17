@@ -197,11 +197,12 @@ const DocumentCreator = () => {
     setSaving(true);
     setShowSaveNotice(true);
     try {
+      // 1) In blocks mode: persist blocks + sync WYSIWYG first, then export
       const html = mode === "blocks" ? blocksToHtml(blocks) : editor.getHTML();
       const doc = mode === "blocks" ? undefined : editor.getJSON();
 
-      // Persist blocks structure (only meaningful in blocks mode; in wysiwyg, clear)
       if (mode === "blocks") {
+        editor.commands.setContent(html || "<p></p>");
         const { error: upErr } = await supabase
           .from("document_blocks")
           .upsert({ page_id: activePage.id, blocks: blocks as any }, { onConflict: "page_id" });
@@ -411,7 +412,7 @@ const DocumentCreator = () => {
                 <div className="flex flex-col items-end">
                   <Button size="sm" onClick={saveToNotion} disabled={saving}>
                     {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
-                    {saving ? "Ukládám…" : "Uložit do Notion"}
+                    {saving ? "Exportuji…" : "Exportovat do Notion"}
                   </Button>
                   {showSaveNotice && (
                     <div className="mt-1 max-w-xs rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground shadow-sm">
