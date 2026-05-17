@@ -63,7 +63,7 @@ export function blockToHtml(b: Block): string {
       const alt = escapeHtml(b.content.alt ?? "");
       if (!url) return "";
       const w = b.content.width ? ` width="${b.content.width}"` : "";
-      return `<p><img src="${url}" alt="${alt}"${w} /></p>`;
+      return `<figure><img src="${url}" alt="${alt}"${w} />${alt ? `<figcaption>${alt}</figcaption>` : ""}</figure>`;
     }
     case "table": {
       const rows: string[][] = b.content.rows ?? [];
