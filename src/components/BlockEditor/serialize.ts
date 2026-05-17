@@ -68,12 +68,14 @@ export function blockToHtml(b: Block): string {
     case "table": {
       const rows: string[][] = b.content.rows ?? [];
       if (rows.length === 0) return "";
+      const cellStyle = `style="border:1px solid #d1d5db;padding:6px 8px;text-align:left;"`;
+      const thStyle = `style="border:1px solid #d1d5db;padding:6px 8px;text-align:left;background-color:#f3f4f6;font-weight:600;"`;
       const head = b.content.headerRow && rows[0]
-        ? `<thead><tr>${rows[0].map((c) => `<th>${escapeHtml(c)}</th>`).join("")}</tr></thead>`
+        ? `<thead><tr>${rows[0].map((c) => `<th ${thStyle}>${escapeHtml(c)}</th>`).join("")}</tr></thead>`
         : "";
       const bodyRows = b.content.headerRow ? rows.slice(1) : rows;
-      const body = `<tbody>${bodyRows.map((r) => `<tr>${r.map((c) => `<td>${escapeHtml(c)}</td>`).join("")}</tr>`).join("")}</tbody>`;
-      return `<table>${head}${body}</table>`;
+      const body = `<tbody>${bodyRows.map((r) => `<tr>${r.map((c) => `<td ${cellStyle}>${escapeHtml(c)}</td>`).join("")}</tr>`).join("")}</tbody>`;
+      return `<table style="width:100%;border-collapse:collapse;border:1px solid #d1d5db;">${head}${body}</table>`;
     }
     case "alert":
       return `<blockquote data-callout="alert">⚠️ ${escapeHtml(b.content.text)}</blockquote>`;
