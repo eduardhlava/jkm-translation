@@ -13,17 +13,48 @@ import { toast } from "sonner";
 
 interface Props {
   block: Block;
+  collapsed?: boolean;
+  onToggleCollapsed?: () => void;
   onChange: (id: string, patch: Partial<Block>) => void;
   onDelete: (id: string) => void;
 }
 
-export default function BlockItem({ block, onChange, onDelete }: Props) {
+function blockPreview(block: Block): string {
+  switch (block.type) {
+    case "heading1":
+    case "heading2":
+    case "heading3":
+    case "heading4":
+      return block.content?.text || "";
+    case "text": {
+      const tmp = document.createElement("div");
+      tmp.innerHTML = block.content?.html || "";
+      return tmp.textContent || "";
+    }
+    case "alert":
+    case "info":
+    case "warning":
+      return block.content?.text || "";
+    case "image":
+      return block.content?.alt || block.content?.url || "";
+    case "table": {
+      const rows: string[][] = block.content?.rows ?? [];
+      return rows[0]?.filter(Boolean).join(" • ") || `${rows.length} řádků`;
+    }
+    default:
+      return "";
+  }
+}
+
+export default function BlockItem({ block, collapsed, onToggleCollapsed, onChange, onDelete }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
+
+  const preview = blockPreview(block);
 
   return (
     <div
@@ -32,7 +63,7 @@ export default function BlockItem({ block, onChange, onDelete }: Props) {
       className="group relative rounded-lg border bg-card shadow-sm"
     >
       <div className="flex items-center justify-between border-b bg-muted/30 px-2 py-1">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 min-w-0 flex-1">
           <button
             {...attributes}
             {...listeners}
@@ -41,9 +72,20 @@ export default function BlockItem({ block, onChange, onDelete }: Props) {
           >
             <GripVertical className="w-4 h-4" />
           </button>
-          <span className="text-xs font-medium text-muted-foreground">
+          <button
+            type="button"
+            onClick={onToggleCollapsed}
+            className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+            aria-label={collapsed ? "Rozbalit" : "Sbalit"}
+          >
+            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+          <span className="text-xs font-medium text-muted-foreground shrink-0">
             {BLOCK_TYPE_LABELS[block.type]}
           </span>
+          {collapsed && preview && (
+            <span className="ml-2 truncate text-xs text-muted-foreground/80">— {preview}</span>
+          )}
         </div>
         <Button
           variant="ghost"
@@ -54,9 +96,11 @@ export default function BlockItem({ block, onChange, onDelete }: Props) {
           <Trash2 className="w-4 h-4" />
         </Button>
       </div>
-      <div className="p-3">
-        <BlockBody block={block} onChange={onChange} />
-      </div>
+      {!collapsed && (
+        <div className="p-3">
+          <BlockBody block={block} onChange={onChange} />
+        </div>
+      )}
     </div>
   );
 }
