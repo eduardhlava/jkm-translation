@@ -46,6 +46,12 @@ import {
 import jkLogo from "@/assets/jk-machinery-logo.png";
 import SectionSwitcher from "@/components/SectionSwitcher";
 import EditorToolbar from "@/components/EditorToolbar";
+import BlockEditor from "@/components/BlockEditor";
+import type { Block } from "@/components/BlockEditor/types";
+import { blocksToHtml } from "@/components/BlockEditor/serialize";
+import { Blocks, PencilLine } from "lucide-react";
+
+type EditorMode = "blocks" | "wysiwyg";
 
 interface ContentItem {
   id: string;
