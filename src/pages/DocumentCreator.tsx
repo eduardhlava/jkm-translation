@@ -294,35 +294,37 @@ const DocumentCreator = () => {
 
       <main className="container max-w-[105rem] py-6 space-y-4">
         {/* Filters */}
-        <Card className="p-4 space-y-3">
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Název (obsahuje)</label>
-              <Input value={titleQuery} onChange={(e) => setTitleQuery(e.target.value)} className="w-56" placeholder="Hledat…" />
+        {!activePage && (
+          <Card className="p-4 space-y-3">
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Název (obsahuje)</label>
+                <Input value={titleQuery} onChange={(e) => setTitleQuery(e.target.value)} className="w-56" placeholder="Hledat…" />
+              </div>
+              {FILTER_PROPS.map((prop) => {
+                const meta = schema[prop];
+                if (!meta) return null;
+                const opts = meta.options ?? [];
+                return (
+                  <div key={prop} className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">{prop}</label>
+                    <Select value={filters[prop] ?? "__any__"} onValueChange={(v) => setFilters((f) => ({ ...f, [prop]: v }))}>
+                      <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__any__">— vše —</SelectItem>
+                        {opts.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                );
+              })}
+              <Button onClick={fetchList} disabled={loading}>
+                {loading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1" />}
+                Načíst seznam
+              </Button>
             </div>
-            {FILTER_PROPS.map((prop) => {
-              const meta = schema[prop];
-              if (!meta) return null;
-              const opts = meta.options ?? [];
-              return (
-                <div key={prop} className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">{prop}</label>
-                  <Select value={filters[prop] ?? "__any__"} onValueChange={(v) => setFilters((f) => ({ ...f, [prop]: v }))}>
-                    <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__any__">— vše —</SelectItem>
-                      {opts.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-              );
-            })}
-            <Button onClick={fetchList} disabled={loading}>
-              {loading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1" />}
-              Načíst seznam
-            </Button>
-          </div>
-        </Card>
+          </Card>
+        )}
 
         {/* List */}
         {!activePage && (
