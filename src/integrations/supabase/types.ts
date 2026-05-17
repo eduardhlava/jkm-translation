@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      document_blocks: {
+        Row: {
+          blocks: Json
+          page_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          blocks?: Json
+          page_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          blocks?: Json
+          page_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
