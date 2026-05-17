@@ -158,7 +158,7 @@ const DocumentCreator = () => {
       if ((contentRes.data as any)?.error) throw new Error((contentRes.data as any).error);
       editor?.commands.setContent((contentRes.data as any).html || "<p></p>");
 
-      const saved = (blocksRes.data?.blocks as Block[] | undefined) ?? [];
+      const saved = ((blocksRes.data?.blocks as unknown) as Block[] | undefined) ?? [];
       setBlocks(saved);
       setMode(saved.length > 0 ? "blocks" : "wysiwyg");
       setActivePage(item);
