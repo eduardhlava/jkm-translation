@@ -364,6 +364,26 @@ const DocumentCreator = () => {
                 </a>
               </div>
               <div className="flex items-center gap-2">
+                <div className="flex items-center rounded-md border bg-background p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setMode("blocks")}
+                    className={`flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                      mode === "blocks" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
+                    }`}
+                  >
+                    <Blocks className="w-3.5 h-3.5" /> Bloky
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMode("wysiwyg")}
+                    className={`flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                      mode === "wysiwyg" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
+                    }`}
+                  >
+                    <PencilLine className="w-3.5 h-3.5" /> WYSIWYG
+                  </button>
+                </div>
                 <Button variant="outline" size="sm" onClick={previewPdf} disabled={saving}>
                   <Eye className="w-4 h-4 mr-1" /> Náhled PDF
                 </Button>
@@ -380,12 +400,22 @@ const DocumentCreator = () => {
                 </div>
               </div>
             </div>
-            <div className="flex-shrink-0">
-              <EditorToolbar editor={editor} />
-            </div>
-            <div className="flex-1 min-h-0 overflow-auto bg-background">
-              <EditorContent editor={editor} />
-            </div>
+            {mode === "wysiwyg" ? (
+              <>
+                <div className="flex-shrink-0">
+                  <EditorToolbar editor={editor} />
+                </div>
+                <div className="flex-1 min-h-0 overflow-auto bg-background">
+                  <EditorContent editor={editor} />
+                </div>
+              </>
+            ) : (
+              <div className="flex-1 min-h-0 overflow-auto bg-muted/20 p-4">
+                <div className="mx-auto max-w-4xl">
+                  <BlockEditor blocks={blocks} onChange={setBlocks} />
+                </div>
+              </div>
+            )}
           </Card>
         )}
       </main>
