@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   DndContext,
   PointerSensor,
@@ -14,6 +14,8 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { ChevronsDownUp, ChevronsUpDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import BlockItem from "./BlockItem";
 import AddBlockMenu from "./AddBlockMenu";
 import { createBlock, type Block, type BlockType } from "./types";
@@ -30,6 +32,8 @@ export default function BlockEditor({ blocks, onChange }: Props) {
   );
 
   const sorted = [...blocks].sort((a, b) => a.order - b.order);
+
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   const reorder = (next: Block[]) => {
     onChange(next.map((b, i) => ({ ...b, order: i })));
@@ -57,8 +61,25 @@ export default function BlockEditor({ blocks, onChange }: Props) {
     reorder(sorted.filter((b) => b.id !== id));
   };
 
+  const toggleCollapsed = (id: string) =>
+    setCollapsed((c) => ({ ...c, [id]: !c[id] }));
+
+  const collapseAll = () =>
+    setCollapsed(Object.fromEntries(sorted.map((b) => [b.id, true])));
+  const expandAll = () => setCollapsed({});
+
   return (
     <div className="space-y-3">
+      {sorted.length > 0 && (
+        <div className="flex justify-end gap-1">
+          <Button type="button" variant="outline" size="sm" onClick={collapseAll}>
+            <ChevronsDownUp className="w-4 h-4 mr-1" /> Sbalit vše
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={expandAll}>
+            <ChevronsUpDown className="w-4 h-4 mr-1" /> Rozbalit vše
+          </Button>
+        </div>
+      )}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={sorted.map((b) => b.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-2">
@@ -68,7 +89,14 @@ export default function BlockEditor({ blocks, onChange }: Props) {
               </div>
             )}
             {sorted.map((b) => (
-              <BlockItem key={b.id} block={b} onChange={updateBlock} onDelete={deleteBlock} />
+              <BlockItem
+                key={b.id}
+                block={b}
+                collapsed={!!collapsed[b.id]}
+                onToggleCollapsed={() => toggleCollapsed(b.id)}
+                onChange={updateBlock}
+                onDelete={deleteBlock}
+              />
             ))}
           </div>
         </SortableContext>
