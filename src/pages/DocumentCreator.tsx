@@ -150,12 +150,17 @@ const DocumentCreator = () => {
     setLoadingContent(true);
     setLoadingId(item.id);
     try {
-      const { data, error } = await supabase.functions.invoke("notion-content", {
-        body: { action: "get", pageId: item.id },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      editor?.commands.setContent(data.html || "<p></p>");
+      const [contentRes, blocksRes] = await Promise.all([
+        supabase.functions.invoke("notion-content", { body: { action: "get", pageId: item.id } }),
+        supabase.from("document_blocks").select("blocks").eq("page_id", item.id).maybeSingle(),
+      ]);
+      if (contentRes.error) throw contentRes.error;
+      if ((contentRes.data as any)?.error) throw new Error((contentRes.data as any).error);
+      editor?.commands.setContent((contentRes.data as any).html || "<p></p>");
+
+      const saved = (blocksRes.data?.blocks as Block[] | undefined) ?? [];
+      setBlocks(saved);
+      setMode(saved.length > 0 ? "blocks" : "wysiwyg");
       setActivePage(item);
       toast.success("Obsah načten");
     } catch (e) {
@@ -171,8 +176,17 @@ const DocumentCreator = () => {
     setSaving(true);
     setShowSaveNotice(true);
     try {
-      const html = editor.getHTML();
-      const doc = editor.getJSON();
+      const html = mode === "blocks" ? blocksToHtml(blocks) : editor.getHTML();
+      const doc = mode === "blocks" ? undefined : editor.getJSON();
+
+      // Persist blocks structure (only meaningful in blocks mode; in wysiwyg, clear)
+      if (mode === "blocks") {
+        const { error: upErr } = await supabase
+          .from("document_blocks")
+          .upsert({ page_id: activePage.id, blocks: blocks as any }, { onConflict: "page_id" });
+        if (upErr) throw upErr;
+      }
+
       let phase: "delete" | "append" | "verify" | "done" = "delete";
       let cursor = 0;
       let after: string | undefined;
