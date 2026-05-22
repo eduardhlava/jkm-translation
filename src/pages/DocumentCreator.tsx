@@ -601,17 +601,33 @@ const DocumentCreator = () => {
                     <ExternalLink className="w-4 h-4 mr-1" /> Otevřít v novém okně
                   </Button>
                 )}
-                {pdfUrl && pdfBlob ? (
-                  <Button size="sm" asChild>
-                    <a href={pdfUrl} download={getPdfFilename()} rel="noopener">
-                      <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
-                    </a>
-                  </Button>
-                ) : (
-                  <Button size="sm" disabled>
-                    <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
-                  </Button>
-                )}
+                <Button
+                  size="sm"
+                  disabled={!pdfBlob}
+                  onClick={() => {
+                    if (!pdfBlob) return;
+                    try {
+                      const blob = pdfBlob.type === "application/pdf"
+                        ? pdfBlob
+                        : new Blob([pdfBlob], { type: "application/pdf" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = getPdfFilename();
+                      a.rel = "noopener";
+                      a.style.display = "none";
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+                    } catch (e) {
+                      console.error("[pdf] download failed", e);
+                      toast.error("Stažení PDF selhalo");
+                    }
+                  }}
+                >
+                  <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
+                </Button>
                 <Button variant="ghost" size="icon" onClick={closePdfPreview}><X className="w-4 h-4" /></Button>
               </div>
             </div>
