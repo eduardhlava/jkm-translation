@@ -382,40 +382,9 @@ const DocumentCreator = () => {
     source.type === "application/pdf" ? source : new Blob([source], { type: "application/pdf" })
   );
 
-  const escapeHtml = (value: string) => value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-
-  const isSafariBrowser = () => /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent);
-
   const triggerPdfDownload = (source: Blob, filename: string) => {
     const blob = ensurePdfBlob(source);
     const url = URL.createObjectURL(blob);
-
-    if (isSafariBrowser()) {
-      const opened = window.open("", "_blank");
-      if (opened) {
-        const safeFilename = escapeHtml(filename);
-        opened.document.open();
-        opened.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${safeFilename}</title></head><body style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f6f7f9;color:#111827;display:grid;place-items:center;height:100vh"><div style="text-align:center"><strong>PDF se připravuje ke stažení…</strong><div style="margin-top:8px;color:#6b7280;font-size:13px">Pokud se stažení nespustí, použijte Soubor → Uložit v otevřeném PDF.</div></div></body></html>`);
-        opened.document.close();
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const dataUrl = String(reader.result).replace(/^data:[^;]*;/, "data:attachment/file;");
-          opened.location.href = dataUrl;
-          opened.focus();
-        };
-        reader.readAsDataURL(blob);
-        toast.success("PDF se stahuje v novém okně Safari");
-      } else {
-        window.location.href = url;
-      }
-      setTimeout(() => URL.revokeObjectURL(url), 300_000);
-      return;
-    }
-
     const a = document.createElement("a");
     a.href = url;
     a.download = filename;
@@ -430,10 +399,37 @@ const DocumentCreator = () => {
     setTimeout(() => URL.revokeObjectURL(url), 60_000);
   };
 
+  const submitServerPdfDownload = (base64: string, filename: string) => {
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = PDF_DOWNLOAD_ENDPOINT;
+    form.target = "_blank";
+    form.style.display = "none";
+
+    const addField = (name: string, value: string) => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = name;
+      input.value = value;
+      form.appendChild(input);
+    };
+
+    addField("filename", filename);
+    addField("file", base64);
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+  };
+
   const downloadPdfFromPreview = () => {
     if (!pdfBlob) return;
     try {
-      triggerPdfDownload(pdfBlob, getPdfFilename());
+      const filename = getPdfFilename();
+      if (pdfBase64) {
+        submitServerPdfDownload(pdfBase64, filename);
+        return;
+      }
+      triggerPdfDownload(pdfBlob, filename);
     } catch (e) {
       console.error("[pdf] download failed", e);
       toast.error("Stažení PDF selhalo");
