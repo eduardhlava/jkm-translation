@@ -59,8 +59,10 @@ import EditorToolbar from "@/components/EditorToolbar";
 import BlockEditor from "@/components/BlockEditor";
 import type { Block } from "@/components/BlockEditor/types";
 import { blocksToHtml } from "@/components/BlockEditor/serialize";
+import { parseDocumentJson, SAMPLE_DOCUMENT_JSON } from "@/components/BlockEditor/importJson";
 import PdfCanvasPreview from "@/components/PdfCanvasPreview";
-import { Blocks, PencilLine } from "lucide-react";
+import { Blocks, PencilLine, Upload, FileDown } from "lucide-react";
+import { useRef } from "react";
 
 type EditorMode = "blocks" | "wysiwyg";
 
