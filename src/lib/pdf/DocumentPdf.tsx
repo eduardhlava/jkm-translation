@@ -126,10 +126,15 @@ function parseInline(html: string): Run[][] {
 }
 
 function fontFamilyFor(r: Run): string {
-  if (r.bold && r.italic) return "Helvetica-BoldOblique";
-  if (r.bold) return "Helvetica-Bold";
-  if (r.italic) return "Helvetica-Oblique";
-  return "Helvetica";
+  return "NotoSans";
+}
+
+function fontStyleFor(r: Run): Record<string, string> {
+  return {
+    fontFamily: fontFamilyFor(r),
+    fontWeight: r.bold ? "bold" : "normal",
+    fontStyle: r.italic ? "italic" : "normal",
+  };
 }
 
 function RunsText({ runs }: { runs: Run[] }) {
@@ -139,7 +144,7 @@ function RunsText({ runs }: { runs: Run[] }) {
   return (
     <>
       {runs.map((r, i) => {
-        const style: any = { fontFamily: fontFamilyFor(r) };
+        const style: any = fontStyleFor(r);
         if (r.underline || r.href) style.textDecoration = "underline";
         if (r.href) style.color = "#2563eb";
         if (r.href) {
