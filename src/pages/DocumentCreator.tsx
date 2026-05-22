@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -78,7 +78,7 @@ interface PropMeta {
 const FILTER_PROPS = ["jazyk", "typ", "stav", "section", "subsection"] as const;
 
 const DocumentCreator = () => {
-  const { profile, isAdmin, user } = useAuth();
+  const { profile, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [schema, setSchema] = useState<Record<string, PropMeta>>({});
   const [titleProp, setTitleProp] = useState<string>("název");
