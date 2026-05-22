@@ -783,6 +783,89 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "checkTitle") {
+      const title: string = (body.title ?? "").trim();
+      if (!title) throw new Error("title is required");
+      const dbRes = await fetch(`https://api.notion.com/v1/databases/${CONTENT_DB_ID}`, {
+        headers: { Authorization: `Bearer ${NOTION_API_KEY}`, "Notion-Version": NOTION_VERSION },
+      });
+      if (!dbRes.ok) throw new Error(`Notion DB read failed [${dbRes.status}]: ${await dbRes.text()}`);
+      const db = await dbRes.json();
+      const titleName = Object.entries<any>(db.properties ?? {}).find(([, p]) => (p as any).type === "title")?.[0];
+      if (!titleName) throw new Error("Title property not found");
+      const qRes = await notionFetch(`https://api.notion.com/v1/databases/${CONTENT_DB_ID}/query`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${NOTION_API_KEY}`,
+          "Notion-Version": NOTION_VERSION,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ filter: { property: titleName, title: { equals: title } }, page_size: 10 }),
+      }, "title lookup");
+      const data = await qRes.json();
+      const matches = (data.results ?? []).map((p: any) => ({ id: p.id, url: p.url }));
+      return new Response(JSON.stringify({ matches }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "createPage") {
+      const title: string = (body.title ?? "").trim();
+      if (!title) throw new Error("title is required");
+      const dbRes = await fetch(`https://api.notion.com/v1/databases/${CONTENT_DB_ID}`, {
+        headers: { Authorization: `Bearer ${NOTION_API_KEY}`, "Notion-Version": NOTION_VERSION },
+      });
+      if (!dbRes.ok) throw new Error(`Notion DB read failed [${dbRes.status}]: ${await dbRes.text()}`);
+      const db = await dbRes.json();
+      const titleName = Object.entries<any>(db.properties ?? {}).find(([, p]) => (p as any).type === "title")?.[0];
+      if (!titleName) throw new Error("Title property not found");
+      const createRes = await notionWrite(`https://api.notion.com/v1/pages`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${NOTION_API_KEY}`,
+          "Notion-Version": NOTION_VERSION,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          parent: { database_id: CONTENT_DB_ID },
+          properties: { [titleName]: { title: [{ type: "text", text: { content: title } }] } },
+        }),
+      }, "create page");
+      const created = await createRes.json();
+      return new Response(JSON.stringify({ id: created.id, url: created.url }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "updateTitle") {
+      const pageId: string = body.pageId;
+      const title: string = (body.title ?? "").trim();
+      if (!pageId || !title) throw new Error("pageId and title are required");
+      const pageRes = await notionFetch(`https://api.notion.com/v1/pages/${pageId}`, {
+        headers: { Authorization: `Bearer ${NOTION_API_KEY}`, "Notion-Version": NOTION_VERSION },
+      }, "fetch page");
+      const page = await pageRes.json();
+      const titleName = Object.entries<any>(page.properties ?? {}).find(([, p]) => (p as any).type === "title")?.[0];
+      if (!titleName) throw new Error("Title property not found on page");
+      await notionWrite(`https://api.notion.com/v1/pages/${pageId}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${NOTION_API_KEY}`,
+          "Notion-Version": NOTION_VERSION,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          properties: { [titleName]: { title: [{ type: "text", text: { content: title } }] } },
+        }),
+      }, "update title");
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (action === "save") {
       const pageId: string = body.pageId;
       const html: string = body.html ?? "";

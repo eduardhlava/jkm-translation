@@ -17,18 +17,21 @@ export type Database = {
       document_blocks: {
         Row: {
           blocks: Json
+          notion_exported_at: string | null
           page_id: string
           updated_at: string
           updated_by: string | null
         }
         Insert: {
           blocks?: Json
+          notion_exported_at?: string | null
           page_id: string
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
           blocks?: Json
+          notion_exported_at?: string | null
           page_id?: string
           updated_at?: string
           updated_by?: string | null
