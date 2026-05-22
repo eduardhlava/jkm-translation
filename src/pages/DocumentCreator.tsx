@@ -333,27 +333,13 @@ const DocumentCreator = () => {
   };
 
   const previewPdf = async () => {
-    if (!activePage || !user) return;
+    if (!activePage) return;
     setPdfBuilding(true);
     setShowPdfPreview(true);
+    setPdfBlob(null);
     try {
       const blob = await buildPdf();
-      console.log("[pdf] generated blob:", blob.size, "bytes");
-      const url = URL.createObjectURL(blob);
-      const filename = getPdfFilename();
-      const safeFilename = filename.replace(/[\\/:*?"<>|]+/g, "-");
-      const storagePath = `${user.id}/${Date.now()}-${safeFilename}`;
-      const { error: uploadError } = await supabase.storage
-        .from("document-pdfs")
-        .upload(storagePath, blob, { contentType: "application/pdf", upsert: true });
-      if (uploadError) throw uploadError;
-      const { data: signed, error: signedError } = await supabase.storage
-        .from("document-pdfs")
-        .createSignedUrl(storagePath, 60 * 10, { download: filename });
-      if (signedError) throw signedError;
       setPdfBlob(blob);
-      setPdfDownloadUrl(signed.signedUrl);
-      setPdfUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return url; });
     } catch (e) {
       console.error("[pdf] generation failed", e);
       toast.error("Generování PDF selhalo", { description: e instanceof Error ? e.message : "" });
@@ -365,10 +351,29 @@ const DocumentCreator = () => {
 
   const closePdfPreview = () => {
     setShowPdfPreview(false);
-    if (pdfUrl) URL.revokeObjectURL(pdfUrl);
-    setPdfUrl(null);
     setPdfBlob(null);
-    setPdfDownloadUrl(null);
+  };
+
+  const downloadPdf = async () => {
+    if (!pdfBlob) return;
+    const filename = getPdfFilename();
+    const url = URL.createObjectURL(pdfBlob);
+    try {
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.rel = "noopener";
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("PDF je připravené ke stažení");
+    } catch (error) {
+      console.error("[pdf] download failed", error);
+      window.location.href = url;
+    } finally {
+      window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+    }
   };
 
   const getPdfFilename = () => {
