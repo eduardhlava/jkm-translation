@@ -360,27 +360,10 @@ const DocumentCreator = () => {
     setPdfBlob(null);
   };
 
-  const downloadPdf = async () => {
-    try {
-      const source = pdfBlob ?? (await buildPdf());
-      const blob = source.type === "application/pdf" ? source : new Blob([source], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-      const filename = `${(docTitle || activePage?.properties[titleProp] || "dokument").trim()}.pdf`;
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      a.rel = "noopener";
-      a.style.display = "none";
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        a.remove();
-        URL.revokeObjectURL(url);
-      }, 1000);
-    } catch (e) {
-      console.error("[pdf] download failed", e);
-      toast.error("Stažení PDF selhalo", { description: e instanceof Error ? e.message : "" });
-    }
+  const getPdfFilename = () => {
+    const rawName = (docTitle || activePage?.properties[titleProp] || "dokument").trim();
+    const safeName = rawName.replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").trim();
+    return `${safeName || "dokument"}.pdf`;
   };
 
   const openPdfInNewWindow = async () => {
@@ -618,9 +601,17 @@ const DocumentCreator = () => {
                     <ExternalLink className="w-4 h-4 mr-1" /> Otevřít v novém okně
                   </Button>
                 )}
-                <Button size="sm" onClick={downloadPdf} disabled={pdfBuilding || !pdfBlob}>
-                  <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
-                </Button>
+                {pdfUrl && pdfBlob ? (
+                  <Button size="sm" asChild>
+                    <a href={pdfUrl} download={getPdfFilename()} rel="noopener">
+                      <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
+                    </a>
+                  </Button>
+                ) : (
+                  <Button size="sm" disabled>
+                    <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
+                  </Button>
+                )}
                 <Button variant="ghost" size="icon" onClick={closePdfPreview}><X className="w-4 h-4" /></Button>
               </div>
             </div>
