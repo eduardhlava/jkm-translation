@@ -599,14 +599,7 @@ const DocumentCreator = () => {
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generuji PDF…
                 </div>
               ) : pdfUrl ? (
-                <object data={pdfUrl} type="application/pdf" className="w-full h-full">
-                  <div className="h-full flex flex-col items-center justify-center gap-2 text-sm">
-                    <p>Náhled nelze zobrazit v této verzi prohlížeče.</p>
-                    <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="text-primary underline">
-                      Otevřít PDF v novém okně
-                    </a>
-                  </div>
-                </object>
+                <iframe src={pdfUrl} title="Náhled PDF" className="w-full h-full border-0" />
               ) : null}
             </div>
           </div>
