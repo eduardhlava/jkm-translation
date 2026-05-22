@@ -387,10 +387,16 @@ const DocumentCreator = () => {
       if (opened) {
         const safeFilename = escapeHtml(filename);
         opened.document.open();
-        opened.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${safeFilename}</title></head><body style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f6f7f9;color:#111827"><div style="height:52px;display:flex;align-items:center;gap:12px;padding:0 16px;background:#fff;border-bottom:1px solid #d1d5db"><a href="${url}" download="${safeFilename}" style="display:inline-flex;align-items:center;border-radius:6px;background:#111827;color:#fff;padding:9px 14px;text-decoration:none;font-size:14px;font-weight:600">Stáhnout PDF</a><span style="font-size:13px;color:#6b7280">Pokud Safari soubor nestáhne automaticky, uložte ho z otevřeného náhledu.</span></div><iframe src="${url}" title="${safeFilename}" style="width:100%;height:calc(100vh - 53px);border:0"></iframe></body></html>`);
+        opened.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${safeFilename}</title></head><body style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f6f7f9;color:#111827;display:grid;place-items:center;height:100vh"><div style="text-align:center"><strong>PDF se připravuje ke stažení…</strong><div style="margin-top:8px;color:#6b7280;font-size:13px">Pokud se stažení nespustí, použijte Soubor → Uložit v otevřeném PDF.</div></div></body></html>`);
         opened.document.close();
-        opened.focus();
-        toast.success("PDF je připravené v novém okně Safari");
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const dataUrl = String(reader.result).replace(/^data:[^;]*;/, "data:attachment/file;");
+          opened.location.href = dataUrl;
+          opened.focus();
+        };
+        reader.readAsDataURL(blob);
+        toast.success("PDF se stahuje v novém okně Safari");
       } else {
         window.location.href = url;
       }
