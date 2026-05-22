@@ -609,9 +609,19 @@ const DocumentCreator = () => {
             <div className="flex items-center justify-between border-b px-4 py-2">
               <div className="font-medium">Náhled PDF</div>
               <div className="flex items-center gap-2">
-                <Button type="button" size="sm" onClick={downloadPdf} disabled={!pdfBlob || pdfBuilding}>
-                  <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
-                </Button>
+                <a
+                  href={pdfObjectUrl ?? "#"}
+                  download={getPdfFilename()}
+                  target="_blank"
+                  rel="noopener"
+                  aria-disabled={!pdfObjectUrl || pdfBuilding}
+                  onClick={(e) => {
+                    if (!pdfObjectUrl || pdfBuilding) e.preventDefault();
+                  }}
+                  className={`inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 ${(!pdfObjectUrl || pdfBuilding) ? "pointer-events-none opacity-50" : ""}`}
+                >
+                  <Download className="w-4 h-4" /> Stáhnout PDF
+                </a>
                 <Button variant="ghost" size="icon" onClick={closePdfPreview}><X className="w-4 h-4" /></Button>
               </div>
             </div>
