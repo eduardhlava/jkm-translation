@@ -587,6 +587,13 @@ const DocumentCreator = () => {
             <div className="flex items-center justify-between border-b px-4 py-2">
               <div className="font-medium">Náhled PDF</div>
               <div className="flex items-center gap-2">
+                {pdfUrl && (
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="w-4 h-4 mr-1" /> Otevřít v novém okně
+                    </a>
+                  </Button>
+                )}
                 <Button size="sm" onClick={downloadPdf} disabled={pdfBuilding || !pdfBlob}>
                   <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
                 </Button>
