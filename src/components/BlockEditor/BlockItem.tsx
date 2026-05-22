@@ -378,7 +378,7 @@ function NotionImagePicker({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-2xl w-[calc(100vw-2rem)] overflow-hidden">
         <DialogHeader>
           <DialogTitle>Obrázky z Notion</DialogTitle>
         </DialogHeader>
@@ -404,18 +404,17 @@ function NotionImagePicker({
             ) : (
               <ul className="divide-y">
                 {filtered.map((it) => (
-                  <li key={it.id} className="flex items-center gap-3 p-2">
+                  <li key={it.id} className="flex items-center gap-3 p-2 min-w-0">
                     <img
                       src={it.image}
                       alt={it.title}
-                      className="h-14 w-14 rounded border object-cover bg-muted"
+                      className="h-14 w-14 shrink-0 rounded border object-cover bg-muted"
                       loading="lazy"
                     />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium">{it.title || "Bez názvu"}</div>
-                      <div className="truncate text-xs text-muted-foreground">{it.image}</div>
                     </div>
-                    <Button type="button" size="sm" onClick={() => onInsert(it)}>
+                    <Button type="button" size="sm" className="shrink-0" onClick={() => onInsert(it)}>
                       Vložit
                     </Button>
                   </li>
