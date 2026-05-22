@@ -8,7 +8,6 @@ const styles = StyleSheet.create({
     paddingBottom: 60,
     paddingHorizontal: 50,
     fontSize: 11,
-    lineHeight: 1.45,
     fontFamily: "Helvetica",
     color: "#111827",
   },
@@ -49,10 +48,8 @@ const styles = StyleSheet.create({
     bottom: 24,
     left: 50,
     right: 50,
-    height: 12,
     textAlign: "center",
     fontSize: 9,
-    lineHeight: 1,
     color: "#6b7280",
   },
   tocTitle: { fontSize: 16, fontFamily: "Helvetica-Bold", marginBottom: 10 },
@@ -336,9 +333,11 @@ function Toc({ entries, pageMap }: { entries: HeadingEntry[]; pageMap: PageMap }
 // ---------- Footer ----------
 function Footer() {
   return (
-    <View fixed style={styles.footer}>
-      <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
-    </View>
+    <Text
+      fixed
+      style={styles.footer}
+      render={({ pageNumber, totalPages }) => `Strana ${pageNumber} / ${totalPages}`}
+    />
   );
 }
 
