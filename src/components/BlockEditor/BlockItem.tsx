@@ -378,7 +378,7 @@ function NotionImagePicker({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-2xl w-[calc(100vw-2rem)] overflow-hidden">
         <DialogHeader>
           <DialogTitle>Obrázky z Notion</DialogTitle>
         </DialogHeader>
