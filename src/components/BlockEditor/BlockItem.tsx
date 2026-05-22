@@ -1,6 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Trash2, AlertTriangle, Info, AlertCircle, Loader2, Upload, Plus, Minus, ChevronDown, ChevronRight } from "lucide-react";
+import { GripVertical, Trash2, AlertTriangle, Info, AlertCircle, Loader2, Upload, Plus, Minus, ChevronDown, ChevronRight, List, ListOrdered, Link } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -146,6 +146,47 @@ function BlockBody({ block, onChange }: { block: Block; onChange: Props["onChang
 function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["onChange"] }) {
   const ref = useRef<HTMLDivElement>(null);
   const lastHtmlRef = useRef<string>(block.content.html ?? "");
+  const selectionRef = useRef<Range | null>(null);
+
+  const saveSelection = () => {
+    const editor = ref.current;
+    const selection = window.getSelection();
+    if (!editor || !selection || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
+    if (editor.contains(range.commonAncestorContainer)) {
+      selectionRef.current = range.cloneRange();
+    }
+  };
+
+  const restoreSelection = () => {
+    const editor = ref.current;
+    const selection = window.getSelection();
+    if (!editor || !selection) return;
+
+    editor.focus();
+    selection.removeAllRanges();
+    if (selectionRef.current) {
+      selection.addRange(selectionRef.current);
+      return;
+    }
+
+    const range = document.createRange();
+    range.selectNodeContents(editor);
+    range.collapse(false);
+    selection.addRange(range);
+  };
+
+  const getEditorSelection = () => {
+    const editor = ref.current;
+    const selection = window.getSelection();
+    if (!editor || !selection || selection.rangeCount === 0) return null;
+    const range = selection.getRangeAt(0);
+    return editor.contains(range.commonAncestorContainer) ? range : null;
+  };
+
+  const escapeHtml = (value: string) =>
+    value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
   // Initialize innerHTML once per block id; avoid re-setting on every keystroke
   // (which would reset the caret to the beginning).
@@ -166,19 +207,35 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
     }
   }, [block.content.html]);
 
-  const exec = (cmd: string, value?: string) => {
-    document.execCommand(cmd, false, value);
+  const syncHtml = () => {
     if (ref.current) {
       const html = ref.current.innerHTML;
       lastHtmlRef.current = html;
       onChange(block.id, { content: { html } });
+      saveSelection();
     }
   };
 
+  const exec = (cmd: string, value?: string) => {
+    restoreSelection();
+    document.execCommand(cmd, false, value);
+    syncHtml();
+  };
+
   const onLink = () => {
+    saveSelection();
     const url = window.prompt("URL odkazu:", "https://");
     if (!url) return;
-    exec("createLink", url);
+    const cleanUrl = url.trim();
+    restoreSelection();
+    const range = getEditorSelection();
+    if (!range || range.collapsed) {
+      document.execCommand("insertHTML", false, `<a href="${escapeHtml(cleanUrl)}">${escapeHtml(cleanUrl)}</a>`);
+      syncHtml();
+      return;
+    }
+    document.execCommand("createLink", false, cleanUrl);
+    syncHtml();
   };
 
   return (
@@ -186,20 +243,23 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
       <div className="flex items-center gap-1 flex-wrap">
         <Button type="button" variant="ghost" size="sm" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("bold")} className="h-7 px-2 font-bold">B</Button>
         <Button type="button" variant="ghost" size="sm" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("italic")} className="h-7 px-2 italic">I</Button>
-        <Button type="button" variant="ghost" size="sm" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("insertUnorderedList")} className="h-7 px-2">• Seznam</Button>
-        <Button type="button" variant="ghost" size="sm" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("insertOrderedList")} className="h-7 px-2">1. Seznam</Button>
-        <Button type="button" variant="ghost" size="sm" onMouseDown={(e) => e.preventDefault()} onClick={onLink} className="h-7 px-2 underline">Odkaz</Button>
+        <Button type="button" variant="ghost" size="icon" title="Nečíslovaný seznam" aria-label="Nečíslovaný seznam" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("insertUnorderedList")} className="h-7 w-7"><List className="h-4 w-4" /></Button>
+        <Button type="button" variant="ghost" size="icon" title="Číslovaný seznam" aria-label="Číslovaný seznam" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("insertOrderedList")} className="h-7 w-7"><ListOrdered className="h-4 w-4" /></Button>
+        <Button type="button" variant="ghost" size="icon" title="Vložit odkaz" aria-label="Vložit odkaz" onMouseDown={(e) => e.preventDefault()} onClick={onLink} className="h-7 w-7"><Link className="h-4 w-4" /></Button>
       </div>
       <div
         ref={ref}
         contentEditable
         suppressContentEditableWarning
+        onKeyUp={saveSelection}
+        onMouseUp={saveSelection}
         onInput={(e) => {
           const html = (e.target as HTMLDivElement).innerHTML;
           lastHtmlRef.current = html;
           onChange(block.id, { content: { html } });
+          saveSelection();
         }}
-        className="min-h-[60px] rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring prose prose-sm max-w-none"
+        className="ProseMirror min-h-[60px] rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring prose prose-sm max-w-none"
       />
     </div>
   );
