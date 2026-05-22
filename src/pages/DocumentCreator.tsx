@@ -59,6 +59,7 @@ import EditorToolbar from "@/components/EditorToolbar";
 import BlockEditor from "@/components/BlockEditor";
 import type { Block } from "@/components/BlockEditor/types";
 import { blocksToHtml } from "@/components/BlockEditor/serialize";
+import PdfCanvasPreview from "@/components/PdfCanvasPreview";
 import { Blocks, PencilLine } from "lucide-react";
 
 type EditorMode = "blocks" | "wysiwyg";
@@ -369,6 +370,16 @@ const DocumentCreator = () => {
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const openPdfInNewWindow = async () => {
+    const blob = pdfBlob ?? (await buildPdf());
+    const url = URL.createObjectURL(blob);
+    const opened = window.open(url, "_blank", "noopener,noreferrer");
+    if (!opened) {
+      toast.error("Prohlížeč zablokoval nové okno. Použijte prosím tlačítko Stáhnout PDF.");
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
   };
 
   const tableHeaders = useMemo(() => {
