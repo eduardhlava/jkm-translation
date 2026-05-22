@@ -83,7 +83,12 @@ const DocumentCreator = () => {
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [mode, setMode] = useState<EditorMode>("blocks");
   const [blocks, setBlocks] = useState<Block[]>([]);
+  const [docTitle, setDocTitle] = useState("");
+  const [originalTitle, setOriginalTitle] = useState("");
+  const [lastExportAt, setLastExportAt] = useState<string | null>(null);
+  const [overwriteDialog, setOverwriteDialog] = useState<{ open: boolean; targetId: string | null }>({ open: false, targetId: null });
   const previewRef = useRef<HTMLDivElement>(null);
+
 
   const editor = useEditor({
     extensions: [
