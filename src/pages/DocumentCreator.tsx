@@ -64,8 +64,6 @@ import { Blocks, PencilLine } from "lucide-react";
 
 type EditorMode = "blocks" | "wysiwyg";
 
-const PDF_DOWNLOAD_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pdf-download`;
-
 interface ContentItem {
   id: string;
   url: string;
@@ -80,7 +78,7 @@ interface PropMeta {
 const FILTER_PROPS = ["jazyk", "typ", "stav", "section", "subsection"] as const;
 
 const DocumentCreator = () => {
-  const { profile, isAdmin } = useAuth();
+  const { profile, isAdmin, user } = useAuth();
   const navigate = useNavigate();
   const [schema, setSchema] = useState<Record<string, PropMeta>>({});
   const [titleProp, setTitleProp] = useState<string>("název");
@@ -96,7 +94,7 @@ const DocumentCreator = () => {
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
-  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
+  const [pdfDownloadUrl, setPdfDownloadUrl] = useState<string | null>(null);
   const [pdfBuilding, setPdfBuilding] = useState(false);
   const [mode, setMode] = useState<EditorMode>("blocks");
   const [blocks, setBlocks] = useState<Block[]>([]);
@@ -337,23 +335,27 @@ const DocumentCreator = () => {
     return await generateDocumentPdf(title, blocks);
   };
 
-  const blobToBase64 = (blob: Blob): Promise<string> => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(String(reader.result).split(",")[1] ?? "");
-    reader.onerror = () => reject(reader.error ?? new Error("PDF nelze připravit ke stažení."));
-    reader.readAsDataURL(blob);
-  });
-
   const previewPdf = async () => {
-    if (!activePage) return;
+    if (!activePage || !user) return;
     setPdfBuilding(true);
     setShowPdfPreview(true);
     try {
       const blob = await buildPdf();
       console.log("[pdf] generated blob:", blob.size, "bytes");
       const url = URL.createObjectURL(blob);
+      const filename = getPdfFilename();
+      const safeFilename = filename.replace(/[\\/:*?"<>|]+/g, "-");
+      const storagePath = `${user.id}/${Date.now()}-${safeFilename}`;
+      const { error: uploadError } = await supabase.storage
+        .from("document-pdfs")
+        .upload(storagePath, blob, { contentType: "application/pdf", upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: signed, error: signedError } = await supabase.storage
+        .from("document-pdfs")
+        .createSignedUrl(storagePath, 60 * 10, { download: filename });
+      if (signedError) throw signedError;
       setPdfBlob(blob);
-      setPdfBase64(await blobToBase64(blob));
+      setPdfDownloadUrl(signed.signedUrl);
       setPdfUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return url; });
     } catch (e) {
       console.error("[pdf] generation failed", e);
@@ -369,7 +371,7 @@ const DocumentCreator = () => {
     if (pdfUrl) URL.revokeObjectURL(pdfUrl);
     setPdfUrl(null);
     setPdfBlob(null);
-    setPdfBase64(null);
+    setPdfDownloadUrl(null);
   };
 
   const getPdfFilename = () => {
@@ -594,13 +596,17 @@ const DocumentCreator = () => {
             <div className="flex items-center justify-between border-b px-4 py-2">
               <div className="font-medium">Náhled PDF</div>
               <div className="flex items-center gap-2">
-                <form method="POST" action={PDF_DOWNLOAD_ENDPOINT} target="_self" className="contents">
-                  <input type="hidden" name="filename" value={getPdfFilename()} />
-                  <input type="hidden" name="file" value={pdfBase64 ?? ""} />
-                  <Button type="submit" size="sm" disabled={!pdfBase64}>
+                {pdfDownloadUrl ? (
+                  <Button size="sm" asChild>
+                    <a href={pdfDownloadUrl} download={getPdfFilename()}>
+                      <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
+                    </a>
+                  </Button>
+                ) : (
+                  <Button type="button" size="sm" disabled>
                     <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
                   </Button>
-                </form>
+                )}
                 <Button variant="ghost" size="icon" onClick={closePdfPreview}><X className="w-4 h-4" /></Button>
               </div>
             </div>
