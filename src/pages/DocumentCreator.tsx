@@ -565,7 +565,7 @@ const DocumentCreator = () => {
             </div>
             <div className="overflow-auto p-6 bg-muted/30">
               <div ref={previewRef} className="pdf-preview bg-white mx-auto shadow-md p-10" style={{ width: "210mm", minHeight: "297mm" }}>
-                <h1 className="text-2xl font-bold mb-4">{activePage?.properties[titleProp]}</h1>
+                <h1 className="text-2xl font-bold mb-4">{docTitle || activePage?.properties[titleProp]}</h1>
                 <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: mode === "blocks" ? blocksToHtml(blocks) : editor.getHTML() }} />
               </div>
             </div>
