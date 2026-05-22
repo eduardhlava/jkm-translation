@@ -269,6 +269,7 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
 function ImageBlockEditor({ block, onChange }: { block: Block; onChange: Props["onChange"] }) {
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const onPick = async (file: File) => {
     setUploading(true);
@@ -291,6 +292,12 @@ function ImageBlockEditor({ block, onChange }: { block: Block; onChange: Props["
     }
   };
 
+  const handleInsertFromNotion = (item: { image: string; title: string }) => {
+    setContent(block, { url: item.image, alt: block.content.alt || item.title }, onChange);
+    setPickerOpen(false);
+    toast.success("Obrázek vložen");
+  };
+
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
@@ -309,6 +316,10 @@ function ImageBlockEditor({ block, onChange }: { block: Block; onChange: Props["
           {uploading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Upload className="w-4 h-4 mr-1" />}
           Nahrát obrázek
         </Button>
+        <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
+          <ImageIcon className="w-4 h-4 mr-1" />
+          Vybrat v Notion
+        </Button>
         <Input
           value={block.content.url ?? ""}
           onChange={(e) => setContent(block, { url: e.target.value }, onChange)}
@@ -324,9 +335,100 @@ function ImageBlockEditor({ block, onChange }: { block: Block; onChange: Props["
       {block.content.url && (
         <img src={block.content.url} alt={block.content.alt} className="max-h-64 rounded border" />
       )}
+      <NotionImagePicker open={pickerOpen} onOpenChange={setPickerOpen} onInsert={handleInsertFromNotion} />
     </div>
   );
 }
+
+type NotionImageItem = { id: string; title: string; image: string; url: string };
+
+function NotionImagePicker({
+  open,
+  onOpenChange,
+  onInsert,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onInsert: (item: NotionImageItem) => void;
+}) {
+  const [items, setItems] = useState<NotionImageItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    if (!open || items.length > 0) return;
+    setLoading(true);
+    setError(null);
+    supabase.functions
+      .invoke("notion-images", { body: {} })
+      .then(({ data, error }) => {
+        if (error) throw error;
+        setItems((data?.items ?? []) as NotionImageItem[]);
+      })
+      .catch((e: unknown) => {
+        setError(e instanceof Error ? e.message : "Načtení selhalo");
+      })
+      .finally(() => setLoading(false));
+  }, [open, items.length]);
+
+  const filtered = items.filter((it) =>
+    it.title.toLowerCase().includes(query.trim().toLowerCase()),
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Obrázky z Notion</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Filtrovat podle názvu…"
+              className="pl-8"
+            />
+          </div>
+          <div className="max-h-[60vh] overflow-auto rounded border">
+            {loading ? (
+              <div className="flex items-center justify-center gap-2 p-6 text-sm text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin" /> Načítám…
+              </div>
+            ) : error ? (
+              <div className="p-4 text-sm text-destructive">{error}</div>
+            ) : filtered.length === 0 ? (
+              <div className="p-4 text-sm text-muted-foreground">Nic nenalezeno.</div>
+            ) : (
+              <ul className="divide-y">
+                {filtered.map((it) => (
+                  <li key={it.id} className="flex items-center gap-3 p-2">
+                    <img
+                      src={it.image}
+                      alt={it.title}
+                      className="h-14 w-14 rounded border object-cover bg-muted"
+                      loading="lazy"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium">{it.title || "Bez názvu"}</div>
+                      <div className="truncate text-xs text-muted-foreground">{it.image}</div>
+                    </div>
+                    <Button type="button" size="sm" onClick={() => onInsert(it)}>
+                      Vložit
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 function TableBlockEditor({ block, onChange }: { block: Block; onChange: Props["onChange"] }) {
   const rows: string[][] = block.content.rows ?? [];
