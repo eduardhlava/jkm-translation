@@ -64,6 +64,8 @@ import { Blocks, PencilLine } from "lucide-react";
 
 type EditorMode = "blocks" | "wysiwyg";
 
+const PDF_DOWNLOAD_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pdf-download`;
+
 interface ContentItem {
   id: string;
   url: string;
@@ -94,6 +96,7 @@ const DocumentCreator = () => {
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
+  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
   const [pdfBuilding, setPdfBuilding] = useState(false);
   const [mode, setMode] = useState<EditorMode>("blocks");
   const [blocks, setBlocks] = useState<Block[]>([]);
