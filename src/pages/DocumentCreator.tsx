@@ -598,22 +598,14 @@ const DocumentCreator = () => {
             <div className="flex items-center justify-between border-b px-4 py-2">
               <div className="font-medium">Náhled PDF</div>
               <div className="flex items-center gap-2">
-                {pdfDownloadUrl ? (
-                  <Button size="sm" asChild>
-                    <a href={pdfDownloadUrl} download={getPdfFilename()}>
-                      <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
-                    </a>
-                  </Button>
-                ) : (
-                  <Button type="button" size="sm" disabled>
-                    <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
-                  </Button>
-                )}
+                <Button type="button" size="sm" onClick={downloadPdf} disabled={!pdfBlob || pdfBuilding}>
+                  <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
+                </Button>
                 <Button variant="ghost" size="icon" onClick={closePdfPreview}><X className="w-4 h-4" /></Button>
               </div>
             </div>
             <div className="flex-1 min-h-0 bg-muted/30">
-              {pdfBuilding && !pdfUrl ? (
+              {pdfBuilding && !pdfBlob ? (
                 <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generuji PDF…
                 </div>
