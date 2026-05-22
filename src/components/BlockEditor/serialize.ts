@@ -8,15 +8,14 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
-// Sanitize allowed inline HTML for Text block (strong/em/a only)
+// Sanitize allowed HTML for Text block (inline + lists)
 function sanitizeInline(html: string): string {
   if (!html) return "";
-  // Quick allow-list pass via DOMParser when available
   if (typeof DOMParser !== "undefined") {
     const doc = new DOMParser().parseFromString(`<div>${html}</div>`, "text/html");
     const root = doc.body.firstChild as HTMLElement | null;
     if (!root) return "";
-    const allowed = new Set(["B", "STRONG", "I", "EM", "A", "BR", "P", "SPAN"]);
+    const allowed = new Set(["B", "STRONG", "I", "EM", "A", "BR", "P", "SPAN", "UL", "OL", "LI"]);
     const walk = (el: Element): string => {
       let out = "";
       el.childNodes.forEach((n) => {
@@ -38,6 +37,9 @@ function sanitizeInline(html: string): string {
           if (tag === "B" || tag === "STRONG") { out += `<strong>${walk(e)}</strong>`; return; }
           if (tag === "I" || tag === "EM") { out += `<em>${walk(e)}</em>`; return; }
           if (tag === "P") { out += `<p>${walk(e)}</p>`; return; }
+          if (tag === "UL") { out += `<ul>${walk(e)}</ul>`; return; }
+          if (tag === "OL") { out += `<ol>${walk(e)}</ol>`; return; }
+          if (tag === "LI") { out += `<li>${walk(e)}</li>`; return; }
           out += walk(e);
         }
       });
@@ -56,7 +58,7 @@ export function blockToHtml(b: Block): string {
     case "heading4": return `<h4>${escapeHtml(b.content.text)}</h4>`;
     case "text": {
       const inner = sanitizeInline(b.content.html ?? "");
-      return inner.includes("<p>") ? inner : `<p>${inner}</p>`;
+      return /<(p|ul|ol)\b/i.test(inner) ? inner : `<p>${inner}</p>`;
     }
     case "image": {
       const url = escapeHtml(b.content.url ?? "");
