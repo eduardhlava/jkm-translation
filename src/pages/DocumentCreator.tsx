@@ -327,23 +327,46 @@ const DocumentCreator = () => {
   };
 
 
-  const previewPdf = () => {
-    if (!editor) return;
+  const buildPdf = async (): Promise<Blob> => {
+    const { generateDocumentPdf } = await import("@/lib/pdf/generate");
+    const title = (docTitle || activePage?.properties[titleProp] || "dokument").trim();
+    return await generateDocumentPdf(title, blocks);
+  };
+
+  const previewPdf = async () => {
+    if (!activePage) return;
+    setPdfBuilding(true);
     setShowPdfPreview(true);
+    try {
+      const blob = await buildPdf();
+      const url = URL.createObjectURL(blob);
+      setPdfBlob(blob);
+      setPdfUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return url; });
+    } catch (e) {
+      toast.error("Generování PDF selhalo", { description: e instanceof Error ? e.message : "" });
+      setShowPdfPreview(false);
+    } finally {
+      setPdfBuilding(false);
+    }
+  };
+
+  const closePdfPreview = () => {
+    setShowPdfPreview(false);
+    if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+    setPdfUrl(null);
+    setPdfBlob(null);
   };
 
   const downloadPdf = async () => {
-    if (!previewRef.current) return;
-    const html2pdf = (await import("html2pdf.js")).default;
-    const opt = {
-      margin: [15, 15, 15, 15] as [number, number, number, number],
-      filename: `${docTitle || activePage?.properties[titleProp] || "dokument"}.pdf`,
-      image: { type: "jpeg" as const, quality: 0.95 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" as const },
-      pagebreak: { mode: ["avoid-all", "css", "legacy"] },
-    };
-    await html2pdf().set(opt).from(previewRef.current).save();
+    const blob = pdfBlob ?? (await buildPdf());
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(docTitle || activePage?.properties[titleProp] || "dokument").trim()}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   const tableHeaders = useMemo(() => {
