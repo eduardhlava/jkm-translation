@@ -400,16 +400,10 @@ const DocumentCreator = () => {
   };
 
   const submitServerPdfDownload = (base64: string, filename: string) => {
-    const frameName = `pdf-download-${Date.now()}`;
-    const frame = document.createElement("iframe");
-    frame.name = frameName;
-    frame.style.display = "none";
-    document.body.appendChild(frame);
-
     const form = document.createElement("form");
     form.method = "POST";
     form.action = PDF_DOWNLOAD_ENDPOINT;
-    form.target = frameName;
+    form.target = "_self";
     form.style.display = "none";
 
     const addField = (name: string, value: string) => {
@@ -425,17 +419,16 @@ const DocumentCreator = () => {
     document.body.appendChild(form);
     form.submit();
     document.body.removeChild(form);
-    setTimeout(() => document.body.contains(frame) && document.body.removeChild(frame), 60_000);
   };
 
-  const downloadPdfFromPreview = () => {
+  const downloadPdfFromPreview = async () => {
     if (!pdfBlob) return;
     try {
       const filename = getPdfFilename();
-      if (pdfBase64) {
-        submitServerPdfDownload(pdfBase64, filename);
-        return;
-      }
+      const base64 = pdfBase64 ?? await blobToBase64(pdfBlob);
+      setPdfBase64(base64);
+      submitServerPdfDownload(base64, filename);
+      return;
       triggerPdfDownload(pdfBlob, filename);
     } catch (e) {
       console.error("[pdf] download failed", e);
