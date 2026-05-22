@@ -64,6 +64,8 @@ import { Blocks, PencilLine } from "lucide-react";
 
 type EditorMode = "blocks" | "wysiwyg";
 
+const PDF_DOWNLOAD_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pdf-download`;
+
 interface ContentItem {
   id: string;
   url: string;
@@ -94,6 +96,7 @@ const DocumentCreator = () => {
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
+  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
   const [pdfBuilding, setPdfBuilding] = useState(false);
   const [mode, setMode] = useState<EditorMode>("blocks");
   const [blocks, setBlocks] = useState<Block[]>([]);
@@ -334,6 +337,13 @@ const DocumentCreator = () => {
     return await generateDocumentPdf(title, blocks);
   };
 
+  const blobToBase64 = (blob: Blob): Promise<string> => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(String(reader.result).split(",")[1] ?? "");
+    reader.onerror = () => reject(reader.error ?? new Error("PDF nelze připravit ke stažení."));
+    reader.readAsDataURL(blob);
+  });
+
   const previewPdf = async () => {
     if (!activePage) return;
     setPdfBuilding(true);
@@ -343,6 +353,7 @@ const DocumentCreator = () => {
       console.log("[pdf] generated blob:", blob.size, "bytes");
       const url = URL.createObjectURL(blob);
       setPdfBlob(blob);
+      setPdfBase64(await blobToBase64(blob));
       setPdfUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return url; });
     } catch (e) {
       console.error("[pdf] generation failed", e);
@@ -358,6 +369,7 @@ const DocumentCreator = () => {
     if (pdfUrl) URL.revokeObjectURL(pdfUrl);
     setPdfUrl(null);
     setPdfBlob(null);
+    setPdfBase64(null);
   };
 
   const getPdfFilename = () => {
@@ -370,58 +382,35 @@ const DocumentCreator = () => {
     source.type === "application/pdf" ? source : new Blob([source], { type: "application/pdf" })
   );
 
-  const escapeHtml = (value: string) => value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+  const submitServerPdfDownload = (base64: string, filename: string) => {
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = PDF_DOWNLOAD_ENDPOINT;
+    form.target = "_self";
+    form.style.display = "none";
 
-  const isSafariBrowser = () => /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent);
+    const addField = (name: string, value: string) => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = name;
+      input.value = value;
+      form.appendChild(input);
+    };
 
-  const triggerPdfDownload = (source: Blob, filename: string) => {
-    const blob = ensurePdfBlob(source);
-    const url = URL.createObjectURL(blob);
-
-    if (isSafariBrowser()) {
-      const opened = window.open("", "_blank");
-      if (opened) {
-        const safeFilename = escapeHtml(filename);
-        opened.document.open();
-        opened.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${safeFilename}</title></head><body style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f6f7f9;color:#111827;display:grid;place-items:center;height:100vh"><div style="text-align:center"><strong>PDF se připravuje ke stažení…</strong><div style="margin-top:8px;color:#6b7280;font-size:13px">Pokud se stažení nespustí, použijte Soubor → Uložit v otevřeném PDF.</div></div></body></html>`);
-        opened.document.close();
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const dataUrl = String(reader.result).replace(/^data:[^;]*;/, "data:attachment/file;");
-          opened.location.href = dataUrl;
-          opened.focus();
-        };
-        reader.readAsDataURL(blob);
-        toast.success("PDF se stahuje v novém okně Safari");
-      } else {
-        window.location.href = url;
-      }
-      setTimeout(() => URL.revokeObjectURL(url), 300_000);
-      return;
-    }
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.target = "_blank";
-    a.rel = "noopener";
-    a.style.position = "fixed";
-    a.style.left = "-9999px";
-    a.style.top = "0";
-    document.body.appendChild(a);
-    a.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    addField("filename", filename);
+    addField("file", base64);
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
   };
 
-  const downloadPdfFromPreview = () => {
+  const downloadPdfFromPreview = async () => {
     if (!pdfBlob) return;
     try {
-      triggerPdfDownload(pdfBlob, getPdfFilename());
+      const filename = getPdfFilename();
+      const base64 = pdfBase64 ?? await blobToBase64(pdfBlob);
+      setPdfBase64(base64);
+      submitServerPdfDownload(base64, filename);
     } catch (e) {
       console.error("[pdf] download failed", e);
       toast.error("Stažení PDF selhalo");
