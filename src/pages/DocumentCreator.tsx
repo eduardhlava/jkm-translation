@@ -579,21 +579,26 @@ const DocumentCreator = () => {
       </main>
 
       {/* PDF Preview Modal */}
-      {showPdfPreview && editor && (
+      {showPdfPreview && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-background rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+          <div className="bg-background rounded-lg shadow-xl w-full max-w-5xl h-[90vh] flex flex-col">
             <div className="flex items-center justify-between border-b px-4 py-2">
               <div className="font-medium">Náhled PDF</div>
               <div className="flex items-center gap-2">
-                <Button size="sm" onClick={downloadPdf}><Download className="w-4 h-4 mr-1" /> Stáhnout PDF</Button>
-                <Button variant="ghost" size="icon" onClick={() => setShowPdfPreview(false)}><X className="w-4 h-4" /></Button>
+                <Button size="sm" onClick={downloadPdf} disabled={pdfBuilding || !pdfBlob}>
+                  <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
+                </Button>
+                <Button variant="ghost" size="icon" onClick={closePdfPreview}><X className="w-4 h-4" /></Button>
               </div>
             </div>
-            <div className="overflow-auto p-6 bg-muted/30">
-              <div ref={previewRef} className="pdf-preview bg-white mx-auto shadow-md p-10" style={{ width: "210mm", minHeight: "297mm" }}>
-                <h1 className="text-2xl font-bold mb-4">{docTitle || activePage?.properties[titleProp]}</h1>
-                <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: mode === "blocks" ? blocksToHtml(blocks) : editor.getHTML() }} />
-              </div>
+            <div className="flex-1 min-h-0 bg-muted/30">
+              {pdfBuilding && !pdfUrl ? (
+                <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generuji PDF…
+                </div>
+              ) : pdfUrl ? (
+                <iframe src={pdfUrl} title="Náhled PDF" className="w-full h-full border-0" />
+              ) : null}
             </div>
           </div>
         </div>
