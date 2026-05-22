@@ -457,13 +457,18 @@ const DocumentCreator = () => {
         {activePage && (
           <Card className="overflow-hidden flex flex-col" style={{ height: "calc(100vh - 90px)" }}>
             <div className="flex-shrink-0 flex flex-wrap items-center justify-between gap-2 border-b bg-muted/30 px-4 py-2">
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex items-center gap-2 text-sm flex-1 min-w-0">
                 <Button variant="ghost" size="sm" onClick={() => setActivePage(null)}>
                   ← Zpět na seznam
                 </Button>
-                <FileText className="w-4 h-4 text-primary" />
-                <span className="font-medium">{activePage.properties[titleProp] || "(bez názvu)"}</span>
-                <a href={activePage.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
+                <FileText className="w-4 h-4 text-primary flex-shrink-0" />
+                <Input
+                  value={docTitle}
+                  onChange={(e) => setDocTitle(e.target.value)}
+                  className="h-8 max-w-md font-medium"
+                  placeholder="Název dokumentu"
+                />
+                <a href={activePage.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary flex-shrink-0">
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </div>
@@ -496,6 +501,11 @@ const DocumentCreator = () => {
                     {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
                     {saving ? "Exportuji…" : "Exportovat do Notion"}
                   </Button>
+                  <div className="mt-1 text-[11px] text-muted-foreground">
+                    {lastExportAt
+                      ? `Poslední export: ${new Date(lastExportAt).toLocaleString("cs-CZ")}`
+                      : "Zatím neexportováno"}
+                  </div>
                   {showSaveNotice && (
                     <div className="mt-1 max-w-xs rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground shadow-sm">
                       Ukládání probíhá na pozadí. Počkejte prosím 1–2 minuty a během této doby nezasahujte do obsahu v Notion.
