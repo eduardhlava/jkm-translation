@@ -365,25 +365,34 @@ const DocumentCreator = () => {
     setPdfBlob(null);
   };
 
-  const downloadPdf = async () => {
-    if (!pdfBlob) return;
-    const filename = getPdfFilename();
-    const url = URL.createObjectURL(pdfBlob);
+  const [uploadingPdf, setUploadingPdf] = useState(false);
+
+  const uploadPdfToNotion = async () => {
+    if (!pdfBlob || !activePage) return;
+    setUploadingPdf(true);
     try {
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      link.rel = "noopener";
-      link.style.display = "none";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.success("PDF je připravené ke stažení");
-    } catch (error) {
-      console.error("[pdf] download failed", error);
-      window.location.href = url;
+      const filename = getPdfFilename();
+      const buf = await pdfBlob.arrayBuffer();
+      // chunked base64 to avoid stack overflow
+      const bytes = new Uint8Array(buf);
+      let binary = "";
+      const CHUNK = 0x8000;
+      for (let i = 0; i < bytes.length; i += CHUNK) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+      }
+      const pdfBase64 = btoa(binary);
+
+      const { data, error } = await supabase.functions.invoke("notion-content", {
+        body: { action: "uploadPdf", pageId: activePage.id, filename, pdfBase64 },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success("PDF uloženo do Notion");
+    } catch (err) {
+      console.error("[pdf] upload to notion failed", err);
+      toast.error(err instanceof Error ? err.message : "Nepodařilo se uložit PDF do Notion");
     } finally {
-      window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+      setUploadingPdf(false);
     }
   };
 
