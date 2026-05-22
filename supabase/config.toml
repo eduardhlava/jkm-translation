@@ -2,6 +2,3 @@ project_id = "jflmhdazpdtllucwpdxl"
 
 [functions.admin-users]
 verify_jwt = false
-
-[functions.pdf-download]
-verify_jwt = false
