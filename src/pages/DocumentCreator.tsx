@@ -365,25 +365,34 @@ const DocumentCreator = () => {
     setPdfBlob(null);
   };
 
-  const downloadPdf = async () => {
-    if (!pdfBlob) return;
-    const filename = getPdfFilename();
-    const url = URL.createObjectURL(pdfBlob);
+  const [uploadingPdf, setUploadingPdf] = useState(false);
+
+  const uploadPdfToNotion = async () => {
+    if (!pdfBlob || !activePage) return;
+    setUploadingPdf(true);
     try {
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      link.rel = "noopener";
-      link.style.display = "none";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.success("PDF je připravené ke stažení");
-    } catch (error) {
-      console.error("[pdf] download failed", error);
-      window.location.href = url;
+      const filename = getPdfFilename();
+      const buf = await pdfBlob.arrayBuffer();
+      // chunked base64 to avoid stack overflow
+      const bytes = new Uint8Array(buf);
+      let binary = "";
+      const CHUNK = 0x8000;
+      for (let i = 0; i < bytes.length; i += CHUNK) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+      }
+      const pdfBase64 = btoa(binary);
+
+      const { data, error } = await supabase.functions.invoke("notion-content", {
+        body: { action: "uploadPdf", pageId: activePage.id, filename, pdfBase64 },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success("PDF uloženo do Notion");
+    } catch (err) {
+      console.error("[pdf] upload to notion failed", err);
+      toast.error(err instanceof Error ? err.message : "Nepodařilo se uložit PDF do Notion");
     } finally {
-      window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+      setUploadingPdf(false);
     }
   };
 
@@ -609,19 +618,17 @@ const DocumentCreator = () => {
             <div className="flex items-center justify-between border-b px-4 py-2">
               <div className="font-medium">Náhled PDF</div>
               <div className="flex items-center gap-2">
-                <a
-                  href={pdfObjectUrl ?? "#"}
-                  download={getPdfFilename()}
-                  target="_blank"
-                  rel="noopener"
-                  aria-disabled={!pdfObjectUrl || pdfBuilding}
-                  onClick={(e) => {
-                    if (!pdfObjectUrl || pdfBuilding) e.preventDefault();
-                  }}
-                  className={`inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 ${(!pdfObjectUrl || pdfBuilding) ? "pointer-events-none opacity-50" : ""}`}
+                <Button
+                  onClick={uploadPdfToNotion}
+                  disabled={!pdfBlob || pdfBuilding || uploadingPdf}
+                  size="sm"
                 >
-                  <Download className="w-4 h-4" /> Stáhnout PDF
-                </a>
+                  {uploadingPdf ? (
+                    <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Nahrávám…</>
+                  ) : (
+                    <><Save className="w-4 h-4 mr-1" /> Uložit do Notion</>
+                  )}
+                </Button>
                 <Button variant="ghost" size="icon" onClick={closePdfPreview}><X className="w-4 h-4" /></Button>
               </div>
             </div>
