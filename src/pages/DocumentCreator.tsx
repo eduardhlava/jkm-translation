@@ -157,7 +157,7 @@ const DocumentCreator = () => {
     try {
       const [contentRes, blocksRes] = await Promise.all([
         supabase.functions.invoke("notion-content", { body: { action: "get", pageId: item.id } }),
-        supabase.from("document_blocks").select("blocks").eq("page_id", item.id).maybeSingle(),
+        supabase.from("document_blocks").select("blocks, notion_exported_at").eq("page_id", item.id).maybeSingle(),
       ]);
       if (contentRes.error) throw contentRes.error;
       if ((contentRes.data as any)?.error) throw new Error((contentRes.data as any).error);
@@ -167,6 +167,10 @@ const DocumentCreator = () => {
       setBlocks(saved);
       setMode(saved.length > 0 ? "blocks" : "wysiwyg");
       setActivePage(item);
+      const initialTitle = item.properties[titleProp] || "";
+      setDocTitle(initialTitle);
+      setOriginalTitle(initialTitle);
+      setLastExportAt((blocksRes.data as any)?.notion_exported_at ?? null);
       toast.success("Obsah načten");
     } catch (e) {
       toast.error("Načtení obsahu selhalo", { description: e instanceof Error ? e.message : "" });
@@ -197,40 +201,102 @@ const DocumentCreator = () => {
     }
   };
 
-  const saveToNotion = async () => {
-    if (!activePage || !editor) return;
+  const runNotionExport = async (targetPageId: string, targetUrl: string, finalTitle: string) => {
+    if (!editor) return;
+    const html = mode === "blocks" ? blocksToHtml(blocks) : editor.getHTML();
+    const doc = mode === "blocks" ? undefined : editor.getJSON();
+
+    if (mode === "blocks") {
+      editor.commands.setContent(html || "<p></p>");
+    }
+    // Persist blocks bound to the (possibly new) target page id
+    const { error: upErr } = await supabase
+      .from("document_blocks")
+      .upsert({ page_id: targetPageId, blocks: blocks as any }, { onConflict: "page_id" });
+    if (upErr) throw upErr;
+
+    let phase: "delete" | "append" | "verify" | "done" = "delete";
+    let cursor = 0;
+    let after: string | undefined;
+
+    for (let attempt = 0; attempt < 250 && phase !== "done"; attempt++) {
+      const { data, error } = await supabase.functions.invoke("notion-content", {
+        body: { action: "save", pageId: targetPageId, html, doc, phase, cursor, after },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      phase = data?.phase ?? "done";
+      cursor = data?.cursor ?? 0;
+      after = data?.after ?? after;
+    }
+    if (phase !== "done") throw new Error("Ukládání trvalo příliš dlouho, zkuste to prosím znovu.");
+
+    const exportedAt = new Date().toISOString();
+    await supabase
+      .from("document_blocks")
+      .update({ notion_exported_at: exportedAt })
+      .eq("page_id", targetPageId);
+    setLastExportAt(exportedAt);
+
+    // Update local activePage binding to the target page
+    setActivePage((prev) => prev ? { ...prev, id: targetPageId, url: targetUrl, properties: { ...prev.properties, [titleProp]: finalTitle } } : prev);
+    setOriginalTitle(finalTitle);
+    toast.success("Obsah uložen a ověřen");
+  };
+
+  const performExport = async (forceOverwriteId?: string) => {
+    if (!activePage) return;
     setSaving(true);
     setShowSaveNotice(true);
     try {
-      // 1) In blocks mode: persist blocks + sync WYSIWYG first, then export
-      const html = mode === "blocks" ? blocksToHtml(blocks) : editor.getHTML();
-      const doc = mode === "blocks" ? undefined : editor.getJSON();
+      const title = (docTitle || "").trim();
+      if (!title) throw new Error("Název dokumentu nesmí být prázdný");
 
-      if (mode === "blocks") {
-        editor.commands.setContent(html || "<p></p>");
-        const { error: upErr } = await supabase
-          .from("document_blocks")
-          .upsert({ page_id: activePage.id, blocks: blocks as any }, { onConflict: "page_id" });
-        if (upErr) throw upErr;
-      }
+      // Decide target page
+      let targetId = activePage.id;
+      let targetUrl = activePage.url;
 
-      let phase: "delete" | "append" | "verify" | "done" = "delete";
-      let cursor = 0;
-      let after: string | undefined;
+      const titleChanged = title !== originalTitle;
 
-      for (let attempt = 0; attempt < 250 && phase !== "done"; attempt++) {
+      if (forceOverwriteId) {
+        targetId = forceOverwriteId;
+        targetUrl = activePage.url; // unknown for now; will be patched after rename
+      } else if (titleChanged) {
+        // Check if a page with this title exists in Notion (other than current)
         const { data, error } = await supabase.functions.invoke("notion-content", {
-          body: { action: "save", pageId: activePage.id, html, doc, phase, cursor, after },
+          body: { action: "checkTitle", title },
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
-        phase = data?.phase ?? "done";
-        cursor = data?.cursor ?? 0;
-        after = data?.after ?? after;
+        const matches: Array<{ id: string; url: string }> = data?.matches ?? [];
+        const conflict = matches.find((m) => m.id !== activePage.id);
+        if (conflict) {
+          // Ask user
+          setSaving(false);
+          setShowSaveNotice(false);
+          setOverwriteDialog({ open: true, targetId: conflict.id });
+          return;
+        }
+        // No conflict → create new page and switch binding
+        const createRes = await supabase.functions.invoke("notion-content", {
+          body: { action: "createPage", title },
+        });
+        if (createRes.error) throw createRes.error;
+        if ((createRes.data as any)?.error) throw new Error((createRes.data as any).error);
+        targetId = (createRes.data as any).id;
+        targetUrl = (createRes.data as any).url;
       }
 
-      if (phase !== "done") throw new Error("Ukládání trvalo příliš dlouho, zkuste to prosím znovu.");
-      toast.success("Obsah uložen a ověřen");
+      // If we're overwriting an existing target, ensure its title matches the entered title
+      if (forceOverwriteId || (!titleChanged && false)) {
+        const renameRes = await supabase.functions.invoke("notion-content", {
+          body: { action: "updateTitle", pageId: targetId, title },
+        });
+        if (renameRes.error) throw renameRes.error;
+        if ((renameRes.data as any)?.error) throw new Error((renameRes.data as any).error);
+      }
+
+      await runNotionExport(targetId, targetUrl, title);
     } catch (e) {
       toast.error("Uložení selhalo", { description: e instanceof Error ? e.message : "" });
     } finally {
@@ -238,6 +304,15 @@ const DocumentCreator = () => {
       setShowSaveNotice(false);
     }
   };
+
+  const saveToNotion = () => performExport();
+
+  const confirmOverwrite = async () => {
+    const id = overwriteDialog.targetId;
+    setOverwriteDialog({ open: false, targetId: null });
+    if (id) await performExport(id);
+  };
+
 
   const previewPdf = () => {
     if (!editor) return;
