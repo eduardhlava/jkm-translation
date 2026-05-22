@@ -587,11 +587,26 @@ const DocumentCreator = () => {
             <div className="flex items-center justify-between border-b px-4 py-2">
               <div className="font-medium">Náhled PDF</div>
               <div className="flex items-center gap-2">
-                {pdfUrl && (
-                  <Button variant="outline" size="sm" asChild>
-                    <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="w-4 h-4 mr-1" /> Otevřít v novém okně
-                    </a>
+                {pdfBlob && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      const buf = await pdfBlob.arrayBuffer();
+                      let bin = "";
+                      const bytes = new Uint8Array(buf);
+                      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+                      const dataUrl = `data:application/pdf;base64,${btoa(bin)}`;
+                      const w = window.open();
+                      if (w) {
+                        w.document.write(
+                          `<iframe src="${dataUrl}" style="border:0;width:100vw;height:100vh"></iframe>`
+                        );
+                        w.document.close();
+                      }
+                    }}
+                  >
+                    <ExternalLink className="w-4 h-4 mr-1" /> Otevřít v novém okně
                   </Button>
                 )}
                 <Button size="sm" onClick={downloadPdf} disabled={pdfBuilding || !pdfBlob}>
