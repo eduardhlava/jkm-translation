@@ -404,6 +404,40 @@ const DocumentCreator = () => {
     return `${safeName || "dokument"}.pdf`;
   };
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleImportJsonClick = () => fileInputRef.current?.click();
+
+  const handleImportJsonFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const { title, blocks: imported } = parseDocumentJson(text);
+      if (imported.length === 0) {
+        toast.error("JSON neobsahuje žádné bloky");
+        return;
+      }
+      setBlocks(imported);
+      if (title) setDocTitle(title);
+      toast.success(`Načteno ${imported.length} bloků z JSON`);
+    } catch (err) {
+      toast.error("Import JSON selhal", { description: err instanceof Error ? err.message : "" });
+    }
+  };
+
+  const downloadSampleJson = () => {
+    const json = JSON.stringify(SAMPLE_DOCUMENT_JSON, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "dokument-vzor.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const tableHeaders = useMemo(() => {
     const cols = [titleProp, ...FILTER_PROPS.filter((p) => schema[p])];
     return cols;
