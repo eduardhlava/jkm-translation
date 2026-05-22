@@ -382,23 +382,6 @@ const DocumentCreator = () => {
     source.type === "application/pdf" ? source : new Blob([source], { type: "application/pdf" })
   );
 
-  const triggerPdfDownload = (source: Blob, filename: string) => {
-    const blob = ensurePdfBlob(source);
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.target = "_blank";
-    a.rel = "noopener";
-    a.style.position = "fixed";
-    a.style.left = "-9999px";
-    a.style.top = "0";
-    document.body.appendChild(a);
-    a.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 60_000);
-  };
-
   const submitServerPdfDownload = (base64: string, filename: string) => {
     const form = document.createElement("form");
     form.method = "POST";
@@ -428,8 +411,6 @@ const DocumentCreator = () => {
       const base64 = pdfBase64 ?? await blobToBase64(pdfBlob);
       setPdfBase64(base64);
       submitServerPdfDownload(base64, filename);
-      return;
-      triggerPdfDownload(pdfBlob, filename);
     } catch (e) {
       console.error("[pdf] download failed", e);
       toast.error("Stažení PDF selhalo");
