@@ -334,7 +334,7 @@ const DocumentCreator = () => {
     const html2pdf = (await import("html2pdf.js")).default;
     const opt = {
       margin: [15, 15, 15, 15] as [number, number, number, number],
-      filename: `${activePage?.properties[titleProp] || "dokument"}.pdf`,
+      filename: `${docTitle || activePage?.properties[titleProp] || "dokument"}.pdf`,
       image: { type: "jpeg" as const, quality: 0.95 },
       html2canvas: { scale: 2, useCORS: true },
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" as const },
