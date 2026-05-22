@@ -12,13 +12,13 @@ const styles = StyleSheet.create({
     fontFamily: "Helvetica",
     color: "#111827",
   },
-  docTitle: { fontSize: 22, fontFamily: "Helvetica-Bold", marginBottom: 14 },
-  h1: { fontSize: 18, fontFamily: "Helvetica-Bold", marginTop: 14, marginBottom: 6 },
-  h2: { fontSize: 15, fontFamily: "Helvetica-Bold", marginTop: 12, marginBottom: 5 },
-  h3: { fontSize: 13, fontFamily: "Helvetica-Bold", marginTop: 10, marginBottom: 4 },
-  h4: { fontSize: 12, fontFamily: "Helvetica-Bold", marginTop: 8, marginBottom: 4 },
-  p: { marginBottom: 6 },
-  li: { flexDirection: "row", marginBottom: 2 },
+  docTitle: { fontSize: 22, lineHeight: 1.2, fontFamily: "Helvetica-Bold", marginBottom: 14 },
+  h1: { fontSize: 18, lineHeight: 1.25, fontFamily: "Helvetica-Bold", marginTop: 14, marginBottom: 6 },
+  h2: { fontSize: 15, lineHeight: 1.25, fontFamily: "Helvetica-Bold", marginTop: 12, marginBottom: 5 },
+  h3: { fontSize: 13, lineHeight: 1.25, fontFamily: "Helvetica-Bold", marginTop: 10, marginBottom: 4 },
+  h4: { fontSize: 12, lineHeight: 1.25, fontFamily: "Helvetica-Bold", marginTop: 8, marginBottom: 4 },
+  p: { fontSize: 11, lineHeight: 1.45, marginBottom: 6 },
+  li: { flexDirection: "row", marginBottom: 2, fontSize: 11, lineHeight: 1.45 },
   liBullet: { width: 14 },
   liContent: { flex: 1 },
   image: { marginVertical: 8, alignSelf: "center", maxWidth: "100%" },
@@ -42,8 +42,10 @@ const styles = StyleSheet.create({
     bottom: 24,
     left: 50,
     right: 50,
+    height: 12,
     textAlign: "center",
     fontSize: 9,
+    lineHeight: 1,
     color: "#6b7280",
   },
   tocTitle: { fontSize: 16, fontFamily: "Helvetica-Bold", marginBottom: 10 },
@@ -154,10 +156,11 @@ function Heading({ block, level, collector }: { block: Block; level: 1 | 2 | 3 |
   const styleMap = { 1: styles.h1, 2: styles.h2, 3: styles.h3, 4: styles.h4 } as const;
   const text = block.content?.text ?? "";
   return (
-    <View style={styleMap[level]} wrap={false}>
-      <Text>{text}</Text>
+    <View wrap={false}>
+      <Text style={styleMap[level]}>{text}</Text>
       {collector && level <= 3 && (
         <Text
+          style={{ height: 0, fontSize: 0 }}
           render={({ pageNumber }) => {
             collector.set(block.id, pageNumber);
             return "";
@@ -318,11 +321,9 @@ function Toc({ entries, pageMap }: { entries: HeadingEntry[]; pageMap: PageMap }
 // ---------- Footer ----------
 function Footer() {
   return (
-    <Text
-      style={styles.footer}
-      fixed
-      render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`}
-    />
+    <View style={styles.footer} fixed>
+      <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
+    </View>
   );
 }
 
@@ -344,17 +345,17 @@ export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collect
     <Document title={title}>
       {includeToc && pageMap && (
         <Page size="A4" style={styles.page}>
+          <Footer />
           <Text style={styles.docTitle}>{title}</Text>
           <Toc entries={tocEntries} pageMap={pageMap} />
-          <Footer />
         </Page>
       )}
       <Page size="A4" style={styles.page}>
+        <Footer />
         {!includeToc && <Text style={styles.docTitle}>{title}</Text>}
         {ordered.map((b) => (
           <BlockNode key={b.id} block={b} collector={collector} />
         ))}
-        <Footer />
       </Page>
     </Document>
   );
