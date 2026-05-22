@@ -266,28 +266,27 @@ const DocumentCreator = () => {
       let targetId = activePage.id;
       let targetUrl = activePage.url;
 
-      const titleChanged = title !== originalTitle;
-
       if (forceOverwriteId) {
         targetId = forceOverwriteId;
-        targetUrl = activePage.url; // unknown for now; will be patched after rename
-      } else if (titleChanged) {
-        // Check if a page with this title exists in Notion (other than current)
+        targetUrl = activePage.url;
+      } else {
+        // Always check if a page with this title exists in Notion
         const { data, error } = await supabase.functions.invoke("notion-content", {
           body: { action: "checkTitle", title },
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
         const matches: Array<{ id: string; url: string }> = data?.matches ?? [];
-        const conflict = matches.find((m) => m.id !== activePage.id);
-        if (conflict) {
-          // Ask user
+
+        if (matches.length > 0) {
+          // Ask user to confirm overwrite (use first match)
           setSaving(false);
           setShowSaveNotice(false);
-          setOverwriteDialog({ open: true, targetId: conflict.id });
+          setOverwriteDialog({ open: true, targetId: matches[0].id });
           return;
         }
-        // No conflict → create new page and switch binding
+
+        // No match → create new page and switch binding
         const createRes = await supabase.functions.invoke("notion-content", {
           body: { action: "createPage", title },
         });
@@ -298,7 +297,8 @@ const DocumentCreator = () => {
       }
 
       // If we're overwriting an existing target, ensure its title matches the entered title
-      if (forceOverwriteId || (!titleChanged && false)) {
+      if (forceOverwriteId) {
+
         const renameRes = await supabase.functions.invoke("notion-content", {
           body: { action: "updateTitle", pageId: targetId, title },
         });
