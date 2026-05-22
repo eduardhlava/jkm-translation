@@ -336,7 +336,9 @@ function Toc({ entries, pageMap }: { entries: HeadingEntry[]; pageMap: PageMap }
 // ---------- Footer ----------
 function Footer() {
   return (
-    <Text fixed style={styles.footer} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
+    <View fixed style={styles.footer}>
+      <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
+    </View>
   );
 }
 
