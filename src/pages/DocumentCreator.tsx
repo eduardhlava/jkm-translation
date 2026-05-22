@@ -91,6 +91,9 @@ const DocumentCreator = () => {
   const [saving, setSaving] = useState(false);
   const [showSaveNotice, setShowSaveNotice] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
+  const [pdfBuilding, setPdfBuilding] = useState(false);
   const [mode, setMode] = useState<EditorMode>("blocks");
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [docTitle, setDocTitle] = useState("");
@@ -324,23 +327,46 @@ const DocumentCreator = () => {
   };
 
 
-  const previewPdf = () => {
-    if (!editor) return;
+  const buildPdf = async (): Promise<Blob> => {
+    const { generateDocumentPdf } = await import("@/lib/pdf/generate");
+    const title = (docTitle || activePage?.properties[titleProp] || "dokument").trim();
+    return await generateDocumentPdf(title, blocks);
+  };
+
+  const previewPdf = async () => {
+    if (!activePage) return;
+    setPdfBuilding(true);
     setShowPdfPreview(true);
+    try {
+      const blob = await buildPdf();
+      const url = URL.createObjectURL(blob);
+      setPdfBlob(blob);
+      setPdfUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return url; });
+    } catch (e) {
+      toast.error("Generování PDF selhalo", { description: e instanceof Error ? e.message : "" });
+      setShowPdfPreview(false);
+    } finally {
+      setPdfBuilding(false);
+    }
+  };
+
+  const closePdfPreview = () => {
+    setShowPdfPreview(false);
+    if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+    setPdfUrl(null);
+    setPdfBlob(null);
   };
 
   const downloadPdf = async () => {
-    if (!previewRef.current) return;
-    const html2pdf = (await import("html2pdf.js")).default;
-    const opt = {
-      margin: [15, 15, 15, 15] as [number, number, number, number],
-      filename: `${docTitle || activePage?.properties[titleProp] || "dokument"}.pdf`,
-      image: { type: "jpeg" as const, quality: 0.95 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" as const },
-      pagebreak: { mode: ["avoid-all", "css", "legacy"] },
-    };
-    await html2pdf().set(opt).from(previewRef.current).save();
+    const blob = pdfBlob ?? (await buildPdf());
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(docTitle || activePage?.properties[titleProp] || "dokument").trim()}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   const tableHeaders = useMemo(() => {
@@ -553,21 +579,26 @@ const DocumentCreator = () => {
       </main>
 
       {/* PDF Preview Modal */}
-      {showPdfPreview && editor && (
+      {showPdfPreview && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-background rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+          <div className="bg-background rounded-lg shadow-xl w-full max-w-5xl h-[90vh] flex flex-col">
             <div className="flex items-center justify-between border-b px-4 py-2">
               <div className="font-medium">Náhled PDF</div>
               <div className="flex items-center gap-2">
-                <Button size="sm" onClick={downloadPdf}><Download className="w-4 h-4 mr-1" /> Stáhnout PDF</Button>
-                <Button variant="ghost" size="icon" onClick={() => setShowPdfPreview(false)}><X className="w-4 h-4" /></Button>
+                <Button size="sm" onClick={downloadPdf} disabled={pdfBuilding || !pdfBlob}>
+                  <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
+                </Button>
+                <Button variant="ghost" size="icon" onClick={closePdfPreview}><X className="w-4 h-4" /></Button>
               </div>
             </div>
-            <div className="overflow-auto p-6 bg-muted/30">
-              <div ref={previewRef} className="pdf-preview bg-white mx-auto shadow-md p-10" style={{ width: "210mm", minHeight: "297mm" }}>
-                <h1 className="text-2xl font-bold mb-4">{docTitle || activePage?.properties[titleProp]}</h1>
-                <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: mode === "blocks" ? blocksToHtml(blocks) : editor.getHTML() }} />
-              </div>
+            <div className="flex-1 min-h-0 bg-muted/30">
+              {pdfBuilding && !pdfUrl ? (
+                <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generuji PDF…
+                </div>
+              ) : pdfUrl ? (
+                <iframe src={pdfUrl} title="Náhled PDF" className="w-full h-full border-0" />
+              ) : null}
             </div>
           </div>
         </div>
