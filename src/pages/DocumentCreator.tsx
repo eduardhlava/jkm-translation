@@ -602,20 +602,7 @@ const DocumentCreator = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={async () => {
-                      const buf = await pdfBlob.arrayBuffer();
-                      let bin = "";
-                      const bytes = new Uint8Array(buf);
-                      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-                      const dataUrl = `data:application/pdf;base64,${btoa(bin)}`;
-                      const w = window.open();
-                      if (w) {
-                        w.document.write(
-                          `<iframe src="${dataUrl}" style="border:0;width:100vw;height:100vh"></iframe>`
-                        );
-                        w.document.close();
-                      }
-                    }}
+                    onClick={openPdfInNewWindow}
                   >
                     <ExternalLink className="w-4 h-4 mr-1" /> Otevřít v novém okně
                   </Button>
@@ -631,8 +618,8 @@ const DocumentCreator = () => {
                 <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generuji PDF…
                 </div>
-              ) : pdfUrl ? (
-                <iframe src={pdfUrl} title="Náhled PDF" className="w-full h-full border-0" />
+              ) : pdfBlob ? (
+                <PdfCanvasPreview blob={pdfBlob} />
               ) : null}
             </div>
           </div>
