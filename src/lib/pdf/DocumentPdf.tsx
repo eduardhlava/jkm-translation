@@ -155,17 +155,15 @@ function Heading({ block, level, collector }: { block: Block; level: 1 | 2 | 3 |
   const text = block.content?.text ?? "";
   return (
     <View style={styleMap[level]} wrap={false}>
-      <Text>
-        {text}
-        {collector && level <= 3 && (
-          <Text
-            render={({ pageNumber }) => {
-              collector.set(block.id, pageNumber);
-              return "";
-            }}
-          />
-        )}
-      </Text>
+      <Text>{text}</Text>
+      {collector && level <= 3 && (
+        <Text
+          render={({ pageNumber }) => {
+            collector.set(block.id, pageNumber);
+            return "";
+          }}
+        />
+      )}
     </View>
   );
 }
