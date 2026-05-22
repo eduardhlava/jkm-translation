@@ -13,15 +13,22 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
   docTitle: { fontSize: 22, lineHeight: 1.2, fontFamily: "Helvetica-Bold", marginBottom: 14 },
-  h1: { fontSize: 18, lineHeight: 1.25, fontFamily: "Helvetica-Bold", marginTop: 14, marginBottom: 6 },
-  h2: { fontSize: 15, lineHeight: 1.25, fontFamily: "Helvetica-Bold", marginTop: 12, marginBottom: 5 },
-  h3: { fontSize: 13, lineHeight: 1.25, fontFamily: "Helvetica-Bold", marginTop: 10, marginBottom: 4 },
-  h4: { fontSize: 12, lineHeight: 1.25, fontFamily: "Helvetica-Bold", marginTop: 8, marginBottom: 4 },
-  p: { fontSize: 11, lineHeight: 1.45, marginBottom: 6 },
+  h1Wrap: { width: "100%", marginTop: 14, marginBottom: 6 },
+  h2Wrap: { width: "100%", marginTop: 12, marginBottom: 5 },
+  h3Wrap: { width: "100%", marginTop: 10, marginBottom: 4 },
+  h4Wrap: { width: "100%", marginTop: 8, marginBottom: 4 },
+  h1: { fontSize: 18, lineHeight: 1.25, fontFamily: "Helvetica-Bold" },
+  h2: { fontSize: 15, lineHeight: 1.25, fontFamily: "Helvetica-Bold" },
+  h3: { fontSize: 13, lineHeight: 1.25, fontFamily: "Helvetica-Bold" },
+  h4: { fontSize: 12, lineHeight: 1.25, fontFamily: "Helvetica-Bold" },
+  textBlock: { width: "100%" },
+  paragraphWrap: { width: "100%", marginBottom: 6 },
+  p: { fontSize: 11, lineHeight: 1.45 },
   li: { flexDirection: "row", marginBottom: 2, fontSize: 11, lineHeight: 1.45 },
   liBullet: { width: 14 },
   liContent: { flex: 1 },
-  image: { marginVertical: 8, alignSelf: "center", maxWidth: "100%" },
+  imageBlock: { width: "100%", marginVertical: 10, alignItems: "center" },
+  image: { objectFit: "contain" },
   caption: { fontSize: 9, color: "#6b7280", textAlign: "center", marginTop: 2 },
   callout: {
     flexDirection: "row",
@@ -114,6 +121,9 @@ function fontFamilyFor(r: Run): string {
 }
 
 function RunsText({ runs }: { runs: Run[] }) {
+  const hasInlineStyles = runs.some((r) => r.bold || r.italic || r.underline || r.href);
+  if (!hasInlineStyles) return <>{runs.map((r) => r.text).join("")}</>;
+
   return (
     <>
       {runs.map((r, i) => {
@@ -154,9 +164,10 @@ export function collectHeadings(blocks: Block[]): HeadingEntry[] {
 // ---------- Block renderers ----------
 function Heading({ block, level, collector }: { block: Block; level: 1 | 2 | 3 | 4; collector?: PageMap }) {
   const styleMap = { 1: styles.h1, 2: styles.h2, 3: styles.h3, 4: styles.h4 } as const;
+  const wrapStyleMap = { 1: styles.h1Wrap, 2: styles.h2Wrap, 3: styles.h3Wrap, 4: styles.h4Wrap } as const;
   const text = block.content?.text ?? "";
   return (
-    <View wrap={false}>
+    <View wrap={false} style={wrapStyleMap[level]}>
       <Text style={styleMap[level]}>{text}</Text>
       {collector && level <= 3 && (
         <Text
@@ -190,7 +201,7 @@ function TextBlock({ block }: { block: Block }) {
     parent.childNodes.forEach((n) => {
       if (n.nodeType === Node.TEXT_NODE) {
         const t = n.textContent ?? "";
-        if (t.trim()) nodes.push(<Text key={key++} style={styles.p}>{t}</Text>);
+          if (t.trim()) nodes.push(<View key={key++} style={styles.paragraphWrap}><Text style={styles.p}>{t}</Text></View>);
         return;
       }
       if (n.nodeType !== Node.ELEMENT_NODE) return;
@@ -211,12 +222,12 @@ function TextBlock({ block }: { block: Block }) {
       }
       if (tag === "P") {
         const runs = parseInline(el.innerHTML).flat();
-        if (runs.length) nodes.push(<Text key={key++} style={styles.p}><RunsText runs={runs} /></Text>);
+        if (runs.length) nodes.push(<View key={key++} style={styles.paragraphWrap}><Text style={styles.p}><RunsText runs={runs} /></Text></View>);
         return;
       }
       // Fallback: treat as paragraph
       const runs = parseInline(el.outerHTML).flat();
-      if (runs.length) nodes.push(<Text key={key++} style={styles.p}><RunsText runs={runs} /></Text>);
+      if (runs.length) nodes.push(<View key={key++} style={styles.paragraphWrap}><Text style={styles.p}><RunsText runs={runs} /></Text></View>);
     });
   };
 
@@ -225,23 +236,27 @@ function TextBlock({ block }: { block: Block }) {
     return (
       <>
         {paragraphs.map((runs, i) =>
-          runs.length ? <Text key={i} style={styles.p}><RunsText runs={runs} /></Text> : null
+          runs.length ? <View key={i} style={styles.paragraphWrap}><Text style={styles.p}><RunsText runs={runs} /></Text></View> : null
         )}
       </>
     );
   }
   renderRootChildren(root);
-  return <>{nodes}</>;
+  return <View style={styles.textBlock}>{nodes}</View>;
 }
 
 function ImageBlock({ block }: { block: Block }) {
   const url = block.content?.url;
   const alt = block.content?.alt;
   if (!url) return null;
+  const requestedWidth = Number(block.content?.width);
+  const width = Number.isFinite(requestedWidth) && requestedWidth > 0
+    ? Math.max(120, Math.min(440, requestedWidth))
+    : 340;
   return (
-    <View wrap={false}>
+    <View wrap={false} style={styles.imageBlock}>
       {/* eslint-disable-next-line jsx-a11y/alt-text */}
-      <Image src={url} style={styles.image} />
+      <Image src={url} style={[styles.image, { width }] as any} />
       {alt ? <Text style={styles.caption}>{alt}</Text> : null}
     </View>
   );
@@ -321,9 +336,7 @@ function Toc({ entries, pageMap }: { entries: HeadingEntry[]; pageMap: PageMap }
 // ---------- Footer ----------
 function Footer() {
   return (
-    <View style={styles.footer} fixed>
-      <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
-    </View>
+    <Text fixed style={styles.footer} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
   );
 }
 
