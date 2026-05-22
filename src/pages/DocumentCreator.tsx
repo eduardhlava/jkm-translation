@@ -400,10 +400,16 @@ const DocumentCreator = () => {
   };
 
   const submitServerPdfDownload = (base64: string, filename: string) => {
+    const frameName = `pdf-download-${Date.now()}`;
+    const frame = document.createElement("iframe");
+    frame.name = frameName;
+    frame.style.display = "none";
+    document.body.appendChild(frame);
+
     const form = document.createElement("form");
     form.method = "POST";
     form.action = PDF_DOWNLOAD_ENDPOINT;
-    form.target = "_blank";
+    form.target = frameName;
     form.style.display = "none";
 
     const addField = (name: string, value: string) => {
@@ -419,6 +425,7 @@ const DocumentCreator = () => {
     document.body.appendChild(form);
     form.submit();
     document.body.removeChild(form);
+    setTimeout(() => document.body.contains(frame) && document.body.removeChild(frame), 60_000);
   };
 
   const downloadPdfFromPreview = () => {
