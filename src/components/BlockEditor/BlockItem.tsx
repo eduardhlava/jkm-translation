@@ -177,6 +177,17 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
     selection.addRange(range);
   };
 
+  const getEditorSelection = () => {
+    const editor = ref.current;
+    const selection = window.getSelection();
+    if (!editor || !selection || selection.rangeCount === 0) return null;
+    const range = selection.getRangeAt(0);
+    return editor.contains(range.commonAncestorContainer) ? range : null;
+  };
+
+  const escapeHtml = (value: string) =>
+    value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
   // Initialize innerHTML once per block id; avoid re-setting on every keystroke
   // (which would reset the caret to the beginning).
   useEffect(() => {
@@ -215,7 +226,16 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
     saveSelection();
     const url = window.prompt("URL odkazu:", "https://");
     if (!url) return;
-    exec("createLink", url.trim());
+    const cleanUrl = url.trim();
+    restoreSelection();
+    const range = getEditorSelection();
+    if (!range || range.collapsed) {
+      document.execCommand("insertHTML", false, `<a href="${escapeHtml(cleanUrl)}">${escapeHtml(cleanUrl)}</a>`);
+      syncHtml();
+      return;
+    }
+    document.execCommand("createLink", false, cleanUrl);
+    syncHtml();
   };
 
   return (
