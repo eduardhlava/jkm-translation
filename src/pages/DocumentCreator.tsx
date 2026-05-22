@@ -366,10 +366,72 @@ const DocumentCreator = () => {
     return `${safeName || "dokument"}.pdf`;
   };
 
-  const openPdfInNewWindow = async () => {
-    const blob = pdfBlob ?? (await buildPdf());
+  const ensurePdfBlob = (source: Blob) => (
+    source.type === "application/pdf" ? source : new Blob([source], { type: "application/pdf" })
+  );
+
+  const escapeHtml = (value: string) => value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+  const isSafariBrowser = () => /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent);
+
+  const triggerPdfDownload = (source: Blob, filename: string) => {
+    const blob = ensurePdfBlob(source);
     const url = URL.createObjectURL(blob);
-    const opened = window.open(url, "_blank", "noopener,noreferrer");
+
+    if (isSafariBrowser()) {
+      const opened = window.open("", "_blank");
+      if (opened) {
+        const safeFilename = escapeHtml(filename);
+        opened.document.open();
+        opened.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${safeFilename}</title></head><body style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f6f7f9;color:#111827;display:grid;place-items:center;height:100vh"><div style="text-align:center"><strong>PDF se připravuje ke stažení…</strong><div style="margin-top:8px;color:#6b7280;font-size:13px">Pokud se stažení nespustí, použijte Soubor → Uložit v otevřeném PDF.</div></div></body></html>`);
+        opened.document.close();
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const dataUrl = String(reader.result).replace(/^data:[^;]*;/, "data:attachment/file;");
+          opened.location.href = dataUrl;
+          opened.focus();
+        };
+        reader.readAsDataURL(blob);
+        toast.success("PDF se stahuje v novém okně Safari");
+      } else {
+        window.location.href = url;
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 300_000);
+      return;
+    }
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.style.position = "fixed";
+    a.style.left = "-9999px";
+    a.style.top = "0";
+    document.body.appendChild(a);
+    a.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  };
+
+  const downloadPdfFromPreview = () => {
+    if (!pdfBlob) return;
+    try {
+      triggerPdfDownload(pdfBlob, getPdfFilename());
+    } catch (e) {
+      console.error("[pdf] download failed", e);
+      toast.error("Stažení PDF selhalo");
+    }
+  };
+
+  const openPdfInNewWindow = async () => {
+    const blob = ensurePdfBlob(pdfBlob ?? (await buildPdf()));
+    const url = URL.createObjectURL(blob);
+    const opened = window.open(url, "_blank");
     if (!opened) {
       toast.error("Prohlížeč zablokoval nové okno. Použijte prosím tlačítko Stáhnout PDF.");
     }
@@ -604,27 +666,7 @@ const DocumentCreator = () => {
                 <Button
                   size="sm"
                   disabled={!pdfBlob}
-                  onClick={() => {
-                    if (!pdfBlob) return;
-                    try {
-                      const blob = pdfBlob.type === "application/pdf"
-                        ? pdfBlob
-                        : new Blob([pdfBlob], { type: "application/pdf" });
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement("a");
-                      a.href = url;
-                      a.download = getPdfFilename();
-                      a.rel = "noopener";
-                      a.style.display = "none";
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                      setTimeout(() => URL.revokeObjectURL(url), 60_000);
-                    } catch (e) {
-                      console.error("[pdf] download failed", e);
-                      toast.error("Stažení PDF selhalo");
-                    }
-                  }}
+                  onClick={downloadPdfFromPreview}
                 >
                   <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
                 </Button>
