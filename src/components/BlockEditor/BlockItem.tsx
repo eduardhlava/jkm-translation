@@ -327,14 +327,15 @@ function ImageBlockEditor({ block, onChange }: { block: Block; onChange: Props["
           className="flex-1 min-w-[200px]"
         />
       </div>
-      <Input
-        value={block.content.alt ?? ""}
-        onChange={(e) => setContent(block, { alt: e.target.value }, onChange)}
-        placeholder="Alternativní text"
-      />
       {block.content.url && (
         <img src={block.content.url} alt={block.content.alt} className="max-h-64 rounded border" />
       )}
+      <Input
+        value={block.content.alt ?? ""}
+        onChange={(e) => setContent(block, { alt: e.target.value }, onChange)}
+        placeholder="Popis obrázku"
+      />
+
       <NotionImagePicker open={pickerOpen} onOpenChange={setPickerOpen} onInsert={handleInsertFromNotion} />
     </div>
   );
