@@ -59,8 +59,10 @@ import EditorToolbar from "@/components/EditorToolbar";
 import BlockEditor from "@/components/BlockEditor";
 import type { Block } from "@/components/BlockEditor/types";
 import { blocksToHtml } from "@/components/BlockEditor/serialize";
+import { parseDocumentJson, SAMPLE_DOCUMENT_JSON } from "@/components/BlockEditor/importJson";
 import PdfCanvasPreview from "@/components/PdfCanvasPreview";
-import { Blocks, PencilLine } from "lucide-react";
+import { Blocks, PencilLine, Upload, FileDown } from "lucide-react";
+import { useRef } from "react";
 
 type EditorMode = "blocks" | "wysiwyg";
 
@@ -402,6 +404,40 @@ const DocumentCreator = () => {
     return `${safeName || "dokument"}.pdf`;
   };
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleImportJsonClick = () => fileInputRef.current?.click();
+
+  const handleImportJsonFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const { title, blocks: imported } = parseDocumentJson(text);
+      if (imported.length === 0) {
+        toast.error("JSON neobsahuje žádné bloky");
+        return;
+      }
+      setBlocks(imported);
+      if (title) setDocTitle(title);
+      toast.success(`Načteno ${imported.length} bloků z JSON`);
+    } catch (err) {
+      toast.error("Import JSON selhal", { description: err instanceof Error ? err.message : "" });
+    }
+  };
+
+  const downloadSampleJson = () => {
+    const json = JSON.stringify(SAMPLE_DOCUMENT_JSON, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "dokument-vzor.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const tableHeaders = useMemo(() => {
     const cols = [titleProp, ...FILTER_PROPS.filter((p) => schema[p])];
     return cols;
@@ -601,6 +637,19 @@ const DocumentCreator = () => {
             )}
             {mode === "blocks" && (
               <div className="flex-shrink-0 flex items-center justify-end gap-2 border-t bg-muted/30 px-4 py-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/json,.json"
+                  className="hidden"
+                  onChange={handleImportJsonFile}
+                />
+                <Button size="sm" variant="outline" onClick={downloadSampleJson}>
+                  <FileDown className="w-4 h-4 mr-1" /> Vzor JSON
+                </Button>
+                <Button size="sm" variant="outline" onClick={handleImportJsonClick}>
+                  <Upload className="w-4 h-4 mr-1" /> Importovat JSON
+                </Button>
                 <Button size="sm" onClick={saveDraft} disabled={savingDraft}>
                   {savingDraft ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
                   Uložit
