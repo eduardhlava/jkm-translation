@@ -545,6 +545,9 @@ const DocumentCreator = () => {
                 <Button variant="outline" size="sm" onClick={previewPdf} disabled={saving}>
                   <Eye className="w-4 h-4 mr-1" /> Náhled PDF
                 </Button>
+                <Button variant="outline" size="sm" onClick={downloadPdf} disabled={saving || pdfBuilding}>
+                  <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
+                </Button>
                 <div className="flex flex-col items-end">
                   <Button size="sm" onClick={saveToNotion} disabled={saving}>
                     {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
