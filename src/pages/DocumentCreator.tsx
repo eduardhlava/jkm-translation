@@ -335,23 +335,27 @@ const DocumentCreator = () => {
     return await generateDocumentPdf(title, blocks);
   };
 
-  const blobToBase64 = (blob: Blob): Promise<string> => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(String(reader.result).split(",")[1] ?? "");
-    reader.onerror = () => reject(reader.error ?? new Error("PDF nelze připravit ke stažení."));
-    reader.readAsDataURL(blob);
-  });
-
   const previewPdf = async () => {
-    if (!activePage) return;
+    if (!activePage || !user) return;
     setPdfBuilding(true);
     setShowPdfPreview(true);
     try {
       const blob = await buildPdf();
       console.log("[pdf] generated blob:", blob.size, "bytes");
       const url = URL.createObjectURL(blob);
+      const filename = getPdfFilename();
+      const safeFilename = filename.replace(/[\\/:*?"<>|]+/g, "-");
+      const storagePath = `${user.id}/${Date.now()}-${safeFilename}`;
+      const { error: uploadError } = await supabase.storage
+        .from("document-pdfs")
+        .upload(storagePath, blob, { contentType: "application/pdf", upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: signed, error: signedError } = await supabase.storage
+        .from("document-pdfs")
+        .createSignedUrl(storagePath, 60 * 10, { download: filename });
+      if (signedError) throw signedError;
       setPdfBlob(blob);
-      setPdfBase64(await blobToBase64(blob));
+      setPdfDownloadUrl(signed.signedUrl);
       setPdfUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return url; });
     } catch (e) {
       console.error("[pdf] generation failed", e);
@@ -367,7 +371,7 @@ const DocumentCreator = () => {
     if (pdfUrl) URL.revokeObjectURL(pdfUrl);
     setPdfUrl(null);
     setPdfBlob(null);
-    setPdfBase64(null);
+    setPdfDownloadUrl(null);
   };
 
   const getPdfFilename = () => {
