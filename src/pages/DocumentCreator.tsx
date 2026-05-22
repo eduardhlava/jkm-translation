@@ -93,7 +93,18 @@ const DocumentCreator = () => {
   const [showSaveNotice, setShowSaveNotice] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
+  const [pdfObjectUrl, setPdfObjectUrl] = useState<string | null>(null);
   const [pdfBuilding, setPdfBuilding] = useState(false);
+
+  useEffect(() => {
+    if (!pdfBlob) {
+      setPdfObjectUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(pdfBlob);
+    setPdfObjectUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [pdfBlob]);
   const [mode, setMode] = useState<EditorMode>("blocks");
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [docTitle, setDocTitle] = useState("");
