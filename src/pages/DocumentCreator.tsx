@@ -572,6 +572,21 @@ const DocumentCreator = () => {
           </div>
         </div>
       )}
+
+      <AlertDialog open={overwriteDialog.open} onOpenChange={(open) => !open && setOverwriteDialog({ open: false, targetId: null })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Dokument se stejným názvem už v Notion existuje</AlertDialogTitle>
+            <AlertDialogDescription>
+              V Notion již existuje dokument s názvem „{docTitle}". Chcete jeho obsah přepsat aktuální verzí z editoru?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Zrušit</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmOverwrite}>Přepsat</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
