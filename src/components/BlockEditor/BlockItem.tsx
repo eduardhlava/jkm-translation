@@ -145,11 +145,33 @@ function BlockBody({ block, onChange }: { block: Block; onChange: Props["onChang
 
 function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["onChange"] }) {
   const ref = useRef<HTMLDivElement>(null);
+  const lastHtmlRef = useRef<string>(block.content.html ?? "");
+
+  // Initialize innerHTML once per block id; avoid re-setting on every keystroke
+  // (which would reset the caret to the beginning).
+  useEffect(() => {
+    if (ref.current && ref.current.innerHTML !== (block.content.html ?? "")) {
+      ref.current.innerHTML = block.content.html ?? "";
+      lastHtmlRef.current = block.content.html ?? "";
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [block.id]);
+
+  // If parent updates html externally (not from our own input), sync DOM.
+  useEffect(() => {
+    const incoming = block.content.html ?? "";
+    if (incoming !== lastHtmlRef.current && ref.current && ref.current.innerHTML !== incoming) {
+      ref.current.innerHTML = incoming;
+      lastHtmlRef.current = incoming;
+    }
+  }, [block.content.html]);
 
   const exec = (cmd: string, value?: string) => {
     document.execCommand(cmd, false, value);
     if (ref.current) {
-      onChange(block.id, { content: { html: ref.current.innerHTML } });
+      const html = ref.current.innerHTML;
+      lastHtmlRef.current = html;
+      onChange(block.id, { content: { html } });
     }
   };
 
@@ -161,18 +183,23 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-1">
-        <Button type="button" variant="ghost" size="sm" onClick={() => exec("bold")} className="h-7 px-2 font-bold">B</Button>
-        <Button type="button" variant="ghost" size="sm" onClick={() => exec("italic")} className="h-7 px-2 italic">I</Button>
-        <Button type="button" variant="ghost" size="sm" onClick={onLink} className="h-7 px-2 underline">Odkaz</Button>
+      <div className="flex items-center gap-1 flex-wrap">
+        <Button type="button" variant="ghost" size="sm" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("bold")} className="h-7 px-2 font-bold">B</Button>
+        <Button type="button" variant="ghost" size="sm" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("italic")} className="h-7 px-2 italic">I</Button>
+        <Button type="button" variant="ghost" size="sm" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("insertUnorderedList")} className="h-7 px-2">• Seznam</Button>
+        <Button type="button" variant="ghost" size="sm" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("insertOrderedList")} className="h-7 px-2">1. Seznam</Button>
+        <Button type="button" variant="ghost" size="sm" onMouseDown={(e) => e.preventDefault()} onClick={onLink} className="h-7 px-2 underline">Odkaz</Button>
       </div>
       <div
         ref={ref}
         contentEditable
         suppressContentEditableWarning
-        onInput={(e) => onChange(block.id, { content: { html: (e.target as HTMLDivElement).innerHTML } })}
+        onInput={(e) => {
+          const html = (e.target as HTMLDivElement).innerHTML;
+          lastHtmlRef.current = html;
+          onChange(block.id, { content: { html } });
+        }}
         className="min-h-[60px] rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring prose prose-sm max-w-none"
-        dangerouslySetInnerHTML={{ __html: block.content.html || "" }}
       />
     </div>
   );
