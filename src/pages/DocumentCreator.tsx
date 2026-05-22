@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -78,7 +78,7 @@ interface PropMeta {
 const FILTER_PROPS = ["jazyk", "typ", "stav", "section", "subsection"] as const;
 
 const DocumentCreator = () => {
-  const { profile, isAdmin, user } = useAuth();
+  const { profile, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [schema, setSchema] = useState<Record<string, PropMeta>>({});
   const [titleProp, setTitleProp] = useState<string>("název");
@@ -92,9 +92,7 @@ const DocumentCreator = () => {
   const [saving, setSaving] = useState(false);
   const [showSaveNotice, setShowSaveNotice] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
-  const [pdfDownloadUrl, setPdfDownloadUrl] = useState<string | null>(null);
   const [pdfBuilding, setPdfBuilding] = useState(false);
   const [mode, setMode] = useState<EditorMode>("blocks");
   const [blocks, setBlocks] = useState<Block[]>([]);
@@ -102,7 +100,6 @@ const DocumentCreator = () => {
   const [originalTitle, setOriginalTitle] = useState("");
   const [lastExportAt, setLastExportAt] = useState<string | null>(null);
   const [overwriteDialog, setOverwriteDialog] = useState<{ open: boolean; targetId: string | null }>({ open: false, targetId: null });
-  const previewRef = useRef<HTMLDivElement>(null);
 
 
   const editor = useEditor({
@@ -336,27 +333,13 @@ const DocumentCreator = () => {
   };
 
   const previewPdf = async () => {
-    if (!activePage || !user) return;
+    if (!activePage) return;
     setPdfBuilding(true);
     setShowPdfPreview(true);
+    setPdfBlob(null);
     try {
       const blob = await buildPdf();
-      console.log("[pdf] generated blob:", blob.size, "bytes");
-      const url = URL.createObjectURL(blob);
-      const filename = getPdfFilename();
-      const safeFilename = filename.replace(/[\\/:*?"<>|]+/g, "-");
-      const storagePath = `${user.id}/${Date.now()}-${safeFilename}`;
-      const { error: uploadError } = await supabase.storage
-        .from("document-pdfs")
-        .upload(storagePath, blob, { contentType: "application/pdf", upsert: true });
-      if (uploadError) throw uploadError;
-      const { data: signed, error: signedError } = await supabase.storage
-        .from("document-pdfs")
-        .createSignedUrl(storagePath, 60 * 10, { download: filename });
-      if (signedError) throw signedError;
       setPdfBlob(blob);
-      setPdfDownloadUrl(signed.signedUrl);
-      setPdfUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return url; });
     } catch (e) {
       console.error("[pdf] generation failed", e);
       toast.error("Generování PDF selhalo", { description: e instanceof Error ? e.message : "" });
@@ -368,10 +351,29 @@ const DocumentCreator = () => {
 
   const closePdfPreview = () => {
     setShowPdfPreview(false);
-    if (pdfUrl) URL.revokeObjectURL(pdfUrl);
-    setPdfUrl(null);
     setPdfBlob(null);
-    setPdfDownloadUrl(null);
+  };
+
+  const downloadPdf = async () => {
+    if (!pdfBlob) return;
+    const filename = getPdfFilename();
+    const url = URL.createObjectURL(pdfBlob);
+    try {
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.rel = "noopener";
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("PDF je připravené ke stažení");
+    } catch (error) {
+      console.error("[pdf] download failed", error);
+      window.location.href = url;
+    } finally {
+      window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+    }
   };
 
   const getPdfFilename = () => {
@@ -596,22 +598,14 @@ const DocumentCreator = () => {
             <div className="flex items-center justify-between border-b px-4 py-2">
               <div className="font-medium">Náhled PDF</div>
               <div className="flex items-center gap-2">
-                {pdfDownloadUrl ? (
-                  <Button size="sm" asChild>
-                    <a href={pdfDownloadUrl} download={getPdfFilename()}>
-                      <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
-                    </a>
-                  </Button>
-                ) : (
-                  <Button type="button" size="sm" disabled>
-                    <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
-                  </Button>
-                )}
+                <Button type="button" size="sm" onClick={downloadPdf} disabled={!pdfBlob || pdfBuilding}>
+                  <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
+                </Button>
                 <Button variant="ghost" size="icon" onClick={closePdfPreview}><X className="w-4 h-4" /></Button>
               </div>
             </div>
             <div className="flex-1 min-h-0 bg-muted/30">
-              {pdfBuilding && !pdfUrl ? (
+              {pdfBuilding && !pdfBlob ? (
                 <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generuji PDF…
                 </div>

@@ -1,5 +1,20 @@
 import { Document, Page, Text, View, Image, Link, StyleSheet, Font } from "@react-pdf/renderer";
 import type { Block } from "@/components/BlockEditor/types";
+import notoRegular from "@/assets/fonts/NotoSans-Regular.ttf?url";
+import notoBold from "@/assets/fonts/NotoSans-Bold.ttf?url";
+import notoItalic from "@/assets/fonts/NotoSans-Italic.ttf?url";
+import notoBoldItalic from "@/assets/fonts/NotoSans-BoldItalic.ttf?url";
+
+Font.register({
+  family: "NotoSans",
+  fonts: [
+    { src: notoRegular, fontWeight: "normal" },
+    { src: notoBold, fontWeight: "bold" },
+    { src: notoItalic, fontStyle: "italic" },
+    { src: notoBoldItalic, fontWeight: "bold", fontStyle: "italic" },
+  ],
+});
+Font.registerHyphenationCallback((word) => [word]);
 
 // ---------- Styles ----------
 const styles = StyleSheet.create({
@@ -8,18 +23,18 @@ const styles = StyleSheet.create({
     paddingBottom: 60,
     paddingHorizontal: 50,
     fontSize: 11,
-    fontFamily: "Helvetica",
+    fontFamily: "NotoSans",
     color: "#111827",
   },
-  docTitle: { fontSize: 22, lineHeight: 1.2, fontFamily: "Helvetica-Bold", marginBottom: 14 },
+  docTitle: { fontSize: 22, lineHeight: 1.2, fontFamily: "NotoSans", fontWeight: "bold", marginBottom: 14 },
   h1Wrap: { width: "100%", marginTop: 14, marginBottom: 6 },
   h2Wrap: { width: "100%", marginTop: 12, marginBottom: 5 },
   h3Wrap: { width: "100%", marginTop: 10, marginBottom: 4 },
   h4Wrap: { width: "100%", marginTop: 8, marginBottom: 4 },
-  h1: { fontSize: 18, lineHeight: 1.25, fontFamily: "Helvetica-Bold" },
-  h2: { fontSize: 15, lineHeight: 1.25, fontFamily: "Helvetica-Bold" },
-  h3: { fontSize: 13, lineHeight: 1.25, fontFamily: "Helvetica-Bold" },
-  h4: { fontSize: 12, lineHeight: 1.25, fontFamily: "Helvetica-Bold" },
+  h1: { fontSize: 18, lineHeight: 1.25, fontFamily: "NotoSans", fontWeight: "bold" },
+  h2: { fontSize: 15, lineHeight: 1.25, fontFamily: "NotoSans", fontWeight: "bold" },
+  h3: { fontSize: 13, lineHeight: 1.25, fontFamily: "NotoSans", fontWeight: "bold" },
+  h4: { fontSize: 12, lineHeight: 1.25, fontFamily: "NotoSans", fontWeight: "bold" },
   textBlock: { width: "100%" },
   paragraphWrap: { width: "100%", marginBottom: 6 },
   p: { fontSize: 11, lineHeight: 1.45 },
@@ -42,7 +57,7 @@ const styles = StyleSheet.create({
   table: { borderWidth: 1, borderColor: "#d1d5db", marginVertical: 6 },
   tr: { flexDirection: "row" },
   td: { flex: 1, padding: 5, borderRightWidth: 1, borderBottomWidth: 1, borderColor: "#d1d5db", fontSize: 10 },
-  th: { backgroundColor: "#f3f4f6", fontFamily: "Helvetica-Bold" },
+  th: { backgroundColor: "#f3f4f6", fontFamily: "NotoSans", fontWeight: "bold" },
   footer: {
     position: "absolute",
     bottom: 24,
@@ -52,7 +67,7 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: "#6b7280",
   },
-  tocTitle: { fontSize: 16, fontFamily: "Helvetica-Bold", marginBottom: 10 },
+  tocTitle: { fontSize: 16, fontFamily: "NotoSans", fontWeight: "bold", marginBottom: 10 },
   tocRow: { flexDirection: "row", marginBottom: 3, fontSize: 11 },
   tocLeft: { flex: 1 },
   tocPage: { width: 30, textAlign: "right" },
@@ -111,10 +126,15 @@ function parseInline(html: string): Run[][] {
 }
 
 function fontFamilyFor(r: Run): string {
-  if (r.bold && r.italic) return "Helvetica-BoldOblique";
-  if (r.bold) return "Helvetica-Bold";
-  if (r.italic) return "Helvetica-Oblique";
-  return "Helvetica";
+  return "NotoSans";
+}
+
+function fontStyleFor(r: Run): Record<string, string> {
+  return {
+    fontFamily: fontFamilyFor(r),
+    fontWeight: r.bold ? "bold" : "normal",
+    fontStyle: r.italic ? "italic" : "normal",
+  };
 }
 
 function RunsText({ runs }: { runs: Run[] }) {
@@ -124,7 +144,7 @@ function RunsText({ runs }: { runs: Run[] }) {
   return (
     <>
       {runs.map((r, i) => {
-        const style: any = { fontFamily: fontFamilyFor(r) };
+        const style: any = fontStyleFor(r);
         if (r.underline || r.href) style.textDecoration = "underline";
         if (r.href) style.color = "#2563eb";
         if (r.href) {
