@@ -596,13 +596,17 @@ const DocumentCreator = () => {
             <div className="flex items-center justify-between border-b px-4 py-2">
               <div className="font-medium">Náhled PDF</div>
               <div className="flex items-center gap-2">
-                <form method="POST" action={PDF_DOWNLOAD_ENDPOINT} target="_self" className="contents">
-                  <input type="hidden" name="filename" value={getPdfFilename()} />
-                  <input type="hidden" name="file" value={pdfBase64 ?? ""} />
-                  <Button type="submit" size="sm" disabled={!pdfBase64}>
+                {pdfDownloadUrl ? (
+                  <Button size="sm" asChild>
+                    <a href={pdfDownloadUrl} download={getPdfFilename()}>
+                      <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
+                    </a>
+                  </Button>
+                ) : (
+                  <Button type="button" size="sm" disabled>
                     <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
                   </Button>
-                </form>
+                )}
                 <Button variant="ghost" size="icon" onClick={closePdfPreview}><X className="w-4 h-4" /></Button>
               </div>
             </div>
