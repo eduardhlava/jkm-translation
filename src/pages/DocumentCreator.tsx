@@ -64,8 +64,6 @@ import { Blocks, PencilLine } from "lucide-react";
 
 type EditorMode = "blocks" | "wysiwyg";
 
-const PDF_DOWNLOAD_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pdf-download`;
-
 interface ContentItem {
   id: string;
   url: string;
@@ -80,7 +78,7 @@ interface PropMeta {
 const FILTER_PROPS = ["jazyk", "typ", "stav", "section", "subsection"] as const;
 
 const DocumentCreator = () => {
-  const { profile, isAdmin } = useAuth();
+  const { profile, isAdmin, user } = useAuth();
   const navigate = useNavigate();
   const [schema, setSchema] = useState<Record<string, PropMeta>>({});
   const [titleProp, setTitleProp] = useState<string>("název");
@@ -96,7 +94,7 @@ const DocumentCreator = () => {
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
-  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
+  const [pdfDownloadUrl, setPdfDownloadUrl] = useState<string | null>(null);
   const [pdfBuilding, setPdfBuilding] = useState(false);
   const [mode, setMode] = useState<EditorMode>("blocks");
   const [blocks, setBlocks] = useState<Block[]>([]);
