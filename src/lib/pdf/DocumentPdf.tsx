@@ -336,9 +336,11 @@ function Toc({ entries, pageMap }: { entries: HeadingEntry[]; pageMap: PageMap }
 // ---------- Footer ----------
 function Footer() {
   return (
-    <View fixed style={styles.footer}>
-      <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
-    </View>
+    <Text
+      fixed
+      style={styles.footer}
+      render={({ pageNumber, totalPages }) => `Strana ${pageNumber} / ${totalPages}`}
+    />
   );
 }
 
