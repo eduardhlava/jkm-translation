@@ -366,10 +366,66 @@ const DocumentCreator = () => {
     return `${safeName || "dokument"}.pdf`;
   };
 
-  const openPdfInNewWindow = async () => {
-    const blob = pdfBlob ?? (await buildPdf());
+  const ensurePdfBlob = (source: Blob) => (
+    source.type === "application/pdf" ? source : new Blob([source], { type: "application/pdf" })
+  );
+
+  const escapeHtml = (value: string) => value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+  const isSafariBrowser = () => /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent);
+
+  const triggerPdfDownload = (source: Blob, filename: string) => {
+    const blob = ensurePdfBlob(source);
     const url = URL.createObjectURL(blob);
-    const opened = window.open(url, "_blank", "noopener,noreferrer");
+
+    if (isSafariBrowser()) {
+      const opened = window.open("", "_blank");
+      if (opened) {
+        const safeFilename = escapeHtml(filename);
+        opened.document.open();
+        opened.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${safeFilename}</title></head><body style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f6f7f9;color:#111827"><div style="height:52px;display:flex;align-items:center;gap:12px;padding:0 16px;background:#fff;border-bottom:1px solid #d1d5db"><a href="${url}" download="${safeFilename}" style="display:inline-flex;align-items:center;border-radius:6px;background:#111827;color:#fff;padding:9px 14px;text-decoration:none;font-size:14px;font-weight:600">Stáhnout PDF</a><span style="font-size:13px;color:#6b7280">Pokud Safari soubor nestáhne automaticky, uložte ho z otevřeného náhledu.</span></div><iframe src="${url}" title="${safeFilename}" style="width:100%;height:calc(100vh - 53px);border:0"></iframe></body></html>`);
+        opened.document.close();
+        opened.focus();
+        toast.success("PDF je připravené v novém okně Safari");
+      } else {
+        window.location.href = url;
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 300_000);
+      return;
+    }
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.style.position = "fixed";
+    a.style.left = "-9999px";
+    a.style.top = "0";
+    document.body.appendChild(a);
+    a.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  };
+
+  const downloadPdfFromPreview = () => {
+    if (!pdfBlob) return;
+    try {
+      triggerPdfDownload(pdfBlob, getPdfFilename());
+    } catch (e) {
+      console.error("[pdf] download failed", e);
+      toast.error("Stažení PDF selhalo");
+    }
+  };
+
+  const openPdfInNewWindow = async () => {
+    const blob = ensurePdfBlob(pdfBlob ?? (await buildPdf()));
+    const url = URL.createObjectURL(blob);
+    const opened = window.open(url, "_blank");
     if (!opened) {
       toast.error("Prohlížeč zablokoval nové okno. Použijte prosím tlačítko Stáhnout PDF.");
     }
