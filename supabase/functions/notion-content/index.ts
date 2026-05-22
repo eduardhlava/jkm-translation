@@ -721,15 +721,25 @@ function htmlToBlocks(html: string): any[] {
   return blocks;
 }
 
+function richSig(rich: any[] = []): string {
+  return rich.map((r: any) => {
+    const text = r.plain_text ?? r.text?.content ?? "";
+    const a = r.annotations ?? {};
+    const flags = [a.bold && "b", a.italic && "i", a.underline && "u", a.strikethrough && "s", a.code && "c"].filter(Boolean).join("");
+    const href = r.href ?? r.text?.link?.url ?? "";
+    return `${text}{${flags}${href ? `|${href}` : ""}}`;
+  }).join("");
+}
+
 function blockPlain(block: any): string {
   const type = block.type;
   if (type === "table") {
     return `table:${(block.table.children ?? [])
-      .map((row: any) => (row.table_row?.cells ?? []).map((cell: any) => richPlain(cell)).join("|"))
+      .map((row: any) => (row.table_row?.cells ?? []).map((cell: any) => richSig(cell)).join("|"))
       .join("/")}`;
   }
   const data = block[type] ?? {};
-  return `${type}:${richPlain(data.rich_text ?? data.caption ?? [])}`;
+  return `${type}:${richSig(data.rich_text ?? data.caption ?? [])}`;
 }
 
 function blocksFingerprint(blocks: any[]): string {
@@ -748,11 +758,11 @@ async function notionBlocksFingerprint(blocks: any[], apiKey: string): Promise<s
       if (type === "table") {
         return `table:${(tableRows.get(block.id) ?? [])
           .filter((row: any) => row.type === "table_row")
-          .map((row: any) => (row.table_row?.cells ?? []).map((cell: any) => richPlain(cell)).join("|"))
+          .map((row: any) => (row.table_row?.cells ?? []).map((cell: any) => richSig(cell)).join("|"))
           .join("/")}`;
       }
       const data = block[type] ?? {};
-      return `${type}:${richPlain(data.rich_text ?? data.caption ?? [])}`;
+      return `${type}:${richSig(data.rich_text ?? data.caption ?? [])}`;
     })
     .join("\n")
     .replace(/\s+/g, " ")
