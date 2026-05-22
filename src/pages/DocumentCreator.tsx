@@ -339,10 +339,12 @@ const DocumentCreator = () => {
     setShowPdfPreview(true);
     try {
       const blob = await buildPdf();
+      console.log("[pdf] generated blob:", blob.size, "bytes");
       const url = URL.createObjectURL(blob);
       setPdfBlob(blob);
       setPdfUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return url; });
     } catch (e) {
+      console.error("[pdf] generation failed", e);
       toast.error("Generování PDF selhalo", { description: e instanceof Error ? e.message : "" });
       setShowPdfPreview(false);
     } finally {
