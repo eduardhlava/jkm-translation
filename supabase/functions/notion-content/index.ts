@@ -513,6 +513,83 @@ function stripTags(html: string): string {
     .trim());
 }
 
+// Parse inline HTML into Notion rich_text with annotations (bold/italic/code/strike/underline + links)
+type Annot = { bold?: boolean; italic?: boolean; underline?: boolean; strikethrough?: boolean; code?: boolean };
+function pushRich(out: any[], text: string, ann: Annot, href: string | null) {
+  if (!text) return;
+  const MAX = 2000;
+  for (let i = 0; i < text.length; i += MAX) {
+    const slice = text.slice(i, i + MAX);
+    const seg: any = { type: "text", text: { content: slice } };
+    if (href) seg.text.link = { url: href };
+    const annotations: any = {};
+    if (ann.bold) annotations.bold = true;
+    if (ann.italic) annotations.italic = true;
+    if (ann.underline) annotations.underline = true;
+    if (ann.strikethrough) annotations.strikethrough = true;
+    if (ann.code) annotations.code = true;
+    if (Object.keys(annotations).length) seg.annotations = annotations;
+    if (href) seg.href = href;
+    out.push(seg);
+  }
+}
+
+function htmlToRich(html: string): any[] {
+  if (!html) return [];
+  const out: any[] = [];
+  // Normalize <br> and <p> boundaries to newlines
+  const src = html.replace(/<br\s*\/?>/gi, "\n").replace(/<\/p\s*>/gi, "\n").replace(/<p\b[^>]*>/gi, "");
+  const tagRe = /<\/?([a-zA-Z0-9]+)\b([^>]*)>/g;
+  const stack: { tag: string; ann: Annot; href: string | null }[] = [];
+  const curAnn = (): Annot => {
+    const a: Annot = {};
+    for (const s of stack) {
+      if (s.ann.bold) a.bold = true;
+      if (s.ann.italic) a.italic = true;
+      if (s.ann.underline) a.underline = true;
+      if (s.ann.strikethrough) a.strikethrough = true;
+      if (s.ann.code) a.code = true;
+    }
+    return a;
+  };
+  const curHref = (): string | null => {
+    for (let i = stack.length - 1; i >= 0; i--) if (stack[i].href) return stack[i].href;
+    return null;
+  };
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = tagRe.exec(src)) !== null) {
+    if (m.index > last) {
+      pushRich(out, decodeHtml(src.slice(last, m.index)), curAnn(), curHref());
+    }
+    last = m.index + m[0].length;
+    const tag = m[1].toLowerCase();
+    const attrs = m[2] || "";
+    const isClose = m[0].startsWith("</");
+    if (isClose) {
+      for (let i = stack.length - 1; i >= 0; i--) {
+        if (stack[i].tag === tag) { stack.splice(i, 1); break; }
+      }
+    } else {
+      const ann: Annot = {};
+      let href: string | null = null;
+      if (tag === "b" || tag === "strong") ann.bold = true;
+      else if (tag === "i" || tag === "em") ann.italic = true;
+      else if (tag === "u") ann.underline = true;
+      else if (tag === "s" || tag === "strike" || tag === "del") ann.strikethrough = true;
+      else if (tag === "code") ann.code = true;
+      else if (tag === "a") href = getAttr(attrs, "href");
+      // self-closing or unknown tags ignored for stack
+      const selfClose = /\/\s*>$/.test(m[0]) || tag === "img";
+      if (!selfClose) stack.push({ tag, ann, href });
+    }
+  }
+  if (last < src.length) {
+    pushRich(out, decodeHtml(src.slice(last)), curAnn(), curHref());
+  }
+  return out;
+}
+
 function htmlToBlocks(html: string): any[] {
   const blocks: any[] = [];
   // Tokenize at top-level block tags
@@ -529,21 +606,21 @@ function htmlToBlocks(html: string): any[] {
         blocks.push({
           object: "block",
           type: `heading_${tag[1]}`,
-          [`heading_${tag[1]}`]: { rich_text: textToRich(stripTags(inner)) },
+          [`heading_${tag[1]}`]: { rich_text: htmlToRich(inner) },
         });
         break;
       case "p":
         blocks.push({
           object: "block",
           type: "paragraph",
-          paragraph: { rich_text: textToRich(stripTags(inner)) },
+          paragraph: { rich_text: htmlToRich(inner) },
         });
         break;
       case "blockquote":
         blocks.push({
           object: "block",
           type: "quote",
-          quote: { rich_text: textToRich(stripTags(inner)) },
+          quote: { rich_text: htmlToRich(inner) },
         });
         break;
       case "pre":
@@ -565,7 +642,7 @@ function htmlToBlocks(html: string): any[] {
           blocks.push({
             object: "block",
             type: itemType,
-            [itemType]: { rich_text: textToRich(stripTags(li[1])) },
+            [itemType]: { rich_text: htmlToRich(li[1]) },
           });
         }
         break;
@@ -644,15 +721,25 @@ function htmlToBlocks(html: string): any[] {
   return blocks;
 }
 
+function richSig(rich: any[] = []): string {
+  return rich.map((r: any) => {
+    const text = r.plain_text ?? r.text?.content ?? "";
+    const a = r.annotations ?? {};
+    const flags = [a.bold && "b", a.italic && "i", a.underline && "u", a.strikethrough && "s", a.code && "c"].filter(Boolean).join("");
+    const href = r.href ?? r.text?.link?.url ?? "";
+    return `${text}{${flags}${href ? `|${href}` : ""}}`;
+  }).join("");
+}
+
 function blockPlain(block: any): string {
   const type = block.type;
   if (type === "table") {
     return `table:${(block.table.children ?? [])
-      .map((row: any) => (row.table_row?.cells ?? []).map((cell: any) => richPlain(cell)).join("|"))
+      .map((row: any) => (row.table_row?.cells ?? []).map((cell: any) => richSig(cell)).join("|"))
       .join("/")}`;
   }
   const data = block[type] ?? {};
-  return `${type}:${richPlain(data.rich_text ?? data.caption ?? [])}`;
+  return `${type}:${richSig(data.rich_text ?? data.caption ?? [])}`;
 }
 
 function blocksFingerprint(blocks: any[]): string {
@@ -671,11 +758,11 @@ async function notionBlocksFingerprint(blocks: any[], apiKey: string): Promise<s
       if (type === "table") {
         return `table:${(tableRows.get(block.id) ?? [])
           .filter((row: any) => row.type === "table_row")
-          .map((row: any) => (row.table_row?.cells ?? []).map((cell: any) => richPlain(cell)).join("|"))
+          .map((row: any) => (row.table_row?.cells ?? []).map((cell: any) => richSig(cell)).join("|"))
           .join("/")}`;
       }
       const data = block[type] ?? {};
-      return `${type}:${richPlain(data.rich_text ?? data.caption ?? [])}`;
+      return `${type}:${richSig(data.rich_text ?? data.caption ?? [])}`;
     })
     .join("\n")
     .replace(/\s+/g, " ")
