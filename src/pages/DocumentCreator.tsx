@@ -378,55 +378,6 @@ const DocumentCreator = () => {
     return `${safeName || "dokument"}.pdf`;
   };
 
-  const ensurePdfBlob = (source: Blob) => (
-    source.type === "application/pdf" ? source : new Blob([source], { type: "application/pdf" })
-  );
-
-  const submitServerPdfDownload = (base64: string, filename: string) => {
-    const form = document.createElement("form");
-    form.method = "POST";
-    form.action = PDF_DOWNLOAD_ENDPOINT;
-    form.target = "_self";
-    form.style.display = "none";
-
-    const addField = (name: string, value: string) => {
-      const input = document.createElement("input");
-      input.type = "hidden";
-      input.name = name;
-      input.value = value;
-      form.appendChild(input);
-    };
-
-    addField("filename", filename);
-    addField("file", base64);
-    document.body.appendChild(form);
-    form.submit();
-    document.body.removeChild(form);
-  };
-
-  const downloadPdfFromPreview = async () => {
-    if (!pdfBlob) return;
-    try {
-      const filename = getPdfFilename();
-      const base64 = pdfBase64 ?? await blobToBase64(pdfBlob);
-      setPdfBase64(base64);
-      submitServerPdfDownload(base64, filename);
-    } catch (e) {
-      console.error("[pdf] download failed", e);
-      toast.error("Stažení PDF selhalo");
-    }
-  };
-
-  const openPdfInNewWindow = async () => {
-    const blob = ensurePdfBlob(pdfBlob ?? (await buildPdf()));
-    const url = URL.createObjectURL(blob);
-    const opened = window.open(url, "_blank");
-    if (!opened) {
-      toast.error("Prohlížeč zablokoval nové okno. Použijte prosím tlačítko Stáhnout PDF.");
-    }
-    setTimeout(() => URL.revokeObjectURL(url), 60_000);
-  };
-
   const tableHeaders = useMemo(() => {
     const cols = [titleProp, ...FILTER_PROPS.filter((p) => schema[p])];
     return cols;
@@ -643,22 +594,13 @@ const DocumentCreator = () => {
             <div className="flex items-center justify-between border-b px-4 py-2">
               <div className="font-medium">Náhled PDF</div>
               <div className="flex items-center gap-2">
-                {pdfBlob && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={openPdfInNewWindow}
-                  >
-                    <ExternalLink className="w-4 h-4 mr-1" /> Otevřít v novém okně
+                <form method="POST" action={PDF_DOWNLOAD_ENDPOINT} target="_self" className="contents">
+                  <input type="hidden" name="filename" value={getPdfFilename()} />
+                  <input type="hidden" name="file" value={pdfBase64 ?? ""} />
+                  <Button type="submit" size="sm" disabled={!pdfBase64}>
+                    <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
                   </Button>
-                )}
-                <Button
-                  size="sm"
-                  disabled={!pdfBlob}
-                  onClick={downloadPdfFromPreview}
-                >
-                  <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
-                </Button>
+                </form>
                 <Button variant="ghost" size="icon" onClick={closePdfPreview}><X className="w-4 h-4" /></Button>
               </div>
             </div>
