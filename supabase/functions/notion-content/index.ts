@@ -606,21 +606,21 @@ function htmlToBlocks(html: string): any[] {
         blocks.push({
           object: "block",
           type: `heading_${tag[1]}`,
-          [`heading_${tag[1]}`]: { rich_text: textToRich(stripTags(inner)) },
+          [`heading_${tag[1]}`]: { rich_text: htmlToRich(inner) },
         });
         break;
       case "p":
         blocks.push({
           object: "block",
           type: "paragraph",
-          paragraph: { rich_text: textToRich(stripTags(inner)) },
+          paragraph: { rich_text: htmlToRich(inner) },
         });
         break;
       case "blockquote":
         blocks.push({
           object: "block",
           type: "quote",
-          quote: { rich_text: textToRich(stripTags(inner)) },
+          quote: { rich_text: htmlToRich(inner) },
         });
         break;
       case "pre":
@@ -642,7 +642,7 @@ function htmlToBlocks(html: string): any[] {
           blocks.push({
             object: "block",
             type: itemType,
-            [itemType]: { rich_text: textToRich(stripTags(li[1])) },
+            [itemType]: { rich_text: htmlToRich(li[1]) },
           });
         }
         break;
