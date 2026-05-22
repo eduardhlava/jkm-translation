@@ -58,7 +58,7 @@ export function blockToHtml(b: Block): string {
     case "heading4": return `<h4>${escapeHtml(b.content.text)}</h4>`;
     case "text": {
       const inner = sanitizeInline(b.content.html ?? "");
-      return inner.includes("<p>") ? inner : `<p>${inner}</p>`;
+      return /<(p|ul|ol)\b/i.test(inner) ? inner : `<p>${inner}</p>`;
     }
     case "image": {
       const url = escapeHtml(b.content.url ?? "");
