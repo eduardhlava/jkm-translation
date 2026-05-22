@@ -361,15 +361,26 @@ const DocumentCreator = () => {
   };
 
   const downloadPdf = async () => {
-    const blob = pdfBlob ?? (await buildPdf());
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${(docTitle || activePage?.properties[titleProp] || "dokument").trim()}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    try {
+      const source = pdfBlob ?? (await buildPdf());
+      const blob = source.type === "application/pdf" ? source : new Blob([source], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const filename = `${(docTitle || activePage?.properties[titleProp] || "dokument").trim()}.pdf`;
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.rel = "noopener";
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        a.remove();
+        URL.revokeObjectURL(url);
+      }, 1000);
+    } catch (e) {
+      console.error("[pdf] download failed", e);
+      toast.error("Stažení PDF selhalo", { description: e instanceof Error ? e.message : "" });
+    }
   };
 
   const openPdfInNewWindow = async () => {
@@ -544,9 +555,6 @@ const DocumentCreator = () => {
                 </div>
                 <Button variant="outline" size="sm" onClick={previewPdf} disabled={saving}>
                   <Eye className="w-4 h-4 mr-1" /> Náhled PDF
-                </Button>
-                <Button variant="outline" size="sm" onClick={downloadPdf} disabled={saving || pdfBuilding}>
-                  <Download className="w-4 h-4 mr-1" /> Stáhnout PDF
                 </Button>
                 <div className="flex flex-col items-end">
                   <Button size="sm" onClick={saveToNotion} disabled={saving}>
