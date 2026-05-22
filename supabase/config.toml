@@ -2,3 +2,6 @@ project_id = "jflmhdazpdtllucwpdxl"
 
 [functions.admin-users]
 verify_jwt = false
+
+[functions.notion-images]
+verify_jwt = false
