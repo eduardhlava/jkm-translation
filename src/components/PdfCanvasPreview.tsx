@@ -13,12 +13,23 @@ type PdfDocument = {
 
 function PdfPageCanvas({ pdfDocument, pageNumber, scale }: { pdfDocument: PdfDocument; pageNumber: number; scale: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const renderTaskRef = useRef<{ cancel: () => void; promise: Promise<unknown> } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    let renderTask: { cancel: () => void; promise: Promise<unknown> } | null = null;
 
-    (async () => {
+    const run = async () => {
+      // Wait for any in-flight render on this canvas to finish/cancel before starting another.
+      if (renderTaskRef.current) {
+        try {
+          renderTaskRef.current.cancel();
+          await renderTaskRef.current.promise;
+        } catch {
+          /* expected when cancelled */
+        }
+        renderTaskRef.current = null;
+      }
+
       const page = await pdfDocument.getPage(pageNumber);
       if (cancelled || !canvasRef.current) return;
 
@@ -32,22 +43,31 @@ function PdfPageCanvas({ pdfDocument, pageNumber, scale }: { pdfDocument: PdfDoc
       canvas.height = Math.floor(viewport.height * outputScale);
       canvas.style.width = `${viewport.width}px`;
       canvas.style.height = `${viewport.height}px`;
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      context.clearRect(0, 0, canvas.width, canvas.height);
 
-      renderTask = page.render({
+      const task = page.render({
         canvasContext: context,
         viewport,
         transform: outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : undefined,
       });
-      await renderTask.promise;
-    })().catch((error) => {
-      if (!cancelled && error?.name !== "RenderingCancelledException") {
-        console.error("[pdf] canvas render failed", error);
+      renderTaskRef.current = task;
+      try {
+        await task.promise;
+      } catch (error: any) {
+        if (error?.name !== "RenderingCancelledException") throw error;
+      } finally {
+        if (renderTaskRef.current === task) renderTaskRef.current = null;
       }
+    };
+
+    run().catch((error) => {
+      if (!cancelled) console.error("[pdf] canvas render failed", error);
     });
 
     return () => {
       cancelled = true;
-      renderTask?.cancel();
+      renderTaskRef.current?.cancel();
     };
   }, [pdfDocument, pageNumber, scale]);
 
