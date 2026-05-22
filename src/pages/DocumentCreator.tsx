@@ -92,9 +92,7 @@ const DocumentCreator = () => {
   const [saving, setSaving] = useState(false);
   const [showSaveNotice, setShowSaveNotice] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
-  const [pdfDownloadUrl, setPdfDownloadUrl] = useState<string | null>(null);
   const [pdfBuilding, setPdfBuilding] = useState(false);
   const [mode, setMode] = useState<EditorMode>("blocks");
   const [blocks, setBlocks] = useState<Block[]>([]);
@@ -102,7 +100,6 @@ const DocumentCreator = () => {
   const [originalTitle, setOriginalTitle] = useState("");
   const [lastExportAt, setLastExportAt] = useState<string | null>(null);
   const [overwriteDialog, setOverwriteDialog] = useState<{ open: boolean; targetId: string | null }>({ open: false, targetId: null });
-  const previewRef = useRef<HTMLDivElement>(null);
 
 
   const editor = useEditor({
