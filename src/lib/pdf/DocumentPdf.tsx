@@ -27,7 +27,8 @@ const styles = StyleSheet.create({
   li: { flexDirection: "row", marginBottom: 2, fontSize: 11, lineHeight: 1.45 },
   liBullet: { width: 14 },
   liContent: { flex: 1 },
-  image: { marginVertical: 8, alignSelf: "center", maxWidth: "100%" },
+  imageBlock: { width: "100%", marginVertical: 10, alignItems: "center" },
+  image: { objectFit: "contain" },
   caption: { fontSize: 9, color: "#6b7280", textAlign: "center", marginTop: 2 },
   callout: {
     flexDirection: "row",
@@ -248,10 +249,14 @@ function ImageBlock({ block }: { block: Block }) {
   const url = block.content?.url;
   const alt = block.content?.alt;
   if (!url) return null;
+  const requestedWidth = Number(block.content?.width);
+  const width = Number.isFinite(requestedWidth) && requestedWidth > 0
+    ? Math.max(120, Math.min(440, requestedWidth))
+    : 340;
   return (
-    <View wrap={false}>
+    <View wrap={false} style={styles.imageBlock}>
       {/* eslint-disable-next-line jsx-a11y/alt-text */}
-      <Image src={url} style={styles.image} />
+      <Image src={url} style={[styles.image, { width }] as any} />
       {alt ? <Text style={styles.caption}>{alt}</Text> : null}
     </View>
   );
