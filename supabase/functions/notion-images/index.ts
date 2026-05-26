@@ -19,12 +19,16 @@ function titleOf(page: any): string {
   return "";
 }
 
+function selectOf(page: any, name: string): string {
+  const p = page.properties?.[name];
+  if (p?.type === "select") return p.select?.name ?? "";
+  return "";
+}
+
 function imageOf(page: any): string {
-  // 1) Cover
   const cover = page.cover;
   if (cover?.type === "external" && cover.external?.url) return cover.external.url;
   if (cover?.type === "file" && cover.file?.url) return cover.file.url;
-  // 2) First "files" property containing an image
   const props = page.properties ?? {};
   for (const key of Object.keys(props)) {
     const p = props[key];
@@ -49,8 +53,22 @@ Deno.serve(async (req) => {
 
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const databaseId = body.databaseId || DEFAULT_DB_ID;
+    const typ: string | undefined = body.typ || undefined;
+    const stroj: string | undefined = body.stroj || undefined;
+    const limit: number = Math.min(Math.max(Number(body.limit) || 5, 1), 100);
 
-    const items: { id: string; title: string; image: string; url: string }[] = [];
+    const filters: any[] = [];
+    if (typ) filters.push({ property: "typ", select: { equals: typ } });
+    if (stroj) filters.push({ property: "stroj", select: { equals: stroj } });
+
+    const queryBody: Record<string, unknown> = {
+      page_size: Math.max(limit, 25),
+      sorts: [{ timestamp: "created_time", direction: "descending" }],
+    };
+    if (filters.length === 1) queryBody.filter = filters[0];
+    else if (filters.length > 1) queryBody.filter = { and: filters };
+
+    const items: { id: string; title: string; image: string; url: string; typ: string; stroj: string; createdTime: string }[] = [];
     let cursor: string | undefined = undefined;
     let safety = 10;
     do {
@@ -61,15 +79,25 @@ Deno.serve(async (req) => {
           "Notion-Version": NOTION_VERSION,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ page_size: 100, start_cursor: cursor }),
+        body: JSON.stringify({ ...queryBody, start_cursor: cursor }),
       });
       if (!res.ok) throw new Error(`Notion query failed [${res.status}]: ${await res.text()}`);
       const data = await res.json();
       for (const page of data.results ?? []) {
         const image = imageOf(page);
         if (!image) continue;
-        items.push({ id: page.id, title: titleOf(page), image, url: page.url });
+        items.push({
+          id: page.id,
+          title: titleOf(page),
+          image,
+          url: page.url,
+          typ: selectOf(page, "typ"),
+          stroj: selectOf(page, "stroj"),
+          createdTime: page.created_time,
+        });
+        if (items.length >= limit) break;
       }
+      if (items.length >= limit) break;
       cursor = data.has_more ? data.next_cursor : undefined;
       safety--;
     } while (cursor && safety > 0);
