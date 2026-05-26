@@ -342,7 +342,7 @@ function ImageBlockEditor({ block, onChange }: { block: Block; onChange: Props["
   );
 }
 
-type NotionImageItem = { id: string; title: string; image: string; url: string };
+type NotionImageItem = { id: string; title: string; image: string; url: string; typ?: string; stroj?: string; createdTime?: string };
 
 const TYP_OPTIONS = ["schéma", "3D model", "fotografie"];
 const STROJ_OPTIONS = ["JCM", "JCC", "JAB"];
