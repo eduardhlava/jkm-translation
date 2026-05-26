@@ -362,6 +362,13 @@ function NotionImagePicker({
   const [error, setError] = useState<string | null>(null);
   const [typ, setTyp] = useState<string>(ALL);
   const [stroj, setStroj] = useState<string>(ALL);
+  const [name, setName] = useState<string>("");
+  const [debouncedName, setDebouncedName] = useState<string>("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedName(name.trim()), 300);
+    return () => clearTimeout(t);
+  }, [name]);
 
   useEffect(() => {
     if (!open) return;
@@ -374,6 +381,7 @@ function NotionImagePicker({
           limit: 5,
           typ: typ === ALL ? undefined : typ,
           stroj: stroj === ALL ? undefined : stroj,
+          name: debouncedName || undefined,
         },
       })
       .then(({ data, error }) => {
@@ -390,7 +398,8 @@ function NotionImagePicker({
     return () => {
       cancelled = true;
     };
-  }, [open, typ, stroj]);
+  }, [open, typ, stroj, debouncedName]);
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
