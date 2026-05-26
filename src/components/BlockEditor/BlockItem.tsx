@@ -408,6 +408,10 @@ function NotionImagePicker({
           <DialogTitle>Obrázky z Notion</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Název</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Hledat podle názvu…" />
+          </div>
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Typ</Label>
