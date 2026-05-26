@@ -344,6 +344,10 @@ function ImageBlockEditor({ block, onChange }: { block: Block; onChange: Props["
 
 type NotionImageItem = { id: string; title: string; image: string; url: string };
 
+const TYP_OPTIONS = ["schéma", "3D model", "fotografie"];
+const STROJ_OPTIONS = ["JCM", "JCC", "JAB"];
+const ALL = "__all__";
+
 function NotionImagePicker({
   open,
   onOpenChange,
@@ -356,27 +360,37 @@ function NotionImagePicker({
   const [items, setItems] = useState<NotionImageItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
+  const [typ, setTyp] = useState<string>(ALL);
+  const [stroj, setStroj] = useState<string>(ALL);
 
   useEffect(() => {
-    if (!open || items.length > 0) return;
+    if (!open) return;
+    let cancelled = false;
     setLoading(true);
     setError(null);
     supabase.functions
-      .invoke("notion-images", { body: {} })
+      .invoke("notion-images", {
+        body: {
+          limit: 5,
+          typ: typ === ALL ? undefined : typ,
+          stroj: stroj === ALL ? undefined : stroj,
+        },
+      })
       .then(({ data, error }) => {
+        if (cancelled) return;
         if (error) throw error;
         setItems((data?.items ?? []) as NotionImageItem[]);
       })
       .catch((e: unknown) => {
-        setError(e instanceof Error ? e.message : "Načtení selhalo");
+        if (!cancelled) setError(e instanceof Error ? e.message : "Načtení selhalo");
       })
-      .finally(() => setLoading(false));
-  }, [open, items.length]);
-
-  const filtered = items.filter((it) =>
-    it.title.toLowerCase().includes(query.trim().toLowerCase()),
-  );
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, typ, stroj]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -385,14 +399,27 @@ function NotionImagePicker({
           <DialogTitle>Obrázky z Notion</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
-          <div className="relative">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Filtrovat podle názvu…"
-              className="pl-8"
-            />
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Typ</Label>
+              <Select value={typ} onValueChange={setTyp}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Vše</SelectItem>
+                  {TYP_OPTIONS.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Stroj</Label>
+              <Select value={stroj} onValueChange={setStroj}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Vše</SelectItem>
+                  {STROJ_OPTIONS.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="max-h-[60vh] overflow-auto rounded border">
             {loading ? (
@@ -401,11 +428,11 @@ function NotionImagePicker({
               </div>
             ) : error ? (
               <div className="p-4 text-sm text-destructive">{error}</div>
-            ) : filtered.length === 0 ? (
+            ) : items.length === 0 ? (
               <div className="p-4 text-sm text-muted-foreground">Nic nenalezeno.</div>
             ) : (
               <ul className="divide-y">
-                {filtered.map((it) => (
+                {items.map((it) => (
                   <li key={it.id} className="flex items-center gap-3 p-2 min-w-0">
                     <img
                       src={it.image}
@@ -415,6 +442,9 @@ function NotionImagePicker({
                     />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium">{it.title || "Bez názvu"}</div>
+                      <div className="truncate text-xs text-muted-foreground">
+                        {[it.typ, it.stroj].filter(Boolean).join(" • ")}
+                      </div>
                     </div>
                     <Button type="button" size="sm" className="shrink-0" onClick={() => onInsert(it)}>
                       Vložit
