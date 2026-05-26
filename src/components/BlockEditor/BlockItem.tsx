@@ -362,6 +362,13 @@ function NotionImagePicker({
   const [error, setError] = useState<string | null>(null);
   const [typ, setTyp] = useState<string>(ALL);
   const [stroj, setStroj] = useState<string>(ALL);
+  const [name, setName] = useState<string>("");
+  const [debouncedName, setDebouncedName] = useState<string>("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedName(name.trim()), 300);
+    return () => clearTimeout(t);
+  }, [name]);
 
   useEffect(() => {
     if (!open) return;
@@ -374,6 +381,7 @@ function NotionImagePicker({
           limit: 5,
           typ: typ === ALL ? undefined : typ,
           stroj: stroj === ALL ? undefined : stroj,
+          name: debouncedName || undefined,
         },
       })
       .then(({ data, error }) => {
@@ -390,7 +398,8 @@ function NotionImagePicker({
     return () => {
       cancelled = true;
     };
-  }, [open, typ, stroj]);
+  }, [open, typ, stroj, debouncedName]);
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -399,6 +408,10 @@ function NotionImagePicker({
           <DialogTitle>Obrázky z Notion</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Název</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Hledat podle názvu…" />
+          </div>
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Typ</Label>

@@ -55,11 +55,13 @@ Deno.serve(async (req) => {
     const databaseId = body.databaseId || DEFAULT_DB_ID;
     const typ: string | undefined = body.typ || undefined;
     const stroj: string | undefined = body.stroj || undefined;
+    const name: string = typeof body.name === "string" ? body.name.trim() : "";
     const limit: number = Math.min(Math.max(Number(body.limit) || 5, 1), 100);
 
     const filters: any[] = [];
     if (typ) filters.push({ property: "typ", select: { equals: typ } });
     if (stroj) filters.push({ property: "stroj", select: { equals: stroj } });
+    if (name) filters.push({ property: "název", title: { contains: name } });
 
     const queryBody: Record<string, unknown> = {
       page_size: Math.max(limit, 25),
@@ -67,6 +69,7 @@ Deno.serve(async (req) => {
     };
     if (filters.length === 1) queryBody.filter = filters[0];
     else if (filters.length > 1) queryBody.filter = { and: filters };
+
 
     const items: { id: string; title: string; image: string; url: string; typ: string; stroj: string; createdTime: string }[] = [];
     let cursor: string | undefined = undefined;
