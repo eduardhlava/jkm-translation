@@ -19,11 +19,14 @@ import { Button } from "@/components/ui/button";
 import BlockItem from "./BlockItem";
 import AddBlockMenu from "./AddBlockMenu";
 import { createBlock, type Block, type BlockType } from "./types";
+import { computeHeadingNumbers } from "./headingNumbers";
 
 interface Props {
   blocks: Block[];
   onChange: (next: Block[]) => void;
+  numberHeadings?: boolean;
 }
+
 
 export default function BlockEditor({ blocks, onChange }: Props) {
   const sensors = useSensors(
