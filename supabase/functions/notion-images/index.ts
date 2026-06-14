@@ -58,10 +58,50 @@ Deno.serve(async (req) => {
     const name: string = typeof body.name === "string" ? body.name.trim() : "";
     const limit: number = Math.min(Math.max(Number(body.limit) || 5, 1), 100);
 
+    // Generate query variants by zero-padding numeric runs (width 1..3)
+    // so "Obr1" also matches "Obr01"/"Obr001" and vice versa.
+    function nameVariants(q: string): string[] {
+      if (!q) return [];
+      const parts = q.split(/(\d+)/);
+      const numericIdx: number[] = [];
+      parts.forEach((p, i) => { if (/^\d+$/.test(p)) numericIdx.push(i); });
+      if (numericIdx.length === 0) return [q];
+      const widths = [1, 2, 3];
+      const variantsPerIdx = numericIdx.map((i) => {
+        const n = parseInt(parts[i], 10);
+        const s = new Set<string>();
+        widths.forEach((w) => s.add(String(n).padStart(w, "0")));
+        s.add(parts[i]); // keep original
+        return Array.from(s);
+      });
+      // Cartesian product, capped at 12 variants for safety
+      let combos: string[][] = [[]];
+      for (const opts of variantsPerIdx) {
+        const next: string[][] = [];
+        for (const c of combos) for (const o of opts) next.push([...c, o]);
+        combos = next;
+        if (combos.length > 12) combos = combos.slice(0, 12);
+      }
+      const out = new Set<string>();
+      for (const combo of combos) {
+        const copy = parts.slice();
+        numericIdx.forEach((idx, k) => { copy[idx] = combo[k]; });
+        out.add(copy.join(""));
+      }
+      return Array.from(out);
+    }
+
     const filters: any[] = [];
     if (typ) filters.push({ property: "typ", select: { equals: typ } });
     if (stroj) filters.push({ property: "stroj", select: { equals: stroj } });
-    if (name) filters.push({ property: "název", title: { contains: name } });
+    if (name) {
+      const variants = nameVariants(name);
+      if (variants.length === 1) {
+        filters.push({ property: "název", title: { contains: variants[0] } });
+      } else {
+        filters.push({ or: variants.map((v) => ({ property: "název", title: { contains: v } })) });
+      }
+    }
 
     const queryBody: Record<string, unknown> = {
       page_size: Math.max(limit, 25),
