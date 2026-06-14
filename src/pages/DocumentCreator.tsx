@@ -348,7 +348,29 @@ const DocumentCreator = () => {
   const buildPdf = async (): Promise<Blob> => {
     const { generateDocumentPdf } = await import("@/lib/pdf/generate");
     const title = (docTitle || activePage?.properties[titleProp] || "dokument").trim();
-    return await generateDocumentPdf(title, blocks, { numberHeadings });
+    return await generateDocumentPdf(title, blocks, {
+      numberHeadings,
+      pageId: activePage?.id,
+      onImagesRehydrated: (rewrites) => {
+        if (!rewrites.size) return;
+        setBlocks((prev) => {
+          const next = prev.map((b) => {
+            if (b.type !== "image") return b;
+            const u = (b.content as any)?.url as string | undefined;
+            const fresh = u ? rewrites.get(u) : undefined;
+            return fresh ? { ...b, content: { ...b.content, url: fresh } } : b;
+          });
+          // Persist rehydrated permanent URLs so future loads don't 403.
+          if (activePage) {
+            supabase
+              .from("document_blocks")
+              .upsert({ page_id: activePage.id, blocks: next as any, settings: { numberHeadings } as any }, { onConflict: "page_id" })
+              .then(({ error }) => { if (error) console.warn("[pdf] persist rehydrated images failed", error); });
+          }
+          return next;
+        });
+      },
+    });
   };
 
 
