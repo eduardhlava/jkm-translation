@@ -179,13 +179,14 @@ export function collectHeadings(blocks: Block[]): HeadingEntry[] {
 }
 
 // ---------- Block renderers ----------
-function Heading({ block, level, collector }: { block: Block; level: 1 | 2 | 3 | 4; collector?: PageMap }) {
+function Heading({ block, level, collector, number }: { block: Block; level: 1 | 2 | 3 | 4; collector?: PageMap; number?: string }) {
   const styleMap = { 1: styles.h1, 2: styles.h2, 3: styles.h3, 4: styles.h4 } as const;
   const wrapStyleMap = { 1: styles.h1Wrap, 2: styles.h2Wrap, 3: styles.h3Wrap, 4: styles.h4Wrap } as const;
   const text = block.content?.text ?? "";
+  const prefixed = number ? `${number}  ${text}` : text;
   return (
     <View wrap={false} style={wrapStyleMap[level]}>
-      <Text style={styleMap[level]}>{text}</Text>
+      <Text style={styleMap[level]}>{prefixed}</Text>
       {collector && level <= 3 && (
         <Text
           style={{ height: 0, fontSize: 0 }}
@@ -198,6 +199,7 @@ function Heading({ block, level, collector }: { block: Block; level: 1 | 2 | 3 |
     </View>
   );
 }
+
 
 const BASE_FONT_SIZE = 11;
 
