@@ -115,10 +115,24 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Re-fetch fresh signed URL from Notion
-    const blocks = await fetchAllBlocks(pageId, NOTION_KEY);
-    const candidates = collectImageUrls(blocks);
-    const fresh = candidates.find((u) => pathKey(u) === stalePath) ?? candidates[0];
+    // Re-fetch fresh signed URL from Notion.
+    // 1) Fast path: extract block_id from the S3 pathname and ask Notion directly.
+    let fresh: string | null = null;
+    const blockId = extractBlockId(staleUrl);
+    if (blockId) fresh = await fetchFreshUrlFromBlock(blockId, NOTION_KEY);
+
+    // 2) Fallback: recursively scan the whole page tree and match by path.
+    if (!fresh) {
+      const blocks = await fetchAllBlocksRecursive(pageId, NOTION_KEY);
+      const urls: string[] = [];
+      for (const b of blocks) {
+        if (b?.type === "image") {
+          const src = b.image?.type === "external" ? b.image.external?.url : b.image.file?.url;
+          if (src) urls.push(src);
+        }
+      }
+      fresh = urls.find((u) => pathKey(u) === stalePath) ?? urls[0] ?? null;
+    }
     if (!fresh) throw new Error("No matching image found on Notion page");
 
     const dl = await fetch(fresh);
