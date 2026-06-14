@@ -66,8 +66,7 @@ async function refreshImageUrl(url: string, pageId?: string): Promise<{ data: st
 
 async function fetchAsDataUrl(url: string, pageId?: string): Promise<{ data: string | null; permanentUrl?: string }> {
   if (isExpiredNotionSignedUrl(url)) {
-    const refreshed = await refreshImageUrl(url, pageId);
-    if (refreshed.data) return refreshed;
+    return await refreshImageUrl(url, pageId);
   }
 
   // 1) Direct fetch (Supabase Storage etc. with CORS).
