@@ -228,7 +228,7 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
     if (ref.current) {
       const html = ref.current.innerHTML;
       lastHtmlRef.current = html;
-      onChange(block.id, { content: { html } });
+      onChange(block.id, { content: { ...block.content, html } });
       saveSelection();
     }
   };
