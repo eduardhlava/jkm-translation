@@ -101,7 +101,9 @@ export default function BlockEditor({ blocks, onChange, numberHeadings }: Props)
                 onToggleCollapsed={() => toggleCollapsed(b.id)}
                 onChange={updateBlock}
                 onDelete={deleteBlock}
+                headingNumber={numbersMap?.get(b.id)}
               />
+
             ))}
           </div>
         </SortableContext>
