@@ -32,17 +32,32 @@ interface Props {
   onAdd: (type: BlockType) => void;
   variant?: "default" | "ghost";
   label?: string;
+  compact?: boolean;
 }
 
-export default function AddBlockMenu({ onAdd, variant = "default", label = "Přidat blok" }: Props) {
+export default function AddBlockMenu({ onAdd, variant = "default", label = "Přidat blok", compact = false }: Props) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant={variant} size="sm">
-          <Plus className="w-4 h-4 mr-1" /> {label}
-        </Button>
+        {compact ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label={label}
+            title={label}
+            className="h-6 w-6 rounded-full"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </Button>
+        ) : (
+          <Button variant={variant} size="sm">
+            <Plus className="w-4 h-4 mr-1" /> {label}
+          </Button>
+        )}
       </PopoverTrigger>
       <PopoverContent className="w-64 p-2" align="start">
+
         <div className="grid grid-cols-2 gap-1">
           {ORDER.map((t) => {
             const Icon = ICONS[t];
