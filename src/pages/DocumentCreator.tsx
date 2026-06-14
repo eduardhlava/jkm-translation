@@ -344,8 +344,9 @@ const DocumentCreator = () => {
   const buildPdf = async (): Promise<Blob> => {
     const { generateDocumentPdf } = await import("@/lib/pdf/generate");
     const title = (docTitle || activePage?.properties[titleProp] || "dokument").trim();
-    return await generateDocumentPdf(title, blocks);
+    return await generateDocumentPdf(title, blocks, { numberHeadings });
   };
+
 
   const previewPdf = async () => {
     if (!activePage) return;
