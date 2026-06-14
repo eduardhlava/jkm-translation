@@ -8,14 +8,33 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
-// Sanitize allowed HTML for Text block (inline + lists)
+// Sanitize allowed HTML for Text block (inline + lists + per-paragraph align/size)
+function filterStyleAttr(el: Element): string {
+  const raw = (el as HTMLElement).getAttribute("style") || "";
+  if (!raw) return "";
+  const out: string[] = [];
+  for (const decl of raw.split(";")) {
+    const idx = decl.indexOf(":");
+    if (idx < 0) continue;
+    const key = decl.slice(0, idx).trim().toLowerCase();
+    const val = decl.slice(idx + 1).trim();
+    if (!val) continue;
+    if (key === "text-align" && /^(left|center|right|justify)$/i.test(val)) {
+      out.push(`text-align:${val.toLowerCase()}`);
+    } else if (key === "font-size" && /^[\d.]+(em|rem|px|%)$/i.test(val)) {
+      out.push(`font-size:${val}`);
+    }
+  }
+  return out.length ? ` style="${out.join(";")}"` : "";
+}
+
 function sanitizeInline(html: string): string {
   if (!html) return "";
   if (typeof DOMParser !== "undefined") {
     const doc = new DOMParser().parseFromString(`<div>${html}</div>`, "text/html");
     const root = doc.body.firstChild as HTMLElement | null;
     if (!root) return "";
-    const allowed = new Set(["B", "STRONG", "I", "EM", "A", "BR", "P", "SPAN", "UL", "OL", "LI"]);
+    const allowed = new Set(["B", "STRONG", "I", "EM", "A", "BR", "P", "SPAN", "UL", "OL", "LI", "DIV"]);
     const walk = (el: Element): string => {
       let out = "";
       el.childNodes.forEach((n) => {
@@ -36,10 +55,10 @@ function sanitizeInline(html: string): string {
           }
           if (tag === "B" || tag === "STRONG") { out += `<strong>${walk(e)}</strong>`; return; }
           if (tag === "I" || tag === "EM") { out += `<em>${walk(e)}</em>`; return; }
-          if (tag === "P") { out += `<p>${walk(e)}</p>`; return; }
+          if (tag === "P" || tag === "DIV") { out += `<p${filterStyleAttr(e)}>${walk(e)}</p>`; return; }
           if (tag === "UL") { out += `<ul>${walk(e)}</ul>`; return; }
           if (tag === "OL") { out += `<ol>${walk(e)}</ol>`; return; }
-          if (tag === "LI") { out += `<li>${walk(e)}</li>`; return; }
+          if (tag === "LI") { out += `<li${filterStyleAttr(e)}>${walk(e)}</li>`; return; }
           out += walk(e);
         }
       });
@@ -58,11 +77,7 @@ export function blockToHtml(b: Block): string {
     case "heading4": return `<h4>${escapeHtml(b.content.text)}</h4>`;
     case "text": {
       const inner = sanitizeInline(b.content.html ?? "");
-      const body = /<(p|ul|ol)\b/i.test(inner) ? inner : `<p>${inner}</p>`;
-      const align = b.content.align === "center" || b.content.align === "right" ? b.content.align : "left";
-      const sizeMap: Record<string, string> = { small: "0.875rem", normal: "1rem", large: "1.25rem" };
-      const fs = sizeMap[b.content.size] ?? sizeMap.normal;
-      return `<div style="text-align:${align};font-size:${fs};">${body}</div>`;
+      return /<(p|ul|ol)\b/i.test(inner) ? inner : `<p>${inner}</p>`;
     }
     case "pagebreak":
       return `<div style="page-break-before:always;break-before:page;"></div>`;
