@@ -58,6 +58,13 @@ export default function BlockEditor({ blocks, onChange, numberHeadings }: Props)
     onChange(next);
   };
 
+  const insertBlockAt = (index: number, type: BlockType) => {
+    const next = [...sorted];
+    next.splice(index, 0, createBlock(type, index));
+    reorder(next);
+  };
+
+
   const updateBlock = (id: string, patch: Partial<Block>) => {
     onChange(sorted.map((b) => (b.id === id ? { ...b, ...patch } : b)));
   };
@@ -93,17 +100,26 @@ export default function BlockEditor({ blocks, onChange, numberHeadings }: Props)
                 Zatím žádné bloky. Začněte tlačítkem „Přidat blok".
               </div>
             )}
-            {sorted.map((b) => (
-              <BlockItem
-                key={b.id}
-                block={b}
-                collapsed={!!collapsed[b.id]}
-                onToggleCollapsed={() => toggleCollapsed(b.id)}
-                onChange={updateBlock}
-                onDelete={deleteBlock}
-                headingNumber={numbersMap?.get(b.id)}
-              />
-
+            {sorted.map((b, i) => (
+              <div key={b.id}>
+                <BlockItem
+                  block={b}
+                  collapsed={!!collapsed[b.id]}
+                  onToggleCollapsed={() => toggleCollapsed(b.id)}
+                  onChange={updateBlock}
+                  onDelete={deleteBlock}
+                  headingNumber={numbersMap?.get(b.id)}
+                />
+                <div className="group relative flex h-2 items-center justify-center">
+                  <div className="opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                    <AddBlockMenu
+                      compact
+                      label="Vložit blok"
+                      onAdd={(t) => insertBlockAt(i + 1, t)}
+                    />
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         </SortableContext>
@@ -111,6 +127,7 @@ export default function BlockEditor({ blocks, onChange, numberHeadings }: Props)
       <div className="flex justify-center pt-2">
         <AddBlockMenu onAdd={addBlock} />
       </div>
+
     </div>
   );
 }
