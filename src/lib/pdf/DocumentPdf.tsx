@@ -370,7 +370,7 @@ function BlockNode({ block, collector, number }: { block: Block; collector?: Pag
 
 
 // ---------- TOC ----------
-function Toc({ entries, pageMap }: { entries: HeadingEntry[]; pageMap: PageMap }) {
+function Toc({ entries, pageMap, numbers }: { entries: HeadingEntry[]; pageMap: PageMap; numbers?: Map<string, string> }) {
   if (entries.length === 0) return null;
   return (
     <View>
@@ -378,9 +378,11 @@ function Toc({ entries, pageMap }: { entries: HeadingEntry[]; pageMap: PageMap }
       {entries.map((e) => {
         const indent = (e.level - 1) * 14;
         const pn = pageMap.get(e.id);
+        const num = numbers?.get(e.id);
+        const label = num ? `${num}  ${e.text || "—"}` : (e.text || "—");
         return (
           <View key={e.id} style={styles.tocRow} wrap={false}>
-            <Text style={[styles.tocLeft, { paddingLeft: indent }] as any}>{e.text || "—"}</Text>
+            <Text style={[styles.tocLeft, { paddingLeft: indent }] as any}>{label}</Text>
             <Text style={styles.tocPage}>{pn ?? ""}</Text>
           </View>
         );
@@ -388,6 +390,7 @@ function Toc({ entries, pageMap }: { entries: HeadingEntry[]; pageMap: PageMap }
     </View>
   );
 }
+
 
 // ---------- Footer ----------
 function Footer() {
