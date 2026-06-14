@@ -104,12 +104,13 @@ export default function BlockItem({ block, collapsed, onToggleCollapsed, onChang
       </div>
       {!collapsed && (
         <div className="p-3">
-          <BlockBody block={block} onChange={onChange} />
+          <BlockBody block={block} onChange={onChange} headingNumber={headingNumber} />
         </div>
       )}
     </div>
   );
 }
+
 
 function setContent(block: Block, patch: any, onChange: Props["onChange"]) {
   onChange(block.id, { content: { ...block.content, ...patch } });
