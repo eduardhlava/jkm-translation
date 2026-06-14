@@ -25,10 +25,12 @@ interface Props {
   blocks: Block[];
   onChange: (next: Block[]) => void;
   numberHeadings?: boolean;
+  collapsed?: Record<string, boolean>;
+  onCollapsedChange?: (next: Record<string, boolean>) => void;
 }
 
 
-export default function BlockEditor({ blocks, onChange, numberHeadings }: Props) {
+export default function BlockEditor({ blocks, onChange, numberHeadings, collapsed: collapsedProp, onCollapsedChange }: Props) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -38,11 +40,17 @@ export default function BlockEditor({ blocks, onChange, numberHeadings }: Props)
   const numbersMap = numberHeadings ? computeHeadingNumbers(sorted, 4) : null;
 
 
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [collapsedLocal, setCollapsedLocal] = useState<Record<string, boolean>>({});
+  const collapsed = collapsedProp ?? collapsedLocal;
+  const setCollapsed = (updater: (prev: Record<string, boolean>) => Record<string, boolean>) => {
+    if (onCollapsedChange) onCollapsedChange(updater(collapsed));
+    else setCollapsedLocal(updater);
+  };
 
   const reorder = (next: Block[]) => {
     onChange(next.map((b, i) => ({ ...b, order: i })));
   };
+
 
   const onDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
