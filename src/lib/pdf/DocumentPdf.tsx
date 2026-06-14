@@ -351,12 +351,12 @@ function CalloutBlock({ block }: { block: Block }) {
   );
 }
 
-function BlockNode({ block, collector }: { block: Block; collector?: PageMap }) {
+function BlockNode({ block, collector, number }: { block: Block; collector?: PageMap; number?: string }) {
   switch (block.type) {
-    case "heading1": return <Heading block={block} level={1} collector={collector} />;
-    case "heading2": return <Heading block={block} level={2} collector={collector} />;
-    case "heading3": return <Heading block={block} level={3} collector={collector} />;
-    case "heading4": return <Heading block={block} level={4} />;
+    case "heading1": return <Heading block={block} level={1} collector={collector} number={number} />;
+    case "heading2": return <Heading block={block} level={2} collector={collector} number={number} />;
+    case "heading3": return <Heading block={block} level={3} collector={collector} number={number} />;
+    case "heading4": return <Heading block={block} level={4} number={number} />;
     case "text":     return <TextBlock block={block} />;
     case "image":    return <ImageBlock block={block} />;
     case "table":    return <TableBlock block={block} />;
@@ -367,6 +367,7 @@ function BlockNode({ block, collector }: { block: Block; collector?: PageMap }) 
     default: return null;
   }
 }
+
 
 // ---------- TOC ----------
 function Toc({ entries, pageMap }: { entries: HeadingEntry[]; pageMap: PageMap }) {
