@@ -604,7 +604,7 @@ function TableBlockEditor({ block, onChange }: { block: Block; onChange: Props["
           <Button type="button" variant="outline" size="sm" onClick={removeCol}><Minus className="w-3 h-3 mr-1" />Sloupec</Button>
         </div>
       </div>
-      <div className="overflow-auto rounded-md bg-muted p-3">
+      <div className="overflow-auto rounded-md bg-[hsl(220,14%,90%)] p-3 dark:bg-[hsl(217,33%,12%)]">
         <table className="w-full border-collapse">
           <tbody>
             {rows.map((row, ri) => (
