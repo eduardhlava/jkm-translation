@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+
 import {
   Select,
   SelectContent,
@@ -113,6 +115,8 @@ const DocumentCreator = () => {
   const [originalTitle, setOriginalTitle] = useState("");
   const [lastExportAt, setLastExportAt] = useState<string | null>(null);
   const [overwriteDialog, setOverwriteDialog] = useState<{ open: boolean; targetId: string | null }>({ open: false, targetId: null });
+  const [numberHeadings, setNumberHeadings] = useState(false);
+
 
 
   const editor = useEditor({
@@ -342,8 +346,9 @@ const DocumentCreator = () => {
   const buildPdf = async (): Promise<Blob> => {
     const { generateDocumentPdf } = await import("@/lib/pdf/generate");
     const title = (docTitle || activePage?.properties[titleProp] || "dokument").trim();
-    return await generateDocumentPdf(title, blocks);
+    return await generateDocumentPdf(title, blocks, { numberHeadings });
   };
+
 
   const previewPdf = async () => {
     if (!activePage) return;
@@ -631,31 +636,41 @@ const DocumentCreator = () => {
             ) : (
               <div className="flex-1 min-h-0 overflow-auto bg-muted/20 p-4">
                 <div className="mx-auto max-w-4xl">
-                  <BlockEditor blocks={blocks} onChange={setBlocks} />
+                  <BlockEditor blocks={blocks} onChange={setBlocks} numberHeadings={numberHeadings} />
                 </div>
               </div>
             )}
             {mode === "blocks" && (
-              <div className="flex-shrink-0 flex items-center justify-end gap-2 border-t bg-muted/30 px-4 py-2">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="application/json,.json"
-                  className="hidden"
-                  onChange={handleImportJsonFile}
-                />
-                <Button size="sm" variant="outline" onClick={downloadSampleJson}>
-                  <FileDown className="w-4 h-4 mr-1" /> Vzor JSON
-                </Button>
-                <Button size="sm" variant="outline" onClick={handleImportJsonClick}>
-                  <Upload className="w-4 h-4 mr-1" /> Importovat JSON
-                </Button>
-                <Button size="sm" onClick={saveDraft} disabled={savingDraft}>
-                  {savingDraft ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
-                  Uložit
-                </Button>
+              <div className="flex-shrink-0 flex items-center justify-between gap-2 border-t bg-muted/30 px-4 py-2">
+                <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+                  <Checkbox
+                    checked={numberHeadings}
+                    onCheckedChange={(v) => setNumberHeadings(v === true)}
+                  />
+                  Automaticky číslovat nadpisy (H1–H4)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="application/json,.json"
+                    className="hidden"
+                    onChange={handleImportJsonFile}
+                  />
+                  <Button size="sm" variant="outline" onClick={downloadSampleJson}>
+                    <FileDown className="w-4 h-4 mr-1" /> Vzor JSON
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={handleImportJsonClick}>
+                    <Upload className="w-4 h-4 mr-1" /> Importovat JSON
+                  </Button>
+                  <Button size="sm" onClick={saveDraft} disabled={savingDraft}>
+                    {savingDraft ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
+                    Uložit
+                  </Button>
+                </div>
               </div>
             )}
+
           </Card>
         )}
       </main>

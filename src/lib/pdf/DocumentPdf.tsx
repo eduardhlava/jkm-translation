@@ -179,13 +179,14 @@ export function collectHeadings(blocks: Block[]): HeadingEntry[] {
 }
 
 // ---------- Block renderers ----------
-function Heading({ block, level, collector }: { block: Block; level: 1 | 2 | 3 | 4; collector?: PageMap }) {
+function Heading({ block, level, collector, number }: { block: Block; level: 1 | 2 | 3 | 4; collector?: PageMap; number?: string }) {
   const styleMap = { 1: styles.h1, 2: styles.h2, 3: styles.h3, 4: styles.h4 } as const;
   const wrapStyleMap = { 1: styles.h1Wrap, 2: styles.h2Wrap, 3: styles.h3Wrap, 4: styles.h4Wrap } as const;
   const text = block.content?.text ?? "";
+  const prefixed = number ? `${number}  ${text}` : text;
   return (
     <View wrap={false} style={wrapStyleMap[level]}>
-      <Text style={styleMap[level]}>{text}</Text>
+      <Text style={styleMap[level]}>{prefixed}</Text>
       {collector && level <= 3 && (
         <Text
           style={{ height: 0, fontSize: 0 }}
@@ -198,6 +199,7 @@ function Heading({ block, level, collector }: { block: Block; level: 1 | 2 | 3 |
     </View>
   );
 }
+
 
 const BASE_FONT_SIZE = 11;
 
@@ -349,12 +351,12 @@ function CalloutBlock({ block }: { block: Block }) {
   );
 }
 
-function BlockNode({ block, collector }: { block: Block; collector?: PageMap }) {
+function BlockNode({ block, collector, number }: { block: Block; collector?: PageMap; number?: string }) {
   switch (block.type) {
-    case "heading1": return <Heading block={block} level={1} collector={collector} />;
-    case "heading2": return <Heading block={block} level={2} collector={collector} />;
-    case "heading3": return <Heading block={block} level={3} collector={collector} />;
-    case "heading4": return <Heading block={block} level={4} />;
+    case "heading1": return <Heading block={block} level={1} collector={collector} number={number} />;
+    case "heading2": return <Heading block={block} level={2} collector={collector} number={number} />;
+    case "heading3": return <Heading block={block} level={3} collector={collector} number={number} />;
+    case "heading4": return <Heading block={block} level={4} number={number} />;
     case "text":     return <TextBlock block={block} />;
     case "image":    return <ImageBlock block={block} />;
     case "table":    return <TableBlock block={block} />;
@@ -366,8 +368,9 @@ function BlockNode({ block, collector }: { block: Block; collector?: PageMap }) 
   }
 }
 
+
 // ---------- TOC ----------
-function Toc({ entries, pageMap }: { entries: HeadingEntry[]; pageMap: PageMap }) {
+function Toc({ entries, pageMap, numbers }: { entries: HeadingEntry[]; pageMap: PageMap; numbers?: Map<string, string> }) {
   if (entries.length === 0) return null;
   return (
     <View>
@@ -375,9 +378,11 @@ function Toc({ entries, pageMap }: { entries: HeadingEntry[]; pageMap: PageMap }
       {entries.map((e) => {
         const indent = (e.level - 1) * 14;
         const pn = pageMap.get(e.id);
+        const num = numbers?.get(e.id);
+        const label = num ? `${num}  ${e.text || "—"}` : (e.text || "—");
         return (
           <View key={e.id} style={styles.tocRow} wrap={false}>
-            <Text style={[styles.tocLeft, { paddingLeft: indent }] as any}>{e.text || "—"}</Text>
+            <Text style={[styles.tocLeft, { paddingLeft: indent }] as any}>{label}</Text>
             <Text style={styles.tocPage}>{pn ?? ""}</Text>
           </View>
         );
@@ -385,6 +390,7 @@ function Toc({ entries, pageMap }: { entries: HeadingEntry[]; pageMap: PageMap }
     </View>
   );
 }
+
 
 // ---------- Footer ----------
 function Footer() {
@@ -404,12 +410,27 @@ export interface DocumentPdfProps {
   includeToc?: boolean;
   pageMap?: PageMap;       // resolved page numbers for headings (pass 2)
   collector?: PageMap;     // collector to fill on render (pass 1)
+  numberHeadings?: boolean;
 }
 
-export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collector }: DocumentPdfProps) {
+export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collector, numberHeadings }: DocumentPdfProps) {
   const ordered = [...blocks].sort((a, b) => a.order - b.order);
   const headings = collectHeadings(ordered);
   const tocEntries = headings;
+  let numbers: Map<string, string> | undefined;
+  if (numberHeadings) {
+    // Inline computation to avoid extra import cycles.
+    const counters = [0, 0, 0, 0];
+    numbers = new Map();
+    const lvlOf: Record<string, number> = { heading1: 1, heading2: 2, heading3: 3, heading4: 4 };
+    for (const b of ordered) {
+      const lvl = lvlOf[b.type];
+      if (!lvl) continue;
+      counters[lvl - 1] += 1;
+      for (let i = lvl; i < counters.length; i++) counters[i] = 0;
+      numbers.set(b.id, counters.slice(0, lvl).join("."));
+    }
+  }
 
   return (
     <Document title={title}>
@@ -417,16 +438,17 @@ export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collect
         <Page size="A4" style={styles.page}>
           <Footer />
           <Text style={styles.docTitle}>{title}</Text>
-          <Toc entries={tocEntries} pageMap={pageMap} />
+          <Toc entries={tocEntries} pageMap={pageMap} numbers={numbers} />
         </Page>
       )}
       <Page size="A4" style={styles.page}>
         <Footer />
         {!includeToc && <Text style={styles.docTitle}>{title}</Text>}
         {ordered.map((b) => (
-          <BlockNode key={b.id} block={b} collector={collector} />
+          <BlockNode key={b.id} block={b} collector={collector} number={numbers?.get(b.id)} />
         ))}
       </Page>
     </Document>
   );
 }
+

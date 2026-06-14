@@ -19,7 +19,9 @@ interface Props {
   onToggleCollapsed?: () => void;
   onChange: (id: string, patch: Partial<Block>) => void;
   onDelete: (id: string) => void;
+  headingNumber?: string;
 }
+
 
 function blockPreview(block: Block): string {
   switch (block.type) {
@@ -50,7 +52,7 @@ function blockPreview(block: Block): string {
   }
 }
 
-export default function BlockItem({ block, collapsed, onToggleCollapsed, onChange, onDelete }: Props) {
+export default function BlockItem({ block, collapsed, onToggleCollapsed, onChange, onDelete, headingNumber }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -102,18 +104,19 @@ export default function BlockItem({ block, collapsed, onToggleCollapsed, onChang
       </div>
       {!collapsed && (
         <div className="p-3">
-          <BlockBody block={block} onChange={onChange} />
+          <BlockBody block={block} onChange={onChange} headingNumber={headingNumber} />
         </div>
       )}
     </div>
   );
 }
 
+
 function setContent(block: Block, patch: any, onChange: Props["onChange"]) {
   onChange(block.id, { content: { ...block.content, ...patch } });
 }
 
-function BlockBody({ block, onChange }: { block: Block; onChange: Props["onChange"] }) {
+function BlockBody({ block, onChange, headingNumber }: { block: Block; onChange: Props["onChange"]; headingNumber?: string }) {
   switch (block.type) {
     case "heading1":
     case "heading2":
@@ -126,14 +129,18 @@ function BlockBody({ block, onChange }: { block: Block; onChange: Props["onChang
         heading4: "text-base font-semibold",
       }[block.type];
       return (
-        <Input
-          value={block.content.text ?? ""}
-          onChange={(e) => setContent(block, { text: e.target.value }, onChange)}
-          placeholder={BLOCK_TYPE_LABELS[block.type]}
-          className={`border-0 shadow-none focus-visible:ring-0 px-0 h-auto py-1 ${sizeCls}`}
-        />
+        <div className={`flex items-baseline gap-2 ${sizeCls}`}>
+          {headingNumber && <span className="text-muted-foreground shrink-0">{headingNumber}</span>}
+          <Input
+            value={block.content.text ?? ""}
+            onChange={(e) => setContent(block, { text: e.target.value }, onChange)}
+            placeholder={BLOCK_TYPE_LABELS[block.type]}
+            className={`border-0 shadow-none focus-visible:ring-0 px-0 h-auto py-1 flex-1 ${sizeCls}`}
+          />
+        </div>
       );
     }
+
     case "text":
       return <TextBlockEditor block={block} onChange={onChange} />;
     case "image":

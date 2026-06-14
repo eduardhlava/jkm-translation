@@ -19,19 +19,24 @@ import { Button } from "@/components/ui/button";
 import BlockItem from "./BlockItem";
 import AddBlockMenu from "./AddBlockMenu";
 import { createBlock, type Block, type BlockType } from "./types";
+import { computeHeadingNumbers } from "./headingNumbers";
 
 interface Props {
   blocks: Block[];
   onChange: (next: Block[]) => void;
+  numberHeadings?: boolean;
 }
 
-export default function BlockEditor({ blocks, onChange }: Props) {
+
+export default function BlockEditor({ blocks, onChange, numberHeadings }: Props) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
   const sorted = [...blocks].sort((a, b) => a.order - b.order);
+  const numbersMap = numberHeadings ? computeHeadingNumbers(sorted, 4) : null;
+
 
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
@@ -96,7 +101,9 @@ export default function BlockEditor({ blocks, onChange }: Props) {
                 onToggleCollapsed={() => toggleCollapsed(b.id)}
                 onChange={updateBlock}
                 onDelete={deleteBlock}
+                headingNumber={numbersMap?.get(b.id)}
               />
+
             ))}
           </div>
         </SortableContext>
