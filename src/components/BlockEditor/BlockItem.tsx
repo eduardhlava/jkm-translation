@@ -19,7 +19,9 @@ interface Props {
   onToggleCollapsed?: () => void;
   onChange: (id: string, patch: Partial<Block>) => void;
   onDelete: (id: string) => void;
+  headingNumber?: string;
 }
+
 
 function blockPreview(block: Block): string {
   switch (block.type) {
