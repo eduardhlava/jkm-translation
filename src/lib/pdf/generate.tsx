@@ -96,7 +96,7 @@ async function inlineImages(blocks: Block[], pageId?: string): Promise<{ blocks:
         cache.set(url, entry);
       }
       if (entry.permanentUrl) rewrites.set(url, entry.permanentUrl);
-      if (!entry.data) return b;
+      if (!entry.data) return { ...b, content: { ...b.content, url: "" } } as Block;
       return { ...b, content: { ...b.content, url: entry.data } } as Block;
     }),
   );
