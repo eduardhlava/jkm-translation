@@ -58,8 +58,14 @@ export function blockToHtml(b: Block): string {
     case "heading4": return `<h4>${escapeHtml(b.content.text)}</h4>`;
     case "text": {
       const inner = sanitizeInline(b.content.html ?? "");
-      return /<(p|ul|ol)\b/i.test(inner) ? inner : `<p>${inner}</p>`;
+      const body = /<(p|ul|ol)\b/i.test(inner) ? inner : `<p>${inner}</p>`;
+      const align = b.content.align === "center" || b.content.align === "right" ? b.content.align : "left";
+      const sizeMap: Record<string, string> = { small: "0.875rem", normal: "1rem", large: "1.25rem" };
+      const fs = sizeMap[b.content.size] ?? sizeMap.normal;
+      return `<div style="text-align:${align};font-size:${fs};">${body}</div>`;
     }
+    case "pagebreak":
+      return `<div style="page-break-before:always;break-before:page;"></div>`;
     case "image": {
       const url = escapeHtml(b.content.url ?? "");
       const alt = escapeHtml(b.content.alt ?? "");
