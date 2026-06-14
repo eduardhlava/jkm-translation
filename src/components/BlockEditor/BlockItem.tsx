@@ -116,7 +116,7 @@ function setContent(block: Block, patch: any, onChange: Props["onChange"]) {
   onChange(block.id, { content: { ...block.content, ...patch } });
 }
 
-function BlockBody({ block, onChange }: { block: Block; onChange: Props["onChange"] }) {
+function BlockBody({ block, onChange, headingNumber }: { block: Block; onChange: Props["onChange"]; headingNumber?: string }) {
   switch (block.type) {
     case "heading1":
     case "heading2":
@@ -129,14 +129,18 @@ function BlockBody({ block, onChange }: { block: Block; onChange: Props["onChang
         heading4: "text-base font-semibold",
       }[block.type];
       return (
-        <Input
-          value={block.content.text ?? ""}
-          onChange={(e) => setContent(block, { text: e.target.value }, onChange)}
-          placeholder={BLOCK_TYPE_LABELS[block.type]}
-          className={`border-0 shadow-none focus-visible:ring-0 px-0 h-auto py-1 ${sizeCls}`}
-        />
+        <div className={`flex items-baseline gap-2 ${sizeCls}`}>
+          {headingNumber && <span className="text-muted-foreground shrink-0">{headingNumber}</span>}
+          <Input
+            value={block.content.text ?? ""}
+            onChange={(e) => setContent(block, { text: e.target.value }, onChange)}
+            placeholder={BLOCK_TYPE_LABELS[block.type]}
+            className={`border-0 shadow-none focus-visible:ring-0 px-0 h-auto py-1 flex-1 ${sizeCls}`}
+          />
+        </div>
       );
     }
+
     case "text":
       return <TextBlockEditor block={block} onChange={onChange} />;
     case "image":
