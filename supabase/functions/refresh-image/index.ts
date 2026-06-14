@@ -182,12 +182,19 @@ Deno.serve(async (req) => {
     }
 
     // Re-fetch fresh signed URL from Notion.
-    // 1) Fast path: extract block_id from the S3 pathname and ask Notion directly.
+    // 1) Fast path: extract owner id from the S3 pathname. It can be either an image block id
+    //    or a database page id whose file property/cover stores the image.
     let fresh: string | null = null;
-    const blockId = extractBlockId(staleUrl);
-    if (blockId) fresh = await fetchFreshUrlFromBlock(blockId, NOTION_KEY);
+    const ownerId = extractNotionFileOwnerId(staleUrl);
+    if (ownerId) {
+      fresh = await fetchFreshUrlFromBlock(ownerId, NOTION_KEY);
+      if (!fresh) {
+        const pageUrls = await fetchFreshUrlsFromPage(ownerId, NOTION_KEY);
+        fresh = pageUrls.find((u) => pathKey(u) === stalePath) ?? pageUrls.find((u) => fileNameKey(u) === fileNameKey(staleUrl)) ?? pageUrls[0] ?? null;
+      }
+    }
 
-    // 2) Fallback: recursively scan the whole page tree and match by path.
+    // 2) Fallback: recursively scan the document page tree and match by path.
     if (!fresh) {
       const blocks = await fetchAllBlocksRecursive(pageId, NOTION_KEY);
       const urls: string[] = [];
@@ -197,7 +204,12 @@ Deno.serve(async (req) => {
           if (src) urls.push(src);
         }
       }
-      fresh = urls.find((u) => pathKey(u) === stalePath) ?? urls[0] ?? null;
+      fresh = urls.find((u) => pathKey(u) === stalePath) ?? urls.find((u) => fileNameKey(u) === fileNameKey(staleUrl)) ?? null;
+    }
+
+    // 3) Fallback for images inserted from the separate "Obrázky" database.
+    if (!fresh) {
+      fresh = await fetchFreshUrlFromImageDatabase(staleUrl, NOTION_KEY);
     }
     if (!fresh) throw new Error("No matching image found on Notion page");
 
