@@ -211,7 +211,11 @@ Deno.serve(async (req) => {
     if (!fresh) {
       fresh = await fetchFreshUrlFromImageDatabase(staleUrl, NOTION_KEY);
     }
-    if (!fresh) throw new Error("No matching image found on Notion page");
+    if (!fresh) {
+      return new Response(JSON.stringify({ url: null }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const dl = await fetch(fresh);
     if (!dl.ok) throw new Error(`Fresh download failed [${dl.status}]`);
@@ -240,6 +244,12 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    if (message.includes("No matching image") || message.includes("Fresh download failed [403]")) {
+      return new Response(JSON.stringify({ url: null }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
