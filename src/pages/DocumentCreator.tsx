@@ -116,6 +116,7 @@ const DocumentCreator = () => {
   const [lastExportAt, setLastExportAt] = useState<string | null>(null);
   const [overwriteDialog, setOverwriteDialog] = useState<{ open: boolean; targetId: string | null }>({ open: false, targetId: null });
   const [numberHeadings, setNumberHeadings] = useState(false);
+  const [collapsedBlocks, setCollapsedBlocks] = useState<Record<string, boolean>>({});
 
 
 
@@ -201,6 +202,7 @@ const DocumentCreator = () => {
       setOriginalTitle(initialTitle);
       const savedSettings = (blocksRes.data as any)?.settings ?? {};
       setNumberHeadings(!!savedSettings.numberHeadings);
+      setCollapsedBlocks((savedSettings.collapsedBlocks as Record<string, boolean>) ?? {});
       setLastExportAt((blocksRes.data as any)?.notion_exported_at ?? null);
       toast.success("Obsah načten");
     } catch (e) {
@@ -222,7 +224,7 @@ const DocumentCreator = () => {
       editor.commands.setContent(html || "<p></p>");
       const { error } = await supabase
         .from("document_blocks")
-        .upsert({ page_id: activePage.id, blocks: blocks as any, settings: { numberHeadings } as any }, { onConflict: "page_id" });
+        .upsert({ page_id: activePage.id, blocks: blocks as any, settings: { numberHeadings, collapsedBlocks } as any }, { onConflict: "page_id" });
       if (error) throw error;
       toast.success("Uloženo do databáze aplikace");
     } catch (e) {
@@ -364,7 +366,7 @@ const DocumentCreator = () => {
           if (activePage) {
             supabase
               .from("document_blocks")
-              .upsert({ page_id: activePage.id, blocks: next as any, settings: { numberHeadings } as any }, { onConflict: "page_id" })
+              .upsert({ page_id: activePage.id, blocks: next as any, settings: { numberHeadings, collapsedBlocks } as any }, { onConflict: "page_id" })
               .then(({ error }) => { if (error) console.warn("[pdf] persist rehydrated images failed", error); });
           }
           return next;
@@ -660,7 +662,7 @@ const DocumentCreator = () => {
             ) : (
               <div className="flex-1 min-h-0 overflow-auto bg-muted/20 p-4">
                 <div className="mx-auto max-w-4xl">
-                  <BlockEditor blocks={blocks} onChange={setBlocks} numberHeadings={numberHeadings} />
+                  <BlockEditor blocks={blocks} onChange={setBlocks} numberHeadings={numberHeadings} collapsed={collapsedBlocks} onCollapsedChange={setCollapsedBlocks} />
                 </div>
               </div>
             )}
