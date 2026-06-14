@@ -86,9 +86,26 @@ export default function BlockItem({ block, collapsed, onToggleCollapsed, onChang
           >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
-          <span className="text-xs font-medium text-muted-foreground shrink-0">
-            {BLOCK_TYPE_LABELS[block.type]}
-          </span>
+          {block.type.startsWith("heading") ? (
+            <Select
+              value={block.type}
+              onValueChange={(v) => onChange(block.id, { type: v as Block["type"] })}
+            >
+              <SelectTrigger className="h-6 w-[90px] text-xs border-0 bg-transparent px-0 shadow-none focus:ring-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="heading1">Nadpis 1</SelectItem>
+                <SelectItem value="heading2">Nadpis 2</SelectItem>
+                <SelectItem value="heading3">Nadpis 3</SelectItem>
+                <SelectItem value="heading4">Nadpis 4</SelectItem>
+              </SelectContent>
+            </Select>
+          ) : (
+            <span className="text-xs font-medium text-muted-foreground shrink-0">
+              {BLOCK_TYPE_LABELS[block.type]}
+            </span>
+          )}
           {collapsed && preview && (
             <span className="ml-2 truncate text-xs text-muted-foreground/80">— {preview}</span>
           )}
@@ -129,30 +146,14 @@ function BlockBody({ block, onChange, headingNumber }: { block: Block; onChange:
         heading4: "text-base font-semibold",
       }[block.type];
       return (
-        <div className="space-y-2">
-          <Select
-            value={block.type}
-            onValueChange={(v) => onChange(block.id, { type: v as Block["type"] })}
-          >
-            <SelectTrigger className="h-7 w-[140px] text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="heading1">Nadpis 1</SelectItem>
-              <SelectItem value="heading2">Nadpis 2</SelectItem>
-              <SelectItem value="heading3">Nadpis 3</SelectItem>
-              <SelectItem value="heading4">Nadpis 4</SelectItem>
-            </SelectContent>
-          </Select>
-          <div className={`flex items-baseline gap-2 ${sizeCls}`}>
-            {headingNumber && <span className="text-muted-foreground shrink-0">{headingNumber}</span>}
-            <Input
-              value={block.content.text ?? ""}
-              onChange={(e) => setContent(block, { text: e.target.value }, onChange)}
-              placeholder={BLOCK_TYPE_LABELS[block.type]}
-              className={`border-0 shadow-none focus-visible:ring-0 px-0 h-auto py-1 flex-1 ${sizeCls}`}
-            />
-          </div>
+        <div className={`flex items-baseline gap-2 ${sizeCls}`}>
+          {headingNumber && <span className="text-muted-foreground shrink-0">{headingNumber}</span>}
+          <Input
+            value={block.content.text ?? ""}
+            onChange={(e) => setContent(block, { text: e.target.value }, onChange)}
+            placeholder={BLOCK_TYPE_LABELS[block.type]}
+            className={`border-0 shadow-none focus-visible:ring-0 px-0 h-auto py-1 flex-1 ${sizeCls}`}
+          />
         </div>
       );
     }
