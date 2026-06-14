@@ -186,7 +186,7 @@ const DocumentCreator = () => {
     try {
       const [contentRes, blocksRes] = await Promise.all([
         supabase.functions.invoke("notion-content", { body: { action: "get", pageId: item.id } }),
-        supabase.from("document_blocks").select("blocks, notion_exported_at").eq("page_id", item.id).maybeSingle(),
+        supabase.from("document_blocks").select("blocks, settings, notion_exported_at").eq("page_id", item.id).maybeSingle(),
       ]);
       if (contentRes.error) throw contentRes.error;
       if ((contentRes.data as any)?.error) throw new Error((contentRes.data as any).error);
@@ -199,6 +199,8 @@ const DocumentCreator = () => {
       const initialTitle = item.properties[titleProp] || "";
       setDocTitle(initialTitle);
       setOriginalTitle(initialTitle);
+      const savedSettings = (blocksRes.data as any)?.settings ?? {};
+      setNumberHeadings(!!savedSettings.numberHeadings);
       setLastExportAt((blocksRes.data as any)?.notion_exported_at ?? null);
       toast.success("Obsah načten");
     } catch (e) {
