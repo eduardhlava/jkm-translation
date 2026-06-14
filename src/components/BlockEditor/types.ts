@@ -8,23 +8,29 @@ export type BlockType =
   | "image"
   | "alert"
   | "info"
-  | "warning";
+  | "warning"
+  | "pagebreak";
+
+export type TextAlign = "left" | "center" | "right";
+export type TextSize = "small" | "normal" | "large";
 
 export interface HeadingContent { text: string }
-export interface TextContent { html: string }
+export interface TextContent { html: string; align?: TextAlign; size?: TextSize }
 export interface TableContent {
   headerRow: boolean;
   rows: string[][]; // rows[r][c]
 }
 export interface ImageContent { url: string; alt: string; width?: number }
 export interface CalloutContent { text: string }
+export interface PageBreakContent {}
 
 export type BlockContent =
   | HeadingContent
   | TextContent
   | TableContent
   | ImageContent
-  | CalloutContent;
+  | CalloutContent
+  | PageBreakContent;
 
 export interface Block {
   id: string;
@@ -45,6 +51,7 @@ export const BLOCK_TYPE_LABELS: Record<BlockType, string> = {
   alert: "Výstraha",
   info: "Informace",
   warning: "Upozornění",
+  pagebreak: "Konec stránky",
 };
 
 export function emptyContent(type: BlockType): any {
@@ -55,7 +62,7 @@ export function emptyContent(type: BlockType): any {
     case "heading4":
       return { text: "" };
     case "text":
-      return { html: "" };
+      return { html: "", align: "left", size: "normal" };
     case "table":
       return { headerRow: true, rows: [["", ""], ["", ""]] };
     case "image":
@@ -64,6 +71,8 @@ export function emptyContent(type: BlockType): any {
     case "info":
     case "warning":
       return { text: "" };
+    case "pagebreak":
+      return {};
   }
 }
 

@@ -200,6 +200,14 @@ function Heading({ block, level, collector }: { block: Block; level: 1 | 2 | 3 |
 }
 
 function TextBlock({ block }: { block: Block }) {
+  const align = (block.content?.align === "center" || block.content?.align === "right")
+    ? block.content.align as "center" | "right"
+    : "left";
+  const sizeKey = (block.content?.size ?? "normal") as "small" | "normal" | "large";
+  const fontSize = sizeKey === "small" ? 9 : sizeKey === "large" ? 14 : 11;
+  const pStyle = { ...styles.p, fontSize, textAlign: align } as any;
+  const liStyle = { ...styles.li, fontSize } as any;
+
   const paragraphs = parseInline(block.content?.html ?? "");
   // Detect list items inside the html quickly: re-parse for ul/ol structure
   const parser = new DOMParser();
@@ -218,7 +226,7 @@ function TextBlock({ block }: { block: Block }) {
     parent.childNodes.forEach((n) => {
       if (n.nodeType === Node.TEXT_NODE) {
         const t = n.textContent ?? "";
-          if (t.trim()) nodes.push(<View key={key++} style={styles.paragraphWrap}><Text style={styles.p}>{t}</Text></View>);
+          if (t.trim()) nodes.push(<View key={key++} style={styles.paragraphWrap}><Text style={pStyle}>{t}</Text></View>);
         return;
       }
       if (n.nodeType !== Node.ELEMENT_NODE) return;
@@ -229,7 +237,7 @@ function TextBlock({ block }: { block: Block }) {
         items.forEach((li, i) => {
           const runs = renderInlineNode(li);
           nodes.push(
-            <View key={key++} style={styles.li}>
+            <View key={key++} style={liStyle}>
               <Text style={styles.liBullet}>{tag === "OL" ? `${i + 1}.` : "•"}</Text>
               <Text style={styles.liContent}><RunsText runs={runs} /></Text>
             </View>
@@ -239,12 +247,12 @@ function TextBlock({ block }: { block: Block }) {
       }
       if (tag === "P") {
         const runs = parseInline(el.innerHTML).flat();
-        if (runs.length) nodes.push(<View key={key++} style={styles.paragraphWrap}><Text style={styles.p}><RunsText runs={runs} /></Text></View>);
+        if (runs.length) nodes.push(<View key={key++} style={styles.paragraphWrap}><Text style={pStyle}><RunsText runs={runs} /></Text></View>);
         return;
       }
       // Fallback: treat as paragraph
       const runs = parseInline(el.outerHTML).flat();
-      if (runs.length) nodes.push(<View key={key++} style={styles.paragraphWrap}><Text style={styles.p}><RunsText runs={runs} /></Text></View>);
+      if (runs.length) nodes.push(<View key={key++} style={styles.paragraphWrap}><Text style={pStyle}><RunsText runs={runs} /></Text></View>);
     });
   };
 
@@ -253,7 +261,7 @@ function TextBlock({ block }: { block: Block }) {
     return (
       <>
         {paragraphs.map((runs, i) =>
-          runs.length ? <View key={i} style={styles.paragraphWrap}><Text style={styles.p}><RunsText runs={runs} /></Text></View> : null
+          runs.length ? <View key={i} style={styles.paragraphWrap}><Text style={pStyle}><RunsText runs={runs} /></Text></View> : null
         )}
       </>
     );
@@ -326,6 +334,7 @@ function BlockNode({ block, collector }: { block: Block; collector?: PageMap }) 
     case "alert":
     case "info":
     case "warning":  return <CalloutBlock block={block} />;
+    case "pagebreak": return <View break />;
     default: return null;
   }
 }

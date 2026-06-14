@@ -2,8 +2,11 @@ import { type Block, type BlockType, emptyContent } from "./types";
 
 const VALID_TYPES: BlockType[] = [
   "heading1", "heading2", "heading3", "heading4",
-  "text", "table", "image", "alert", "info", "warning",
+  "text", "table", "image", "alert", "info", "warning", "pagebreak",
 ];
+
+const VALID_ALIGN = ["left", "center", "right"] as const;
+const VALID_SIZE = ["small", "normal", "large"] as const;
 
 export interface ImportedBlock {
   type: BlockType;
@@ -31,10 +34,11 @@ function normalizeContent(type: BlockType, raw: any): any {
     case "heading4":
       return { text: String(c.text ?? "") };
     case "text": {
-      // Accept either html string or plain text
-      if (typeof c.html === "string") return { html: c.html };
-      if (typeof c.text === "string") return { html: `<p>${c.text}</p>` };
-      return base;
+      const align = (VALID_ALIGN as readonly string[]).includes(c.align) ? c.align : "left";
+      const size = (VALID_SIZE as readonly string[]).includes(c.size) ? c.size : "normal";
+      if (typeof c.html === "string") return { html: c.html, align, size };
+      if (typeof c.text === "string") return { html: `<p>${c.text}</p>`, align, size };
+      return { ...base, align, size };
     }
     case "image":
       return {
@@ -52,6 +56,8 @@ function normalizeContent(type: BlockType, raw: any): any {
     case "info":
     case "warning":
       return { text: String(c.text ?? "") };
+    case "pagebreak":
+      return {};
   }
 }
 
