@@ -19,6 +19,7 @@ export type Database = {
           blocks: Json
           notion_exported_at: string | null
           page_id: string
+          settings: Json
           updated_at: string
           updated_by: string | null
         }
@@ -26,6 +27,7 @@ export type Database = {
           blocks?: Json
           notion_exported_at?: string | null
           page_id: string
+          settings?: Json
           updated_at?: string
           updated_by?: string | null
         }
@@ -33,6 +35,7 @@ export type Database = {
           blocks?: Json
           notion_exported_at?: string | null
           page_id?: string
+          settings?: Json
           updated_at?: string
           updated_by?: string | null
         }
