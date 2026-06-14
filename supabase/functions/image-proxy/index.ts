@@ -30,9 +30,10 @@ Deno.serve(async (req) => {
 
     const upstream = await fetch(url);
     if (!upstream.ok) {
-      return new Response(JSON.stringify({ error: `Upstream ${upstream.status}` }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      await upstream.body?.cancel().catch(() => undefined);
+      return new Response(null, {
+        status: 204,
+        headers: { ...corsHeaders, "Cache-Control": "no-store" },
       });
     }
 
