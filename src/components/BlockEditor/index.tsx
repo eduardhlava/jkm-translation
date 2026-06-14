@@ -28,13 +28,15 @@ interface Props {
 }
 
 
-export default function BlockEditor({ blocks, onChange }: Props) {
+export default function BlockEditor({ blocks, onChange, numberHeadings }: Props) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
   const sorted = [...blocks].sort((a, b) => a.order - b.order);
+  const numbersMap = numberHeadings ? computeHeadingNumbers(sorted, 4) : null;
+
 
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
