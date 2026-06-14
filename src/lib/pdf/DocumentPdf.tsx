@@ -410,12 +410,27 @@ export interface DocumentPdfProps {
   includeToc?: boolean;
   pageMap?: PageMap;       // resolved page numbers for headings (pass 2)
   collector?: PageMap;     // collector to fill on render (pass 1)
+  numberHeadings?: boolean;
 }
 
-export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collector }: DocumentPdfProps) {
+export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collector, numberHeadings }: DocumentPdfProps) {
   const ordered = [...blocks].sort((a, b) => a.order - b.order);
   const headings = collectHeadings(ordered);
   const tocEntries = headings;
+  let numbers: Map<string, string> | undefined;
+  if (numberHeadings) {
+    // Inline computation to avoid extra import cycles.
+    const counters = [0, 0, 0, 0];
+    numbers = new Map();
+    const lvlOf: Record<string, number> = { heading1: 1, heading2: 2, heading3: 3, heading4: 4 };
+    for (const b of ordered) {
+      const lvl = lvlOf[b.type];
+      if (!lvl) continue;
+      counters[lvl - 1] += 1;
+      for (let i = lvl; i < counters.length; i++) counters[i] = 0;
+      numbers.set(b.id, counters.slice(0, lvl).join("."));
+    }
+  }
 
   return (
     <Document title={title}>
@@ -423,16 +438,17 @@ export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collect
         <Page size="A4" style={styles.page}>
           <Footer />
           <Text style={styles.docTitle}>{title}</Text>
-          <Toc entries={tocEntries} pageMap={pageMap} />
+          <Toc entries={tocEntries} pageMap={pageMap} numbers={numbers} />
         </Page>
       )}
       <Page size="A4" style={styles.page}>
         <Footer />
         {!includeToc && <Text style={styles.docTitle}>{title}</Text>}
         {ordered.map((b) => (
-          <BlockNode key={b.id} block={b} collector={collector} />
+          <BlockNode key={b.id} block={b} collector={collector} number={numbers?.get(b.id)} />
         ))}
       </Page>
     </Document>
   );
 }
+
