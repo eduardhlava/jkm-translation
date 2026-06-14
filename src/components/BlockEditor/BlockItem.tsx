@@ -255,9 +255,48 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
     syncHtml();
   };
 
-  const align = (block.content.align ?? "left") as "left" | "center" | "right";
-  const size = (block.content.size ?? "normal") as "small" | "normal" | "large";
-  const sizeCls = size === "small" ? "text-xs" : size === "large" ? "text-lg" : "text-sm";
+  const findBlockEl = (node: Node | null): HTMLElement | null => {
+    const editor = ref.current;
+    if (!editor) return null;
+    let el: Node | null = node;
+    while (el && el !== editor) {
+      if (el.nodeType === Node.ELEMENT_NODE) {
+        const tag = (el as HTMLElement).tagName;
+        if (/^(P|DIV|LI|H[1-6]|BLOCKQUOTE)$/.test(tag)) return el as HTMLElement;
+      }
+      el = el.parentNode;
+    }
+    return null;
+  };
+
+  const ensureBlockForSelection = (): HTMLElement | null => {
+    const editor = ref.current;
+    if (!editor) return null;
+    restoreSelection();
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return null;
+    const range = sel.getRangeAt(0);
+    let blockEl = findBlockEl(range.startContainer);
+    if (!blockEl) {
+      // Wrap loose content into a <p>
+      document.execCommand("formatBlock", false, "p");
+      const sel2 = window.getSelection();
+      if (sel2 && sel2.rangeCount > 0) blockEl = findBlockEl(sel2.getRangeAt(0).startContainer);
+    }
+    return blockEl;
+  };
+
+  const applySize = (size: "small" | "normal" | "large") => {
+    const blockEl = ensureBlockForSelection();
+    if (!blockEl) return;
+    const sizeMap: Record<string, string> = { small: "0.875em", normal: "", large: "1.25em" };
+    const val = sizeMap[size] ?? "";
+    if (val) blockEl.style.fontSize = val;
+    else blockEl.style.removeProperty("font-size");
+    if (!blockEl.getAttribute("style")) blockEl.removeAttribute("style");
+    saveSelection();
+    syncHtml();
+  };
 
   return (
     <div className="space-y-2">
@@ -268,12 +307,14 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
         <Button type="button" variant="ghost" size="icon" title="Číslovaný seznam" aria-label="Číslovaný seznam" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("insertOrderedList")} className="h-7 w-7"><ListOrdered className="h-4 w-4" /></Button>
         <Button type="button" variant="ghost" size="icon" title="Vložit odkaz" aria-label="Vložit odkaz" onMouseDown={(e) => e.preventDefault()} onClick={onLink} className="h-7 w-7"><Link className="h-4 w-4" /></Button>
         <div className="mx-1 h-5 w-px bg-border" />
-        <Button type="button" variant={align === "left" ? "secondary" : "ghost"} size="icon" title="Zarovnat vlevo" aria-label="Zarovnat vlevo" onMouseDown={(e) => e.preventDefault()} onClick={() => setContent(block, { align: "left" }, onChange)} className="h-7 w-7"><AlignLeft className="h-4 w-4" /></Button>
-        <Button type="button" variant={align === "center" ? "secondary" : "ghost"} size="icon" title="Na střed" aria-label="Na střed" onMouseDown={(e) => e.preventDefault()} onClick={() => setContent(block, { align: "center" }, onChange)} className="h-7 w-7"><AlignCenter className="h-4 w-4" /></Button>
-        <Button type="button" variant={align === "right" ? "secondary" : "ghost"} size="icon" title="Zarovnat vpravo" aria-label="Zarovnat vpravo" onMouseDown={(e) => e.preventDefault()} onClick={() => setContent(block, { align: "right" }, onChange)} className="h-7 w-7"><AlignRight className="h-4 w-4" /></Button>
+        <Button type="button" variant="ghost" size="icon" title="Zarovnat vlevo (odstavec)" aria-label="Zarovnat vlevo" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("justifyLeft")} className="h-7 w-7"><AlignLeft className="h-4 w-4" /></Button>
+        <Button type="button" variant="ghost" size="icon" title="Na střed (odstavec)" aria-label="Na střed" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("justifyCenter")} className="h-7 w-7"><AlignCenter className="h-4 w-4" /></Button>
+        <Button type="button" variant="ghost" size="icon" title="Zarovnat vpravo (odstavec)" aria-label="Zarovnat vpravo" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("justifyRight")} className="h-7 w-7"><AlignRight className="h-4 w-4" /></Button>
         <div className="mx-1 h-5 w-px bg-border" />
-        <Select value={size} onValueChange={(v) => setContent(block, { size: v }, onChange)}>
-          <SelectTrigger className="h-7 w-[110px] text-xs"><SelectValue /></SelectTrigger>
+        <Select value="" onValueChange={(v) => applySize(v as "small" | "normal" | "large")}>
+          <SelectTrigger className="h-7 w-[120px] text-xs" onMouseDown={() => saveSelection()}>
+            <SelectValue placeholder="Velikost" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="small">Malé</SelectItem>
             <SelectItem value="normal">Normální</SelectItem>
@@ -293,8 +334,7 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
           onChange(block.id, { content: { ...block.content, html } });
           saveSelection();
         }}
-        style={{ textAlign: align }}
-        className={`ProseMirror min-h-[60px] rounded-md border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring prose prose-sm max-w-none ${sizeCls}`}
+        className="ProseMirror min-h-[60px] rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring prose prose-sm max-w-none"
       />
     </div>
   );

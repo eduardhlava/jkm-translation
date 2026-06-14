@@ -199,17 +199,38 @@ function Heading({ block, level, collector }: { block: Block; level: 1 | 2 | 3 |
   );
 }
 
-function TextBlock({ block }: { block: Block }) {
-  const align = (block.content?.align === "center" || block.content?.align === "right")
-    ? block.content.align as "center" | "right"
-    : "left";
-  const sizeKey = (block.content?.size ?? "normal") as "small" | "normal" | "large";
-  const fontSize = sizeKey === "small" ? 9 : sizeKey === "large" ? 14 : 11;
-  const pStyle = { ...styles.p, fontSize, textAlign: align } as any;
-  const liStyle = { ...styles.li, fontSize } as any;
+const BASE_FONT_SIZE = 11;
 
-  const paragraphs = parseInline(block.content?.html ?? "");
-  // Detect list items inside the html quickly: re-parse for ul/ol structure
+function parseStyleAttr(el: Element): { textAlign?: "left" | "center" | "right" | "justify"; fontSize?: number } {
+  const out: { textAlign?: any; fontSize?: number } = {};
+  const raw = (el as HTMLElement).getAttribute("style") || "";
+  if (!raw) return out;
+  for (const decl of raw.split(";")) {
+    const idx = decl.indexOf(":");
+    if (idx < 0) continue;
+    const key = decl.slice(0, idx).trim().toLowerCase();
+    const val = decl.slice(idx + 1).trim();
+    if (!val) continue;
+    if (key === "text-align" && /^(left|center|right|justify)$/i.test(val)) {
+      out.textAlign = val.toLowerCase() as any;
+    } else if (key === "font-size") {
+      const m = val.match(/^([\d.]+)(em|rem|px|%)$/i);
+      if (m) {
+        const n = parseFloat(m[1]);
+        const unit = m[2].toLowerCase();
+        if (unit === "em" || unit === "rem") out.fontSize = Math.round(BASE_FONT_SIZE * n);
+        else if (unit === "%") out.fontSize = Math.round(BASE_FONT_SIZE * (n / 100));
+        else if (unit === "px") out.fontSize = Math.round(n * 0.75); // px → pt approx
+      }
+    }
+  }
+  return out;
+}
+
+function TextBlock({ block }: { block: Block }) {
+  const defaultPStyle = { ...styles.p } as any;
+  const defaultLiStyle = { ...styles.li } as any;
+
   const parser = new DOMParser();
   const doc = parser.parseFromString(`<div>${block.content?.html ?? ""}</div>`, "text/html");
   const root = doc.body.firstChild as HTMLElement;
@@ -226,7 +247,7 @@ function TextBlock({ block }: { block: Block }) {
     parent.childNodes.forEach((n) => {
       if (n.nodeType === Node.TEXT_NODE) {
         const t = n.textContent ?? "";
-          if (t.trim()) nodes.push(<View key={key++} style={styles.paragraphWrap}><Text style={pStyle}>{t}</Text></View>);
+        if (t.trim()) nodes.push(<View key={key++} style={styles.paragraphWrap}><Text style={defaultPStyle}>{t}</Text></View>);
         return;
       }
       if (n.nodeType !== Node.ELEMENT_NODE) return;
@@ -236,32 +257,38 @@ function TextBlock({ block }: { block: Block }) {
         const items = Array.from(el.children).filter((c) => c.tagName.toUpperCase() === "LI");
         items.forEach((li, i) => {
           const runs = renderInlineNode(li);
+          const s = parseStyleAttr(li);
+          const liStyle = { ...defaultLiStyle, ...(s.fontSize ? { fontSize: s.fontSize } : {}) };
+          const contentStyle = { ...styles.liContent, ...(s.textAlign ? { textAlign: s.textAlign } : {}), ...(s.fontSize ? { fontSize: s.fontSize } : {}) } as any;
           nodes.push(
             <View key={key++} style={liStyle}>
               <Text style={styles.liBullet}>{tag === "OL" ? `${i + 1}.` : "•"}</Text>
-              <Text style={styles.liContent}><RunsText runs={runs} /></Text>
+              <Text style={contentStyle}><RunsText runs={runs} /></Text>
             </View>
           );
         });
         return;
       }
-      if (tag === "P") {
+      if (tag === "P" || tag === "DIV") {
         const runs = parseInline(el.innerHTML).flat();
-        if (runs.length) nodes.push(<View key={key++} style={styles.paragraphWrap}><Text style={pStyle}><RunsText runs={runs} /></Text></View>);
+        if (!runs.length) return;
+        const s = parseStyleAttr(el);
+        const pStyle = { ...defaultPStyle, ...(s.textAlign ? { textAlign: s.textAlign } : {}), ...(s.fontSize ? { fontSize: s.fontSize } : {}) } as any;
+        nodes.push(<View key={key++} style={styles.paragraphWrap}><Text style={pStyle}><RunsText runs={runs} /></Text></View>);
         return;
       }
       // Fallback: treat as paragraph
       const runs = parseInline(el.outerHTML).flat();
-      if (runs.length) nodes.push(<View key={key++} style={styles.paragraphWrap}><Text style={pStyle}><RunsText runs={runs} /></Text></View>);
+      if (runs.length) nodes.push(<View key={key++} style={styles.paragraphWrap}><Text style={defaultPStyle}><RunsText runs={runs} /></Text></View>);
     });
   };
 
   if (!root || root.children.length === 0) {
-    // Plain runs
+    const paragraphs = parseInline(block.content?.html ?? "");
     return (
       <>
         {paragraphs.map((runs, i) =>
-          runs.length ? <View key={i} style={styles.paragraphWrap}><Text style={pStyle}><RunsText runs={runs} /></Text></View> : null
+          runs.length ? <View key={i} style={styles.paragraphWrap}><Text style={defaultPStyle}><RunsText runs={runs} /></Text></View> : null
         )}
       </>
     );
