@@ -85,8 +85,8 @@ export default function BlockEditor({ blocks, onChange, numberHeadings, collapse
     setCollapsed((c) => ({ ...c, [id]: !c[id] }));
 
   const collapseAll = () =>
-    setCollapsed(Object.fromEntries(sorted.map((b) => [b.id, true])));
-  const expandAll = () => setCollapsed({});
+    setCollapsed(() => Object.fromEntries(sorted.map((b) => [b.id, true])));
+  const expandAll = () => setCollapsed(() => ({}));
 
   return (
     <div className="space-y-3">
