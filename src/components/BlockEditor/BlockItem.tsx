@@ -52,7 +52,7 @@ function blockPreview(block: Block): string {
   }
 }
 
-export default function BlockItem({ block, collapsed, onToggleCollapsed, onChange, onDelete }: Props) {
+export default function BlockItem({ block, collapsed, onToggleCollapsed, onChange, onDelete, headingNumber }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
   const style = {
     transform: CSS.Transform.toString(transform),
