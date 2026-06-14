@@ -36,7 +36,32 @@ async function sha1Hex(input: string): Promise<string> {
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function fetchAllBlocks(blockId: string, apiKey: string): Promise<any[]> {
+const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+
+function extractBlockId(url: string): string | null {
+  // Notion S3 pathname: /<workspace_id>/<block_id>/<filename>
+  try {
+    const parts = new URL(url).pathname.split("/").filter(Boolean);
+    const uuids = parts.filter((p) => UUID_RE.test(p));
+    UUID_RE.lastIndex = 0;
+    return uuids[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchFreshUrlFromBlock(blockId: string, apiKey: string): Promise<string | null> {
+  const res = await fetch(`https://api.notion.com/v1/blocks/${blockId}`, {
+    headers: { Authorization: `Bearer ${apiKey}`, "Notion-Version": NOTION_VERSION },
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  if (data?.type !== "image") return null;
+  return data.image?.type === "external" ? data.image.external?.url : data.image.file?.url;
+}
+
+async function fetchAllBlocksRecursive(blockId: string, apiKey: string, depth = 0): Promise<any[]> {
+  if (depth > 3) return [];
   const all: any[] = [];
   let cursor: string | undefined;
   do {
@@ -46,24 +71,20 @@ async function fetchAllBlocks(blockId: string, apiKey: string): Promise<any[]> {
     const res = await fetch(u.toString(), {
       headers: { Authorization: `Bearer ${apiKey}`, "Notion-Version": NOTION_VERSION },
     });
-    if (!res.ok) throw new Error(`Notion ${res.status}: ${await res.text()}`);
+    if (!res.ok) break;
     const data = await res.json();
-    all.push(...(data.results ?? []));
+    for (const b of data.results ?? []) {
+      all.push(b);
+      if (b.has_children) {
+        const kids = await fetchAllBlocksRecursive(b.id, apiKey, depth + 1);
+        all.push(...kids);
+      }
+    }
     cursor = data.has_more ? data.next_cursor : undefined;
   } while (cursor);
   return all;
 }
 
-function collectImageUrls(blocks: any[]): string[] {
-  const urls: string[] = [];
-  for (const b of blocks) {
-    if (b?.type === "image") {
-      const src = b.image?.type === "external" ? b.image.external?.url : b.image.file?.url;
-      if (src) urls.push(src);
-    }
-  }
-  return urls;
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
