@@ -113,6 +113,8 @@ const DocumentCreator = () => {
   const [originalTitle, setOriginalTitle] = useState("");
   const [lastExportAt, setLastExportAt] = useState<string | null>(null);
   const [overwriteDialog, setOverwriteDialog] = useState<{ open: boolean; targetId: string | null }>({ open: false, targetId: null });
+  const [numberHeadings, setNumberHeadings] = useState(false);
+
 
 
   const editor = useEditor({
