@@ -36,18 +36,46 @@ async function sha1Hex(input: string): Promise<string> {
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const IMAGE_DATABASE_ID = "3689450d-3d3f-8024-8801-fdd841839156";
 
-function extractBlockId(url: string): string | null {
-  // Notion S3 pathname: /<workspace_id>/<block_id>/<filename>
+function extractNotionFileOwnerId(url: string): string | null {
+  // Notion S3 pathname is usually: /<workspace_id>/<block_or_page_id>/<filename>
   try {
     const parts = new URL(url).pathname.split("/").filter(Boolean);
     const uuids = parts.filter((p) => UUID_RE.test(p));
-    UUID_RE.lastIndex = 0;
     return uuids[1] ?? null;
   } catch {
     return null;
   }
+}
+
+function fileNameKey(url: string): string | null {
+  try {
+    const parts = new URL(url).pathname.split("/").filter(Boolean);
+    return parts.at(-1) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function collectPageImageUrls(page: any): string[] {
+  const urls: string[] = [];
+  const cover = page?.cover;
+  if (cover?.type === "external" && cover.external?.url) urls.push(cover.external.url);
+  if (cover?.type === "file" && cover.file?.url) urls.push(cover.file.url);
+  for (const prop of Object.values(page?.properties ?? {}) as any[]) {
+    if (prop?.type === "files") {
+      for (const f of prop.files ?? []) {
+        if (f?.type === "external" && f.external?.url) urls.push(f.external.url);
+        if (f?.type === "file" && f.file?.url) urls.push(f.file.url);
+      }
+    }
+    if (prop?.type === "url" && typeof prop.url === "string" && /\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(prop.url)) {
+      urls.push(prop.url);
+    }
+  }
+  return urls;
 }
 
 async function fetchFreshUrlFromBlock(blockId: string, apiKey: string): Promise<string | null> {
@@ -58,6 +86,44 @@ async function fetchFreshUrlFromBlock(blockId: string, apiKey: string): Promise<
   const data = await res.json();
   if (data?.type !== "image") return null;
   return data.image?.type === "external" ? data.image.external?.url : data.image.file?.url;
+}
+
+async function fetchFreshUrlsFromPage(pageId: string, apiKey: string): Promise<string[]> {
+  const res = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
+    headers: { Authorization: `Bearer ${apiKey}`, "Notion-Version": NOTION_VERSION },
+  });
+  if (!res.ok) return [];
+  return collectPageImageUrls(await res.json());
+}
+
+async function fetchFreshUrlFromImageDatabase(staleUrl: string, apiKey: string): Promise<string | null> {
+  const stalePath = pathKey(staleUrl);
+  const staleFile = fileNameKey(staleUrl);
+  let cursor: string | undefined;
+  let safety = 20;
+  do {
+    const body: Record<string, unknown> = { page_size: 100 };
+    if (cursor) body.start_cursor = cursor;
+    const res = await fetch(`https://api.notion.com/v1/databases/${IMAGE_DATABASE_ID}/query`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Notion-Version": NOTION_VERSION,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const urls = (data.results ?? []).flatMap(collectPageImageUrls);
+    const exact = urls.find((u: string) => stalePath && pathKey(u) === stalePath);
+    if (exact) return exact;
+    const sameFile = urls.find((u: string) => staleFile && fileNameKey(u) === staleFile);
+    if (sameFile) return sameFile;
+    cursor = data.has_more ? data.next_cursor : undefined;
+    safety--;
+  } while (cursor && safety > 0);
+  return null;
 }
 
 async function fetchAllBlocksRecursive(blockId: string, apiKey: string, depth = 0): Promise<any[]> {
