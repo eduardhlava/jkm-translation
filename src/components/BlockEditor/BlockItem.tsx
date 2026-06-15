@@ -91,8 +91,8 @@ export default function BlockItem({ block, collapsed, onToggleCollapsed, onChang
               value={block.type}
               onValueChange={(v) => onChange(block.id, { type: v as Block["type"] })}
             >
-              <SelectTrigger className="h-6 w-auto text-xs border-0 bg-transparent px-0 shadow-none focus:ring-0 [&>svg]:hidden">
-                <Pencil className="w-3 h-3 mr-1 opacity-70 shrink-0" />
+              <SelectTrigger className="h-6 w-auto text-xs border-0 bg-transparent px-0 shadow-none focus:ring-0 [&>svg]:hidden group-hover:bg-accent/30 rounded px-1 -ml-1">
+                <Pencil className="w-3 h-3 mr-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                 <SelectValue>{BLOCK_TYPE_LABELS[block.type]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
