@@ -470,20 +470,27 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
           </div>
         )}
       </div>
-      <div
-        ref={ref}
-        contentEditable
-        suppressContentEditableWarning
-        onKeyUp={saveSelection}
-        onMouseUp={saveSelection}
-        onInput={(e) => {
-          const html = (e.target as HTMLDivElement).innerHTML;
-          lastHtmlRef.current = html;
-          onChange(block.id, { content: { ...block.content, html } });
-          saveSelection();
-        }}
-        className="ProseMirror min-h-[60px] w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring prose prose-sm max-w-none"
-      />
+      <div className="flex items-start gap-2">
+        {block.content.pictogram && block.content.pictogram !== "none" && (
+          <div className="shrink-0 pt-2">
+            <PictogramIcon kind={block.content.pictogram} size={28} />
+          </div>
+        )}
+        <div
+          ref={ref}
+          contentEditable
+          suppressContentEditableWarning
+          onKeyUp={saveSelection}
+          onMouseUp={saveSelection}
+          onInput={(e) => {
+            const html = (e.target as HTMLDivElement).innerHTML;
+            lastHtmlRef.current = html;
+            onChange(block.id, { content: { ...block.content, html } });
+            saveSelection();
+          }}
+          className="ProseMirror min-h-[60px] flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring prose prose-sm max-w-none"
+        />
+      </div>
     </div>
   );
 }
