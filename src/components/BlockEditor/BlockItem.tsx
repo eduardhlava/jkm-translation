@@ -149,13 +149,14 @@ function BlockHeader({
           </span>
         )}
         {block.type.startsWith("heading") && (
-          <label className="flex items-center gap-1 text-xs text-muted-foreground cursor-pointer select-none ml-1">
-            <Checkbox
+          <div className="flex items-center gap-1 ml-1" title="Nečíslovat a nezahrnovat do obsahu">
+            <ListMinus className="w-3.5 h-3.5 text-muted-foreground" />
+            <Switch
               checked={!!block.content.unlisted}
-              onCheckedChange={(v) => setContent(block, { unlisted: v === true }, onChange)}
+              onCheckedChange={(v) => setContent(block, { unlisted: v }, onChange)}
+              className="data-[state=unchecked]:bg-muted-foreground/30 data-[state=checked]:bg-foreground"
             />
-            Nečíslovat a nezahrnovat do obsahu
-          </label>
+          </div>
         )}
         {collapsed && preview && (
           <span className="ml-2 truncate text-xs text-muted-foreground/80">— {preview}</span>
