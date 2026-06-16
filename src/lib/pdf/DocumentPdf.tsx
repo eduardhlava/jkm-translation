@@ -427,6 +427,7 @@ export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collect
     for (const b of ordered) {
       const lvl = lvlOf[b.type];
       if (!lvl) continue;
+      if (b.content?.unlisted) continue;
       counters[lvl - 1] += 1;
       for (let i = lvl; i < counters.length; i++) counters[i] = 0;
       numbers.set(b.id, counters.slice(0, lvl).join("."));
