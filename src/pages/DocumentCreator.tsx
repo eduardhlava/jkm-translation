@@ -71,8 +71,10 @@ import type { Block } from "@/components/BlockEditor/types";
 import { blocksToHtml } from "@/components/BlockEditor/serialize";
 import { parseDocumentJson, SAMPLE_DOCUMENT_JSON } from "@/components/BlockEditor/importJson";
 import PdfCanvasPreview from "@/components/PdfCanvasPreview";
-import { Blocks, PencilLine, Upload, FileDown, MoreHorizontal, Check } from "lucide-react";
+import { Blocks, PencilLine, Upload, FileDown, MoreHorizontal, Check, FileCog } from "lucide-react";
 import { useRef } from "react";
+import DocumentMetadataDialog from "@/components/DocumentMetadata/DocumentMetadataDialog";
+import { DEFAULT_DOCUMENT_METADATA, mergeMetadata, type DocumentMetadata } from "@/components/DocumentMetadata/types";
 
 type EditorMode = "blocks" | "wysiwyg";
 
