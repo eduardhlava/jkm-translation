@@ -40,6 +40,14 @@ import TableCellExt from "@tiptap/extension-table-cell";
 import TableHeaderExt from "@tiptap/extension-table-header";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -63,7 +71,7 @@ import type { Block } from "@/components/BlockEditor/types";
 import { blocksToHtml } from "@/components/BlockEditor/serialize";
 import { parseDocumentJson, SAMPLE_DOCUMENT_JSON } from "@/components/BlockEditor/importJson";
 import PdfCanvasPreview from "@/components/PdfCanvasPreview";
-import { Blocks, PencilLine, Upload, FileDown } from "lucide-react";
+import { Blocks, PencilLine, Upload, FileDown, MoreHorizontal, Check } from "lucide-react";
 import { useRef } from "react";
 
 type EditorMode = "blocks" | "wysiwyg";
