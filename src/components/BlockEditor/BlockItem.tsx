@@ -119,6 +119,7 @@ function BlockHeader({
   attributes: any;
   listeners: any;
 }) {
+  const [deleteOpen, setDeleteOpen] = useState(false);
   return (
     <div className="flex items-center justify-between border-b bg-muted/30 px-2 py-1">
       <div className="flex items-center gap-1 min-w-0 flex-1">
