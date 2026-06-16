@@ -71,8 +71,10 @@ import type { Block } from "@/components/BlockEditor/types";
 import { blocksToHtml } from "@/components/BlockEditor/serialize";
 import { parseDocumentJson, SAMPLE_DOCUMENT_JSON } from "@/components/BlockEditor/importJson";
 import PdfCanvasPreview from "@/components/PdfCanvasPreview";
-import { Blocks, PencilLine, Upload, FileDown, MoreHorizontal, Check } from "lucide-react";
+import { Blocks, PencilLine, Upload, FileDown, MoreHorizontal, Check, FileCog } from "lucide-react";
 import { useRef } from "react";
+import DocumentMetadataDialog from "@/components/DocumentMetadata/DocumentMetadataDialog";
+import { DEFAULT_DOCUMENT_METADATA, mergeMetadata, type DocumentMetadata } from "@/components/DocumentMetadata/types";
 
 type EditorMode = "blocks" | "wysiwyg";
 
@@ -125,6 +127,8 @@ const DocumentCreator = () => {
   const [overwriteDialog, setOverwriteDialog] = useState<{ open: boolean; targetId: string | null }>({ open: false, targetId: null });
   const [numberHeadings, setNumberHeadings] = useState(false);
   const [collapsedBlocks, setCollapsedBlocks] = useState<Record<string, boolean>>({});
+  const [metadata, setMetadata] = useState<DocumentMetadata>(DEFAULT_DOCUMENT_METADATA);
+  const [metadataOpen, setMetadataOpen] = useState(false);
 
 
 
@@ -211,6 +215,7 @@ const DocumentCreator = () => {
       const savedSettings = (blocksRes.data as any)?.settings ?? {};
       setNumberHeadings(!!savedSettings.numberHeadings);
       setCollapsedBlocks((savedSettings.collapsedBlocks as Record<string, boolean>) ?? {});
+      setMetadata(mergeMetadata({ ...(savedSettings.metadata ?? {}), docName: savedSettings.metadata?.docName ?? initialTitle }));
       setLastExportAt((blocksRes.data as any)?.notion_exported_at ?? null);
       toast.success("Obsah načten");
     } catch (e) {
@@ -232,7 +237,7 @@ const DocumentCreator = () => {
       editor.commands.setContent(html || "<p></p>");
       const { error } = await supabase
         .from("document_blocks")
-        .upsert({ page_id: activePage.id, blocks: blocks as any, settings: { numberHeadings, collapsedBlocks } as any }, { onConflict: "page_id" });
+        .upsert({ page_id: activePage.id, blocks: blocks as any, settings: { numberHeadings, collapsedBlocks, metadata } as any }, { onConflict: "page_id" });
       if (error) throw error;
       toast.success("Uloženo do databáze aplikace");
     } catch (e) {
@@ -374,7 +379,7 @@ const DocumentCreator = () => {
           if (activePage) {
             supabase
               .from("document_blocks")
-              .upsert({ page_id: activePage.id, blocks: next as any, settings: { numberHeadings, collapsedBlocks } as any }, { onConflict: "page_id" })
+              .upsert({ page_id: activePage.id, blocks: next as any, settings: { numberHeadings, collapsedBlocks, metadata } as any }, { onConflict: "page_id" })
               .then(({ error }) => { if (error) console.warn("[pdf] persist rehydrated images failed", error); });
           }
           return next;
@@ -677,7 +682,18 @@ const DocumentCreator = () => {
             ) : (
               <div className="flex-1 min-h-0 overflow-auto bg-muted/20 p-4">
                 <div className="mx-auto max-w-4xl">
-                  <BlockEditor blocks={blocks} onChange={setBlocks} numberHeadings={numberHeadings} collapsed={collapsedBlocks} onCollapsedChange={setCollapsedBlocks} />
+                  <BlockEditor
+                    blocks={blocks}
+                    onChange={setBlocks}
+                    numberHeadings={numberHeadings}
+                    collapsed={collapsedBlocks}
+                    onCollapsedChange={setCollapsedBlocks}
+                    leftSlot={
+                      <Button type="button" variant="outline" size="sm" onClick={() => setMetadataOpen(true)}>
+                        <FileCog className="w-4 h-4 mr-1" /> Metadata dokumentu
+                      </Button>
+                    }
+                  />
                 </div>
               </div>
             )}
@@ -759,6 +775,13 @@ const DocumentCreator = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <DocumentMetadataDialog
+        open={metadataOpen}
+        onOpenChange={setMetadataOpen}
+        value={metadata}
+        onChange={setMetadata}
+      />
     </div>
   );
 };

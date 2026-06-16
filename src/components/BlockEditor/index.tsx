@@ -27,10 +27,11 @@ interface Props {
   numberHeadings?: boolean;
   collapsed?: Record<string, boolean>;
   onCollapsedChange?: (next: Record<string, boolean>) => void;
+  leftSlot?: React.ReactNode;
 }
 
 
-export default function BlockEditor({ blocks, onChange, numberHeadings, collapsed: collapsedProp, onCollapsedChange }: Props) {
+export default function BlockEditor({ blocks, onChange, numberHeadings, collapsed: collapsedProp, onCollapsedChange, leftSlot }: Props) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -90,14 +91,19 @@ export default function BlockEditor({ blocks, onChange, numberHeadings, collapse
 
   return (
     <div className="space-y-3">
-      {sorted.length > 0 && (
-        <div className="flex justify-end gap-1">
-          <Button type="button" variant="outline" size="sm" onClick={collapseAll}>
-            <ChevronsDownUp className="w-4 h-4 mr-1" /> Sbalit vše
-          </Button>
-          <Button type="button" variant="outline" size="sm" onClick={expandAll}>
-            <ChevronsUpDown className="w-4 h-4 mr-1" /> Rozbalit vše
-          </Button>
+      {(sorted.length > 0 || leftSlot) && (
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">{leftSlot}</div>
+          {sorted.length > 0 && (
+            <div className="flex gap-1">
+              <Button type="button" variant="outline" size="sm" onClick={collapseAll}>
+                <ChevronsDownUp className="w-4 h-4 mr-1" /> Sbalit vše
+              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={expandAll}>
+                <ChevronsUpDown className="w-4 h-4 mr-1" /> Rozbalit vše
+              </Button>
+            </div>
+          )}
         </div>
       )}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
