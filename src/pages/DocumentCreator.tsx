@@ -691,23 +691,18 @@ const DocumentCreator = () => {
                   Automaticky číslovat nadpisy (H1–H4)
                 </label>
                 <div className="flex items-center gap-2">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="application/json,.json"
-                    className="hidden"
-                    onChange={handleImportJsonFile}
-                  />
-                  <Button size="sm" variant="outline" onClick={downloadSampleJson}>
-                    <FileDown className="w-4 h-4 mr-1" /> Vzor JSON
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={handleImportJsonClick}>
-                    <Upload className="w-4 h-4 mr-1" /> Importovat JSON
-                  </Button>
-                  <Button size="sm" onClick={saveDraft} disabled={savingDraft}>
-                    {savingDraft ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
-                    Uložit
-                  </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/json,.json"
+                  className="hidden"
+                  onChange={handleImportJsonFile}
+                />
+                <Button size="sm" onClick={saveDraft} disabled={savingDraft}>
+                  {savingDraft ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
+                  Uložit
+                </Button>
+
                 </div>
               </div>
             )}
