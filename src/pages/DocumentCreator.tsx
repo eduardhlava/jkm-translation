@@ -40,6 +40,14 @@ import TableCellExt from "@tiptap/extension-table-cell";
 import TableHeaderExt from "@tiptap/extension-table-header";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -63,7 +71,7 @@ import type { Block } from "@/components/BlockEditor/types";
 import { blocksToHtml } from "@/components/BlockEditor/serialize";
 import { parseDocumentJson, SAMPLE_DOCUMENT_JSON } from "@/components/BlockEditor/importJson";
 import PdfCanvasPreview from "@/components/PdfCanvasPreview";
-import { Blocks, PencilLine, Upload, FileDown } from "lucide-react";
+import { Blocks, PencilLine, Upload, FileDown, MoreHorizontal, Check } from "lucide-react";
 import { useRef } from "react";
 
 type EditorMode = "blocks" | "wysiwyg";
@@ -609,29 +617,36 @@ const DocumentCreator = () => {
                 </a>
               </div>
               <div className="flex items-center gap-2">
-                <div className="flex items-center rounded-md border bg-background p-0.5">
-                  <button
-                    type="button"
-                    onClick={() => setMode("blocks")}
-                    className={`flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
-                      mode === "blocks" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
-                    }`}
-                  >
-                    <Blocks className="w-3.5 h-3.5" /> Bloky
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMode("wysiwyg")}
-                    className={`flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
-                      mode === "wysiwyg" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
-                    }`}
-                  >
-                    <PencilLine className="w-3.5 h-3.5" /> WYSIWYG
-                  </button>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-8 w-8">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-52">
+                    <DropdownMenuItem onClick={() => setMode("blocks")}>
+                      <Blocks className="w-4 h-4 mr-2" />
+                      <span className="flex-1">Bloky</span>
+                      {mode === "blocks" && <Check className="w-4 h-4 ml-2" />}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setMode("wysiwyg")}>
+                      <PencilLine className="w-4 h-4 mr-2" />
+                      <span className="flex-1">WYSIWYG</span>
+                      {mode === "wysiwyg" && <Check className="w-4 h-4 ml-2" />}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={downloadSampleJson}>
+                      <FileDown className="w-4 h-4 mr-2" /> Vzor JSON
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleImportJsonClick}>
+                      <Upload className="w-4 h-4 mr-2" /> Importovat JSON
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Button variant="outline" size="sm" onClick={previewPdf} disabled={saving}>
                   <Eye className="w-4 h-4 mr-1" /> Náhled PDF
                 </Button>
+
                 <div className="flex flex-col items-end">
                   <Button size="sm" onClick={saveToNotion} disabled={saving}>
                     {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
@@ -676,23 +691,18 @@ const DocumentCreator = () => {
                   Automaticky číslovat nadpisy (H1–H4)
                 </label>
                 <div className="flex items-center gap-2">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="application/json,.json"
-                    className="hidden"
-                    onChange={handleImportJsonFile}
-                  />
-                  <Button size="sm" variant="outline" onClick={downloadSampleJson}>
-                    <FileDown className="w-4 h-4 mr-1" /> Vzor JSON
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={handleImportJsonClick}>
-                    <Upload className="w-4 h-4 mr-1" /> Importovat JSON
-                  </Button>
-                  <Button size="sm" onClick={saveDraft} disabled={savingDraft}>
-                    {savingDraft ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
-                    Uložit
-                  </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/json,.json"
+                  className="hidden"
+                  onChange={handleImportJsonFile}
+                />
+                <Button size="sm" onClick={saveDraft} disabled={savingDraft}>
+                  {savingDraft ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
+                  Uložit
+                </Button>
+
                 </div>
               </div>
             )}
