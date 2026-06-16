@@ -13,9 +13,10 @@ export type BlockType =
 
 export type TextAlign = "left" | "center" | "right";
 export type TextSize = "small" | "normal" | "large";
+export type Pictogram = "none" | "alert" | "alert-electric" | "warning" | "info";
 
 export interface HeadingContent { text: string }
-export interface TextContent { html: string; align?: TextAlign; size?: TextSize }
+export interface TextContent { html: string; align?: TextAlign; size?: TextSize; pictogram?: Pictogram }
 export interface TableContent {
   headerRow: boolean;
   rows: string[][]; // rows[r][c]
