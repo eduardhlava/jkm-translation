@@ -366,6 +366,7 @@ const DocumentCreator = () => {
     return await generateDocumentPdf(title, blocks, {
       numberHeadings,
       pageId: activePage?.id,
+      metadata,
       onImagesRehydrated: (rewrites) => {
         if (!rewrites.size) return;
         setBlocks((prev) => {
