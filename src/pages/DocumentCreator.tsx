@@ -379,7 +379,7 @@ const DocumentCreator = () => {
           if (activePage) {
             supabase
               .from("document_blocks")
-              .upsert({ page_id: activePage.id, blocks: next as any, settings: { numberHeadings, collapsedBlocks } as any }, { onConflict: "page_id" })
+              .upsert({ page_id: activePage.id, blocks: next as any, settings: { numberHeadings, collapsedBlocks, metadata } as any }, { onConflict: "page_id" })
               .then(({ error }) => { if (error) console.warn("[pdf] persist rehydrated images failed", error); });
           }
           return next;
