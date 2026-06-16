@@ -1,12 +1,13 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Trash2, AlertTriangle, Info, AlertCircle, Loader2, Upload, Plus, Minus, ChevronDown, ChevronRight, List, ListOrdered, Link, ImageIcon, AlignLeft, AlignCenter, AlignRight, SeparatorHorizontal, Pencil } from "lucide-react";
+import { GripVertical, Trash2, AlertTriangle, Info, AlertCircle, Loader2, Upload, Plus, Minus, ChevronDown, ChevronRight, List, ListMinus, ListOrdered, Link, ImageIcon, AlignLeft, AlignCenter, AlignRight, SeparatorHorizontal, Pencil } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BLOCK_TYPE_LABELS, type Block } from "./types";
 import { supabase } from "@/integrations/supabase/client";
@@ -148,13 +149,14 @@ function BlockHeader({
           </span>
         )}
         {block.type.startsWith("heading") && (
-          <label className="flex items-center gap-1 text-xs text-muted-foreground cursor-pointer select-none ml-1">
-            <Checkbox
+          <div className="flex items-center gap-1 ml-1" title="Nečíslovat a nezahrnovat do obsahu">
+            <ListMinus className="w-3.5 h-3.5 text-muted-foreground" />
+            <Switch
               checked={!!block.content.unlisted}
-              onCheckedChange={(v) => setContent(block, { unlisted: v === true }, onChange)}
+              onCheckedChange={(v) => setContent(block, { unlisted: v }, onChange)}
+              className="data-[state=unchecked]:bg-muted-foreground/30 data-[state=checked]:bg-foreground"
             />
-            Nečíslovat a nezahrnovat do obsahu
-          </label>
+          </div>
         )}
         {collapsed && preview && (
           <span className="ml-2 truncate text-xs text-muted-foreground/80">— {preview}</span>
