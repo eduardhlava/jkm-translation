@@ -775,6 +775,13 @@ const DocumentCreator = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <DocumentMetadataDialog
+        open={metadataOpen}
+        onOpenChange={setMetadataOpen}
+        value={metadata}
+        onChange={setMetadata}
+      />
     </div>
   );
 };
