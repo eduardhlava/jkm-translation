@@ -19,6 +19,7 @@ export function computeHeadingNumbers(blocks: Block[], maxLevel = 4): Map<string
   for (const b of ordered) {
     const lvl = HEADING_LEVEL[b.type];
     if (!lvl || lvl > maxLevel) continue;
+    if (b.content?.unlisted) continue;
     counters[lvl - 1] += 1;
     for (let i = lvl; i < counters.length; i++) counters[i] = 0;
     const label = counters.slice(0, lvl).join(".");
