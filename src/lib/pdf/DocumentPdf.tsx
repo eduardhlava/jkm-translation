@@ -288,6 +288,51 @@ function parseStyleAttr(el: Element): { textAlign?: "left" | "center" | "right" 
   return out;
 }
 
+function PictogramSvg({ kind, size = 26 }: { kind: string; size?: number }) {
+  if (kind === "alert" || kind === "alert-electric") {
+    // Triangle with ! or lightning
+    const inner =
+      kind === "alert-electric" ? (
+        // lightning bolt
+        <Path
+          d="M14 8 L9 15 L12 15 L10 20 L16 13 L13 13 L15 8 Z"
+          fill="#000000"
+          stroke="none"
+        />
+      ) : (
+        <>
+          <Path d="M12 9 L12 15" stroke="#000000" strokeWidth={2} strokeLinecap="round" />
+          <Circle cx={12} cy={18} r={1.2} fill="#000000" />
+        </>
+      );
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24">
+        <Polygon points="12,2 22,21 2,21" fill="#ffffff" stroke="#000000" strokeWidth={2} strokeLinejoin="round" />
+        {inner}
+      </Svg>
+    );
+  }
+  if (kind === "warning") {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24">
+        <Circle cx={12} cy={12} r={10} fill="#fbbf24" stroke="#92400e" strokeWidth={1.5} />
+        <Path d="M12 7 L12 13" stroke="#1f2937" strokeWidth={2.2} strokeLinecap="round" />
+        <Circle cx={12} cy={16.5} r={1.2} fill="#1f2937" />
+      </Svg>
+    );
+  }
+  if (kind === "info") {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24">
+        <Circle cx={12} cy={12} r={10} fill="#2563eb" stroke="#1e3a8a" strokeWidth={1.5} />
+        <Circle cx={12} cy={8} r={1.4} fill="#ffffff" />
+        <Path d="M12 11 L12 17" stroke="#ffffff" strokeWidth={2.2} strokeLinecap="round" />
+      </Svg>
+    );
+  }
+  return null;
+}
+
 function TextBlock({ block }: { block: Block }) {
   const defaultPStyle = { ...styles.p } as any;
   const defaultLiStyle = { ...styles.li } as any;
@@ -344,18 +389,33 @@ function TextBlock({ block }: { block: Block }) {
     });
   };
 
+  let body: JSX.Element;
   if (!root || root.children.length === 0) {
     const paragraphs = parseInline(block.content?.html ?? "");
-    return (
-      <>
+    body = (
+      <View style={styles.textBlock}>
         {paragraphs.map((runs, i) =>
           runs.length ? <View key={i} style={styles.paragraphWrap}><Text style={defaultPStyle}><RunsText runs={runs} /></Text></View> : null
         )}
-      </>
+      </View>
+    );
+  } else {
+    renderRootChildren(root);
+    body = <View style={styles.textBlock}>{nodes}</View>;
+  }
+
+  const pictogram = block.content?.pictogram;
+  if (pictogram && pictogram !== "none") {
+    return (
+      <View style={{ flexDirection: "row", marginVertical: 4 }} wrap={false}>
+        <View style={{ width: 32, alignItems: "center", paddingTop: 2 }}>
+          <PictogramSvg kind={pictogram} size={26} />
+        </View>
+        <View style={{ flex: 1 }}>{body}</View>
+      </View>
     );
   }
-  renderRootChildren(root);
-  return <View style={styles.textBlock}>{nodes}</View>;
+  return body;
 }
 
 function ImageBlock({ block }: { block: Block }) {
