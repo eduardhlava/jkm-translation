@@ -68,58 +68,16 @@ export default function BlockItem({ block, collapsed, onToggleCollapsed, onChang
       style={style}
       className="group relative rounded-lg border bg-card shadow-sm"
     >
-      <div className="flex items-center justify-between border-b bg-muted/30 px-2 py-1">
-        <div className="flex items-center gap-1 min-w-0 flex-1">
-          <button
-            {...attributes}
-            {...listeners}
-            className="cursor-grab active:cursor-grabbing rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
-            aria-label="Přesunout"
-          >
-            <GripVertical className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={onToggleCollapsed}
-            className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
-            aria-label={collapsed ? "Rozbalit" : "Sbalit"}
-          >
-            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
-          {block.type.startsWith("heading") ? (
-            <Select
-              value={block.type}
-              onValueChange={(v) => onChange(block.id, { type: v as Block["type"] })}
-            >
-              <SelectTrigger className="h-6 w-auto text-xs border-0 bg-transparent px-0 shadow-none focus:ring-0 [&>svg:last-child]:hidden group-hover:bg-accent/30 rounded px-1 -ml-1">
-                <Pencil className="w-3 h-3 mr-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <SelectValue>{BLOCK_TYPE_LABELS[block.type]}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="heading1">Nadpis 1</SelectItem>
-                <SelectItem value="heading2">Nadpis 2</SelectItem>
-                <SelectItem value="heading3">Nadpis 3</SelectItem>
-                <SelectItem value="heading4">Nadpis 4</SelectItem>
-              </SelectContent>
-            </Select>
-          ) : (
-            <span className="text-xs font-medium text-muted-foreground shrink-0">
-              {BLOCK_TYPE_LABELS[block.type]}
-            </span>
-          )}
-          {collapsed && preview && (
-            <span className="ml-2 truncate text-xs text-muted-foreground/80">— {preview}</span>
-          )}
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 text-muted-foreground hover:text-destructive"
-          onClick={() => onDelete(block.id)}
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
-      </div>
+      <BlockHeader
+        block={block}
+        collapsed={collapsed}
+        onToggleCollapsed={onToggleCollapsed}
+        onChange={onChange}
+        onDelete={onDelete}
+        preview={preview}
+        attributes={attributes}
+        listeners={listeners}
+      />
       {!collapsed && (
         <div className="p-3">
           <BlockBody block={block} onChange={onChange} headingNumber={headingNumber} />
@@ -128,6 +86,93 @@ export default function BlockItem({ block, collapsed, onToggleCollapsed, onChang
     </div>
   );
 }
+
+
+function BlockHeader({
+  block,
+  collapsed,
+  onToggleCollapsed,
+  onChange,
+  onDelete,
+  preview,
+  attributes,
+  listeners,
+}: {
+  block: Block;
+  collapsed?: boolean;
+  onToggleCollapsed?: () => void;
+  onChange: Props["onChange"];
+  onDelete: Props["onDelete"];
+  preview: string;
+  attributes: any;
+  listeners: any;
+}) {
+  return (
+    <div className="flex items-center justify-between border-b bg-muted/30 px-2 py-1">
+      <div className="flex items-center gap-1 min-w-0 flex-1">
+        <button
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+          aria-label="Přesunout"
+        >
+          <GripVertical className="w-4 h-4" />
+        </button>
+        <button
+          type="button"
+          onClick={onToggleCollapsed}
+          className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+          aria-label={collapsed ? "Rozbalit" : "Sbalit"}
+        >
+          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+        {block.type.startsWith("heading") ? (
+          <Select
+            value={block.type}
+            onValueChange={(v) => onChange(block.id, { type: v as Block["type"] })}
+          >
+            <SelectTrigger className="h-6 w-auto text-xs border-0 bg-transparent px-0 shadow-none focus:ring-0 [&>svg:last-child]:hidden group-hover:bg-accent/30 rounded px-1 -ml-1">
+              <Pencil className="w-3 h-3 mr-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <SelectValue>{BLOCK_TYPE_LABELS[block.type]}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="heading1">Nadpis 1</SelectItem>
+              <SelectItem value="heading2">Nadpis 2</SelectItem>
+              <SelectItem value="heading3">Nadpis 3</SelectItem>
+              <SelectItem value="heading4">Nadpis 4</SelectItem>
+            </SelectContent>
+          </Select>
+        ) : (
+          <span className="text-xs font-medium text-muted-foreground shrink-0">
+            {BLOCK_TYPE_LABELS[block.type]}
+          </span>
+        )}
+        {block.type.startsWith("heading") && (
+          <label className="flex items-center gap-1 text-xs text-muted-foreground cursor-pointer select-none ml-1">
+            <Checkbox
+              checked={!!block.content.unlisted}
+              onCheckedChange={(v) => setContent(block, { unlisted: v === true }, onChange)}
+            />
+            Nečíslovat a nezahrnovat do obsahu
+          </label>
+        )}
+        {collapsed && preview && (
+          <span className="ml-2 truncate text-xs text-muted-foreground/80">— {preview}</span>
+        )}
+      </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+        onClick={() => onDelete(block.id)}
+      >
+        <Trash2 className="w-4 h-4" />
+      </Button>
+    </div>
+  );
+}
+
+
 
 
 function setContent(block: Block, patch: any, onChange: Props["onChange"]) {
@@ -147,23 +192,14 @@ function BlockBody({ block, onChange, headingNumber }: { block: Block; onChange:
         heading4: "text-base font-semibold",
       }[block.type];
       return (
-        <div className="space-y-2">
-          <div className={`flex items-baseline gap-2 ${sizeCls}`}>
-            {headingNumber && <span className="text-muted-foreground shrink-0">{headingNumber}</span>}
-            <Input
-              value={block.content.text ?? ""}
-              onChange={(e) => setContent(block, { text: e.target.value }, onChange)}
-              placeholder={BLOCK_TYPE_LABELS[block.type]}
-              className={`border-0 shadow-none focus-visible:ring-0 px-0 h-auto py-1 flex-1 ${sizeCls}`}
-            />
-          </div>
-          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
-            <Checkbox
-              checked={!!block.content.unlisted}
-              onCheckedChange={(v) => setContent(block, { unlisted: v === true }, onChange)}
-            />
-            Nečíslovat a nezahrnovat do obsahu
-          </label>
+        <div className={`flex items-baseline gap-2 ${sizeCls}`}>
+          {headingNumber && <span className="text-muted-foreground shrink-0">{headingNumber}</span>}
+          <Input
+            value={block.content.text ?? ""}
+            onChange={(e) => setContent(block, { text: e.target.value }, onChange)}
+            placeholder={BLOCK_TYPE_LABELS[block.type]}
+            className={`border-0 shadow-none focus-visible:ring-0 px-0 h-auto py-1 flex-1 ${sizeCls}`}
+          />
         </div>
       );
     }
