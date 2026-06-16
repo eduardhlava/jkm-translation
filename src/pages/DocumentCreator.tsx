@@ -43,7 +43,6 @@ import { Color } from "@tiptap/extension-color";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
