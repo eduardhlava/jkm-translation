@@ -23,6 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BLOCK_TYPE_LABELS, type Block } from "./types";
 import { supabase } from "@/integrations/supabase/client";
+import NotionImagePicker from "@/components/NotionImagePicker";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
