@@ -147,14 +147,23 @@ function BlockBody({ block, onChange, headingNumber }: { block: Block; onChange:
         heading4: "text-base font-semibold",
       }[block.type];
       return (
-        <div className={`flex items-baseline gap-2 ${sizeCls}`}>
-          {headingNumber && <span className="text-muted-foreground shrink-0">{headingNumber}</span>}
-          <Input
-            value={block.content.text ?? ""}
-            onChange={(e) => setContent(block, { text: e.target.value }, onChange)}
-            placeholder={BLOCK_TYPE_LABELS[block.type]}
-            className={`border-0 shadow-none focus-visible:ring-0 px-0 h-auto py-1 flex-1 ${sizeCls}`}
-          />
+        <div className="space-y-2">
+          <div className={`flex items-baseline gap-2 ${sizeCls}`}>
+            {headingNumber && <span className="text-muted-foreground shrink-0">{headingNumber}</span>}
+            <Input
+              value={block.content.text ?? ""}
+              onChange={(e) => setContent(block, { text: e.target.value }, onChange)}
+              placeholder={BLOCK_TYPE_LABELS[block.type]}
+              className={`border-0 shadow-none focus-visible:ring-0 px-0 h-auto py-1 flex-1 ${sizeCls}`}
+            />
+          </div>
+          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+            <Checkbox
+              checked={!!block.content.unlisted}
+              onCheckedChange={(v) => setContent(block, { unlisted: v === true }, onChange)}
+            />
+            Nečíslovat a nezahrnovat do obsahu
+          </label>
         </div>
       );
     }
