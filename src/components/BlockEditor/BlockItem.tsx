@@ -463,12 +463,6 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
             <SelectItem value="info">Informace</SelectItem>
           </SelectContent>
         </Select>
-        {block.content.pictogram && block.content.pictogram !== "none" && (
-          <div className="ml-1 flex items-center gap-1 rounded-md border bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
-            <PictogramIcon kind={block.content.pictogram} size={16} />
-            <span>Piktogram se zobrazí v PDF</span>
-          </div>
-        )}
       </div>
       <div className="flex items-start gap-2">
         {block.content.pictogram && block.content.pictogram !== "none" && (
