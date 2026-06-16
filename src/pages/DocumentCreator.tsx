@@ -127,6 +127,8 @@ const DocumentCreator = () => {
   const [overwriteDialog, setOverwriteDialog] = useState<{ open: boolean; targetId: string | null }>({ open: false, targetId: null });
   const [numberHeadings, setNumberHeadings] = useState(false);
   const [collapsedBlocks, setCollapsedBlocks] = useState<Record<string, boolean>>({});
+  const [metadata, setMetadata] = useState<DocumentMetadata>(DEFAULT_DOCUMENT_METADATA);
+  const [metadataOpen, setMetadataOpen] = useState(false);
 
 
 
