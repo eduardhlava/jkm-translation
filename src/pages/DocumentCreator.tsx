@@ -682,7 +682,18 @@ const DocumentCreator = () => {
             ) : (
               <div className="flex-1 min-h-0 overflow-auto bg-muted/20 p-4">
                 <div className="mx-auto max-w-4xl">
-                  <BlockEditor blocks={blocks} onChange={setBlocks} numberHeadings={numberHeadings} collapsed={collapsedBlocks} onCollapsedChange={setCollapsedBlocks} />
+                  <BlockEditor
+                    blocks={blocks}
+                    onChange={setBlocks}
+                    numberHeadings={numberHeadings}
+                    collapsed={collapsedBlocks}
+                    onCollapsedChange={setCollapsedBlocks}
+                    leftSlot={
+                      <Button type="button" variant="outline" size="sm" onClick={() => setMetadataOpen(true)}>
+                        <FileCog className="w-4 h-4 mr-1" /> Metadata dokumentu
+                      </Button>
+                    }
+                  />
                 </div>
               </div>
             )}
