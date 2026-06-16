@@ -167,14 +167,32 @@ function BlockHeader({
       </div>
       <div className="flex items-center gap-10">
         {block.type.startsWith("heading") && (
-          <div className="flex items-center gap-1" title="Nečíslovat a nezahrnovat do obsahu">
-            <ListMinus className="w-3.5 h-3.5 text-muted-foreground" />
-            <Switch
-              checked={!!block.content.unlisted}
-              onCheckedChange={(v) => setContent(block, { unlisted: v }, onChange)}
-              className="data-[state=unchecked]:bg-muted-foreground/30 data-[state=checked]:bg-foreground"
-            />
-          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1 cursor-default">
+                {block.content.unlisted ? (
+                  <ListMinus className="w-3.5 h-3.5 text-muted-foreground" />
+                ) : (
+                  <ListOrdered className="w-3.5 h-3.5 text-muted-foreground" />
+                )}
+                <Switch
+                  checked={!!block.content.unlisted}
+                  onCheckedChange={(v) => setContent(block, { unlisted: v }, onChange)}
+                  className="data-[state=unchecked]:bg-muted-foreground/30 data-[state=checked]:bg-foreground"
+                  aria-label={
+                    block.content.unlisted
+                      ? "Nadpis je vyřazen z číslování a obsahu"
+                      : "Nadpis je číslován a zahrnut do obsahu"
+                  }
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              {block.content.unlisted
+                ? "Nadpis je vyřazen z číslování a obsahu"
+                : "Nadpis je číslován a zahrnut do obsahu"}
+            </TooltipContent>
+          </Tooltip>
         )}
         <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
           <AlertDialogTrigger asChild>
