@@ -2,6 +2,17 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Trash2, AlertTriangle, Info, AlertCircle, Loader2, Upload, Plus, Minus, ChevronDown, ChevronRight, List, ListMinus, ListOrdered, Link, ImageIcon, AlignLeft, AlignCenter, AlignRight, SeparatorHorizontal, Pencil } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -108,6 +119,7 @@ function BlockHeader({
   attributes: any;
   listeners: any;
 }) {
+  const [deleteOpen, setDeleteOpen] = useState(false);
   return (
     <div className="flex items-center justify-between border-b bg-muted/30 px-2 py-1">
       <div className="flex items-center gap-1 min-w-0 flex-1">
@@ -148,8 +160,13 @@ function BlockHeader({
             {BLOCK_TYPE_LABELS[block.type]}
           </span>
         )}
+        {collapsed && preview && (
+          <span className="ml-2 truncate text-xs text-muted-foreground/80">— {preview}</span>
+        )}
+      </div>
+      <div className="flex items-center gap-10">
         {block.type.startsWith("heading") && (
-          <div className="flex items-center gap-1 ml-1" title="Nečíslovat a nezahrnovat do obsahu">
+          <div className="flex items-center gap-1" title="Nečíslovat a nezahrnovat do obsahu">
             <ListMinus className="w-3.5 h-3.5 text-muted-foreground" />
             <Switch
               checked={!!block.content.unlisted}
@@ -158,18 +175,35 @@ function BlockHeader({
             />
           </div>
         )}
-        {collapsed && preview && (
-          <span className="ml-2 truncate text-xs text-muted-foreground/80">— {preview}</span>
-        )}
+        <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Smazat blok?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tento blok bude odstraněn. Tuto akci nelze vrátit zpět.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Zrušit</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => onDelete(block.id)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Smazat
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-7 w-7 text-muted-foreground hover:text-destructive"
-        onClick={() => onDelete(block.id)}
-      >
-        <Trash2 className="w-4 h-4" />
-      </Button>
     </div>
   );
 }
