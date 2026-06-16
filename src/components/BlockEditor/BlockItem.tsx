@@ -1,6 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Trash2, AlertTriangle, Info, AlertCircle, Loader2, Upload, Plus, Minus, ChevronDown, ChevronRight, List, ListMinus, ListOrdered, Link, ImageIcon, AlignLeft, AlignCenter, AlignRight, SeparatorHorizontal, Pencil, Zap } from "lucide-react";
+import { GripVertical, Trash2, AlertTriangle, Info, AlertCircle, Loader2, Upload, Plus, Minus, ChevronDown, ChevronRight, List, ListMinus, ListOrdered, Link, ImageIcon, AlignLeft, AlignCenter, AlignRight, SeparatorHorizontal, Pencil } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BLOCK_TYPE_LABELS, type Block } from "./types";
+import { BLOCK_TYPE_LABELS, type Block, type Pictogram } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 import NotionImagePicker from "@/components/NotionImagePicker";
 import { useEffect, useRef, useState } from "react";
@@ -488,28 +488,52 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
   );
 }
 
-function PictogramIcon({ kind, size = 28 }: { kind: string; size?: number }) {
-  const cls = "text-foreground";
-  switch (kind) {
-    case "alert":
-      return <AlertTriangle style={{ width: size, height: size }} className={cls} strokeWidth={2.2} />;
-    case "alert-electric":
-      return (
-        <div className="relative" style={{ width: size, height: size }}>
-          <AlertTriangle style={{ width: size, height: size }} className={cls} strokeWidth={2.2} />
-          <Zap
-            className="absolute inset-0 m-auto fill-current"
-            style={{ width: size * 0.5, height: size * 0.5, top: size * 0.25, left: size * 0.25 }}
+function PictogramIcon({ kind, size = 28 }: { kind: Pictogram; size?: number }) {
+  const color = "currentColor";
+  const fill = "white";
+  const strokeWidth = 2;
+
+  const symbol = (() => {
+    switch (kind) {
+      case "alert":
+      case "warning":
+        return (
+          <>
+            <line x1="12" y1="9" x2="12" y2="15" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+            <circle cx="12" cy="18" r="1.2" fill={color} />
+          </>
+        );
+      case "alert-electric":
+        return (
+          <path
+            d="M14 8 L9 15 L12 15 L10 20 L16 13 L13 13 L15 8 Z"
+            fill={color}
           />
-        </div>
-      );
-    case "warning":
-      return <AlertCircle style={{ width: size, height: size }} className="text-yellow-600" strokeWidth={2.2} />;
-    case "info":
-      return <Info style={{ width: size, height: size }} className="text-blue-600" strokeWidth={2.2} />;
-    default:
-      return null;
-  }
+        );
+      case "info":
+        return (
+          <>
+            <circle cx="12" cy="8" r="1.2" fill={color} />
+            <line x1="12" y1="11" x2="12" y2="17" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+          </>
+        );
+      default:
+        return null;
+    }
+  })();
+
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" className="text-foreground" fill="none">
+      <polygon
+        points="12,2 22,21 2,21"
+        fill={fill}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinejoin="round"
+      />
+      {symbol}
+    </svg>
+  );
 }
 
 function ImageBlockEditor({ block, onChange }: { block: Block; onChange: Props["onChange"] }) {
