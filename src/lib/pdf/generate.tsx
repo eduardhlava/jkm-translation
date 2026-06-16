@@ -2,6 +2,8 @@ import { pdf } from "@react-pdf/renderer";
 import type { Block } from "@/components/BlockEditor/types";
 import { DocumentPdf, type PageMap } from "./DocumentPdf";
 import { supabase } from "@/integrations/supabase/client";
+import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
+import jkLogo from "@/assets/jk-machinery-logo.png";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 
@@ -68,16 +70,10 @@ async function fetchAsDataUrl(url: string, pageId?: string): Promise<{ data: str
   if (isExpiredNotionSignedUrl(url)) {
     return await refreshImageUrl(url, pageId);
   }
-
-  // 1) Direct fetch (Supabase Storage etc. with CORS).
   const direct = await urlToDataUrl(url);
   if (direct) return { data: direct };
-
-  // 2) Proxy through edge function (handles non-CORS hosts while URL is still valid).
   const proxied = await urlToDataUrl(`${SUPABASE_URL}/functions/v1/image-proxy?url=${encodeURIComponent(url)}`);
   if (proxied) return { data: proxied };
-
-  // 3) URL is likely expired (Notion S3 signed URL). Rehydrate via Notion API.
   return await refreshImageUrl(url, pageId);
 }
 
@@ -102,16 +98,33 @@ async function inlineImages(blocks: Block[], pageId?: string): Promise<{ blocks:
   return { blocks: out, rewrites };
 }
 
+async function inlineMetadataAssets(metadata: DocumentMetadata | undefined, pageId?: string): Promise<DocumentMetadata | undefined> {
+  if (!metadata) return metadata;
+  const cover = metadata.coverImageUrl;
+  if (!cover || cover.startsWith("data:")) return metadata;
+  const entry = await fetchAsDataUrl(cover, pageId);
+  return { ...metadata, coverImageUrl: entry.data ?? "" };
+}
+
 export async function generateDocumentPdf(
   title: string,
   blocks: Block[],
-  options: { numberHeadings?: boolean; pageId?: string; onImagesRehydrated?: (rewrites: Map<string, string>) => void } = {},
+  options: {
+    numberHeadings?: boolean;
+    pageId?: string;
+    onImagesRehydrated?: (rewrites: Map<string, string>) => void;
+    metadata?: DocumentMetadata;
+  } = {},
 ): Promise<Blob> {
-  const { numberHeadings, pageId, onImagesRehydrated } = options;
-  const { blocks: prepared, rewrites } = await inlineImages(blocks, pageId);
+  const { numberHeadings, pageId, onImagesRehydrated, metadata } = options;
+  const [{ blocks: prepared, rewrites }, preparedMetadata, logoDataUrl] = await Promise.all([
+    inlineImages(blocks, pageId),
+    inlineMetadataAssets(metadata, pageId),
+    urlToDataUrl(jkLogo),
+  ]);
   if (rewrites.size && onImagesRehydrated) onImagesRehydrated(rewrites);
 
-  // Pass 1: render with the real TOC layout and collect the actual page numbers.
+  // Pass 1: collect TOC page numbers.
   const collector: PageMap = new Map();
   await pdf(
     <DocumentPdf
@@ -121,6 +134,8 @@ export async function generateDocumentPdf(
       pageMap={new Map()}
       collector={collector}
       numberHeadings={numberHeadings}
+      metadata={preparedMetadata}
+      logoDataUrl={logoDataUrl ?? undefined}
     />,
   ).toBlob();
 
@@ -132,6 +147,8 @@ export async function generateDocumentPdf(
       includeToc
       pageMap={collector}
       numberHeadings={numberHeadings}
+      metadata={preparedMetadata}
+      logoDataUrl={logoDataUrl ?? undefined}
     />,
   ).toBlob();
 }

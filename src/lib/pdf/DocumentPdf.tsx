@@ -4,6 +4,7 @@ import notoRegular from "@/assets/fonts/NotoSans-Regular.ttf?url";
 import notoBold from "@/assets/fonts/NotoSans-Bold.ttf?url";
 import notoItalic from "@/assets/fonts/NotoSans-Italic.ttf?url";
 import notoBoldItalic from "@/assets/fonts/NotoSans-BoldItalic.ttf?url";
+import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
 
 Font.register({
   family: "NotoSans",
@@ -63,15 +64,72 @@ const styles = StyleSheet.create({
     bottom: 24,
     left: 50,
     right: 50,
-    textAlign: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
     fontSize: 9,
     color: "#6b7280",
   },
+  footerLeft: { flex: 1, textAlign: "left" },
+  footerRight: { textAlign: "right" },
   tocTitle: { fontSize: 16, fontFamily: "NotoSans", fontWeight: "bold", marginBottom: 10 },
   tocRow: { flexDirection: "row", marginBottom: 3, fontSize: 11 },
   tocLeft: { flex: 1 },
   tocPage: { width: 30, textAlign: "right" },
   tocLink: { color: "#111827", textDecoration: "none" },
+  // Cover page
+  coverPage: {
+    paddingTop: 40,
+    paddingBottom: 90,
+    paddingHorizontal: 50,
+    fontFamily: "NotoSans",
+    color: "#111827",
+  },
+  coverLogoWrap: { alignItems: "center", marginBottom: 24 },
+  coverLogo: { width: 220, objectFit: "contain" },
+  coverSubtitle: { textAlign: "center", fontSize: 13, marginBottom: 18, letterSpacing: 0.5 },
+  coverTitle: {
+    textAlign: "center",
+    fontSize: 28,
+    lineHeight: 1.2,
+    fontFamily: "NotoSans",
+    fontWeight: "bold",
+    marginBottom: 24,
+  },
+  coverImageWrap: { alignItems: "center", marginVertical: 10 },
+  coverImage: { maxHeight: 380, width: 340, objectFit: "contain" },
+  coverManufacturer: {
+    position: "absolute",
+    left: 50,
+    right: 50,
+    bottom: 60,
+    flexDirection: "row",
+    fontSize: 10,
+    lineHeight: 1.45,
+  },
+  coverColLeft: { flex: 1 },
+  coverColMid: { flex: 1, textAlign: "center", paddingTop: 14 },
+  coverColRight: { flex: 1, textAlign: "right", paddingTop: 14 },
+  // Disclaimer boxes
+  disclaimerBox: {
+    borderWidth: 1,
+    borderColor: "#111827",
+    marginBottom: 18,
+  },
+  disclaimerHeader: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#111827",
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: "#ffffff",
+  },
+  disclaimerHeaderText: {
+    textAlign: "center",
+    fontFamily: "NotoSans",
+    fontWeight: "bold",
+    fontSize: 12,
+  },
+  disclaimerBody: { padding: 10 },
+  disclaimerLine: { fontSize: 11, lineHeight: 1.45, marginBottom: 4 },
 });
 
 const calloutCfg = {
@@ -394,13 +452,87 @@ function Toc({ entries, pageMap, numbers }: { entries: HeadingEntry[]; pageMap: 
 
 
 // ---------- Footer ----------
-function Footer() {
+function Footer({ footerVersion }: { footerVersion?: string }) {
   return (
-    <Text
-      fixed
-      style={styles.footer}
-      render={({ pageNumber, totalPages }) => `Strana ${pageNumber} / ${totalPages}`}
-    />
+    <View fixed style={styles.footer}>
+      <Text style={styles.footerLeft}>{footerVersion ?? ""}</Text>
+      <Text
+        style={styles.footerRight}
+        render={({ pageNumber, totalPages }) => `Strana ${pageNumber} / ${totalPages}`}
+      />
+    </View>
+  );
+}
+
+// ---------- Cover Page ----------
+function CoverPage({ metadata, logoDataUrl, footerVersion }: { metadata: DocumentMetadata; logoDataUrl?: string; footerVersion?: string }) {
+  return (
+    <Page size="A4" style={styles.coverPage}>
+      <Footer footerVersion={footerVersion} />
+      <View style={styles.coverLogoWrap}>
+        {logoDataUrl ? (
+          // eslint-disable-next-line jsx-a11y/alt-text
+          <Image src={logoDataUrl} style={styles.coverLogo} />
+        ) : null}
+      </View>
+      <Text style={styles.coverSubtitle}>PŮVODNÍ NÁVOD K POUŽÍVÁNÍ</Text>
+      {metadata.docCode ? (
+        <Text style={styles.coverTitle}>{metadata.docCode}</Text>
+      ) : null}
+      {metadata.docName ? (
+        <Text style={styles.coverTitle}>{metadata.docName}</Text>
+      ) : null}
+      {metadata.coverImageUrl ? (
+        <View style={styles.coverImageWrap}>
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
+          <Image src={metadata.coverImageUrl} style={styles.coverImage} />
+        </View>
+      ) : null}
+      <View style={styles.coverManufacturer} fixed>
+        <View style={styles.coverColLeft}>
+          <Text>Údaje o výrobci:</Text>
+          <Text>JK Machinery a.s.</Text>
+          <Text>Politických vězňů 912/10</Text>
+          <Text>CZ 110 00 Praha 1</Text>
+          <Text>Česká republika</Text>
+        </View>
+        <View style={styles.coverColMid}>
+          <Text>Tel. +420 222 362 620</Text>
+        </View>
+        <View style={styles.coverColRight}>
+          <Text>info@jk-machinery.cz</Text>
+          <Text>www.jk-machinery.cz</Text>
+        </View>
+      </View>
+    </Page>
+  );
+}
+
+// ---------- Disclaimer Page ----------
+function DisclaimerBox({ title, text }: { title: string; text: string }) {
+  const lines = (text || "").split(/\r?\n/).filter((l) => l.length > 0);
+  return (
+    <View style={styles.disclaimerBox} wrap={false}>
+      <View style={styles.disclaimerHeader}>
+        <Text style={styles.disclaimerHeaderText}>{title}</Text>
+      </View>
+      <View style={styles.disclaimerBody}>
+        {lines.map((l, i) => (
+          <Text key={i} style={styles.disclaimerLine}>{l}</Text>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function DisclaimerPage({ metadata, footerVersion }: { metadata: DocumentMetadata; footerVersion?: string }) {
+  return (
+    <Page size="A4" style={styles.page}>
+      <Footer footerVersion={footerVersion} />
+      <DisclaimerBox title={metadata.disclaimerWarning.title} text={metadata.disclaimerWarning.text} />
+      <DisclaimerBox title={metadata.disclaimerNotice.title} text={metadata.disclaimerNotice.text} />
+      <DisclaimerBox title={metadata.disclaimerConfidential.title} text={metadata.disclaimerConfidential.text} />
+    </Page>
   );
 }
 
@@ -412,15 +544,18 @@ export interface DocumentPdfProps {
   pageMap?: PageMap;       // resolved page numbers for headings (pass 2)
   collector?: PageMap;     // collector to fill on render (pass 1)
   numberHeadings?: boolean;
+  metadata?: DocumentMetadata;
+  logoDataUrl?: string;
 }
 
-export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collector, numberHeadings }: DocumentPdfProps) {
+export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collector, numberHeadings, metadata, logoDataUrl }: DocumentPdfProps) {
   const ordered = [...blocks].sort((a, b) => a.order - b.order);
   const headings = collectHeadings(ordered);
   const tocEntries = headings;
+  const showToc = includeToc && (metadata?.showToc ?? true);
+  const footerVersion = metadata?.footerVersion;
   let numbers: Map<string, string> | undefined;
   if (numberHeadings) {
-    // Inline computation to avoid extra import cycles.
     const counters = [0, 0, 0, 0];
     numbers = new Map();
     const lvlOf: Record<string, number> = { heading1: 1, heading2: 2, heading3: 3, heading4: 4 };
@@ -436,16 +571,22 @@ export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collect
 
   return (
     <Document title={title}>
-      {includeToc && pageMap && (
+      {metadata && (
+        <>
+          <CoverPage metadata={metadata} logoDataUrl={logoDataUrl} footerVersion={footerVersion} />
+          <DisclaimerPage metadata={metadata} footerVersion={footerVersion} />
+        </>
+      )}
+      {showToc && pageMap && (
         <Page size="A4" style={styles.page}>
-          <Footer />
-          <Text style={styles.docTitle}>{title}</Text>
+          <Footer footerVersion={footerVersion} />
+          {!metadata && <Text style={styles.docTitle}>{title}</Text>}
           <Toc entries={tocEntries} pageMap={pageMap} numbers={numbers} />
         </Page>
       )}
       <Page size="A4" style={styles.page}>
-        <Footer />
-        {!includeToc && <Text style={styles.docTitle}>{title}</Text>}
+        <Footer footerVersion={footerVersion} />
+        {!showToc && !metadata && <Text style={styles.docTitle}>{title}</Text>}
         {ordered.map((b) => (
           <BlockNode key={b.id} block={b} collector={collector} number={numbers?.get(b.id)} />
         ))}
@@ -453,4 +594,3 @@ export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collect
     </Document>
   );
 }
-
