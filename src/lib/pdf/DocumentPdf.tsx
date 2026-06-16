@@ -171,6 +171,7 @@ export type PageMap = Map<string, number>;
 export function collectHeadings(blocks: Block[]): HeadingEntry[] {
   const out: HeadingEntry[] = [];
   [...blocks].sort((a, b) => a.order - b.order).forEach((b) => {
+    if (b.content?.unlisted) return;
     if (b.type === "heading1") out.push({ id: b.id, level: 1, text: b.content?.text ?? "" });
     else if (b.type === "heading2") out.push({ id: b.id, level: 2, text: b.content?.text ?? "" });
     else if (b.type === "heading3") out.push({ id: b.id, level: 3, text: b.content?.text ?? "" });
