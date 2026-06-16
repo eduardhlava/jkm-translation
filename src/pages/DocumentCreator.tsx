@@ -237,7 +237,7 @@ const DocumentCreator = () => {
       editor.commands.setContent(html || "<p></p>");
       const { error } = await supabase
         .from("document_blocks")
-        .upsert({ page_id: activePage.id, blocks: blocks as any, settings: { numberHeadings, collapsedBlocks } as any }, { onConflict: "page_id" });
+        .upsert({ page_id: activePage.id, blocks: blocks as any, settings: { numberHeadings, collapsedBlocks, metadata } as any }, { onConflict: "page_id" });
       if (error) throw error;
       toast.success("Uloženo do databáze aplikace");
     } catch (e) {
