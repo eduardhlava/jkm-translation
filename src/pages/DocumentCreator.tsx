@@ -215,6 +215,7 @@ const DocumentCreator = () => {
       const savedSettings = (blocksRes.data as any)?.settings ?? {};
       setNumberHeadings(!!savedSettings.numberHeadings);
       setCollapsedBlocks((savedSettings.collapsedBlocks as Record<string, boolean>) ?? {});
+      setMetadata(mergeMetadata({ ...(savedSettings.metadata ?? {}), docName: savedSettings.metadata?.docName ?? initialTitle }));
       setLastExportAt((blocksRes.data as any)?.notion_exported_at ?? null);
       toast.success("Obsah načten");
     } catch (e) {
