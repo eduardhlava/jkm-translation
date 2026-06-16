@@ -75,6 +75,8 @@ export default function BlockItem({ block, collapsed, onToggleCollapsed, onChang
         onChange={onChange}
         onDelete={onDelete}
         preview={preview}
+        attributes={attributes}
+        listeners={listeners}
       />
       {!collapsed && (
         <div className="p-3">
@@ -84,6 +86,7 @@ export default function BlockItem({ block, collapsed, onToggleCollapsed, onChang
     </div>
   );
 }
+
 
 function BlockHeader({
   block,
