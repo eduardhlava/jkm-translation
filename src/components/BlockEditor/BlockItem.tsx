@@ -463,27 +463,28 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
             <SelectItem value="info">Informace</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+      <div className="flex items-start gap-2">
         {block.content.pictogram && block.content.pictogram !== "none" && (
-          <div className="ml-1 flex items-center gap-1 rounded-md border bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
-            <PictogramIcon kind={block.content.pictogram} size={16} />
-            <span>Piktogram se zobrazí v PDF</span>
+          <div className="shrink-0 pt-2">
+            <PictogramIcon kind={block.content.pictogram} size={28} />
           </div>
         )}
+        <div
+          ref={ref}
+          contentEditable
+          suppressContentEditableWarning
+          onKeyUp={saveSelection}
+          onMouseUp={saveSelection}
+          onInput={(e) => {
+            const html = (e.target as HTMLDivElement).innerHTML;
+            lastHtmlRef.current = html;
+            onChange(block.id, { content: { ...block.content, html } });
+            saveSelection();
+          }}
+          className="ProseMirror min-h-[60px] flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring prose prose-sm max-w-none"
+        />
       </div>
-      <div
-        ref={ref}
-        contentEditable
-        suppressContentEditableWarning
-        onKeyUp={saveSelection}
-        onMouseUp={saveSelection}
-        onInput={(e) => {
-          const html = (e.target as HTMLDivElement).innerHTML;
-          lastHtmlRef.current = html;
-          onChange(block.id, { content: { ...block.content, html } });
-          saveSelection();
-        }}
-        className="ProseMirror min-h-[60px] w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring prose prose-sm max-w-none"
-      />
     </div>
   );
 }

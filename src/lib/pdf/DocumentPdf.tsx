@@ -404,11 +404,11 @@ function TextBlock({ block }: { block: Block }) {
   const pictogram = block.content?.pictogram;
   if (pictogram && pictogram !== "none") {
     return (
-      <View style={{ flexDirection: "row", marginVertical: 4 }} wrap={false}>
-        <View style={{ width: 32, alignItems: "center", paddingTop: 2 }}>
+      <View style={{ position: "relative", marginVertical: 4 }} wrap={false}>
+        <View style={{ position: "absolute", left: -36, top: 2, width: 30, alignItems: "center" }}>
           <PictogramSvg kind={pictogram} size={26} />
         </View>
-        <View style={{ flex: 1 }}>{body}</View>
+        {body}
       </View>
     );
   }
