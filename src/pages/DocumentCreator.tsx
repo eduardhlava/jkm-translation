@@ -617,29 +617,36 @@ const DocumentCreator = () => {
                 </a>
               </div>
               <div className="flex items-center gap-2">
-                <div className="flex items-center rounded-md border bg-background p-0.5">
-                  <button
-                    type="button"
-                    onClick={() => setMode("blocks")}
-                    className={`flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
-                      mode === "blocks" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
-                    }`}
-                  >
-                    <Blocks className="w-3.5 h-3.5" /> Bloky
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMode("wysiwyg")}
-                    className={`flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
-                      mode === "wysiwyg" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
-                    }`}
-                  >
-                    <PencilLine className="w-3.5 h-3.5" /> WYSIWYG
-                  </button>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-8 w-8">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-52">
+                    <DropdownMenuItem onClick={() => setMode("blocks")}>
+                      <Blocks className="w-4 h-4 mr-2" />
+                      <span className="flex-1">Bloky</span>
+                      {mode === "blocks" && <Check className="w-4 h-4 ml-2" />}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setMode("wysiwyg")}>
+                      <PencilLine className="w-4 h-4 mr-2" />
+                      <span className="flex-1">WYSIWYG</span>
+                      {mode === "wysiwyg" && <Check className="w-4 h-4 ml-2" />}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={downloadSampleJson}>
+                      <FileDown className="w-4 h-4 mr-2" /> Vzor JSON
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleImportJsonClick}>
+                      <Upload className="w-4 h-4 mr-2" /> Importovat JSON
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Button variant="outline" size="sm" onClick={previewPdf} disabled={saving}>
                   <Eye className="w-4 h-4 mr-1" /> Náhled PDF
                 </Button>
+
                 <div className="flex flex-col items-end">
                   <Button size="sm" onClick={saveToNotion} disabled={saving}>
                     {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
