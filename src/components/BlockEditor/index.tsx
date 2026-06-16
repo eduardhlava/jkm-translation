@@ -27,10 +27,11 @@ interface Props {
   numberHeadings?: boolean;
   collapsed?: Record<string, boolean>;
   onCollapsedChange?: (next: Record<string, boolean>) => void;
+  leftSlot?: React.ReactNode;
 }
 
 
-export default function BlockEditor({ blocks, onChange, numberHeadings, collapsed: collapsedProp, onCollapsedChange }: Props) {
+export default function BlockEditor({ blocks, onChange, numberHeadings, collapsed: collapsedProp, onCollapsedChange, leftSlot }: Props) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
