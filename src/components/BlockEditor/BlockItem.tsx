@@ -448,23 +448,69 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
             <SelectItem value="large">Velké</SelectItem>
           </SelectContent>
         </Select>
+        <Select
+          value={block.content.pictogram ?? "none"}
+          onValueChange={(v) => onChange(block.id, { content: { ...block.content, pictogram: v } })}
+        >
+          <SelectTrigger className="h-7 w-[180px] text-xs">
+            <SelectValue placeholder="Piktogram" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Bez piktogramu</SelectItem>
+            <SelectItem value="alert">Výstraha</SelectItem>
+            <SelectItem value="alert-electric">Výstraha – elektrické nebezpečí</SelectItem>
+            <SelectItem value="warning">Upozornění</SelectItem>
+            <SelectItem value="info">Informace</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
-      <div
-        ref={ref}
-        contentEditable
-        suppressContentEditableWarning
-        onKeyUp={saveSelection}
-        onMouseUp={saveSelection}
-        onInput={(e) => {
-          const html = (e.target as HTMLDivElement).innerHTML;
-          lastHtmlRef.current = html;
-          onChange(block.id, { content: { ...block.content, html } });
-          saveSelection();
-        }}
-        className="ProseMirror min-h-[60px] rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring prose prose-sm max-w-none"
-      />
+      <div className="flex items-start gap-2">
+        {block.content.pictogram && block.content.pictogram !== "none" && (
+          <div className="shrink-0 pt-2 w-10 flex justify-center">
+            <PictogramIcon kind={block.content.pictogram} />
+          </div>
+        )}
+        <div
+          ref={ref}
+          contentEditable
+          suppressContentEditableWarning
+          onKeyUp={saveSelection}
+          onMouseUp={saveSelection}
+          onInput={(e) => {
+            const html = (e.target as HTMLDivElement).innerHTML;
+            lastHtmlRef.current = html;
+            onChange(block.id, { content: { ...block.content, html } });
+            saveSelection();
+          }}
+          className="ProseMirror min-h-[60px] flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring prose prose-sm max-w-none"
+        />
+      </div>
     </div>
   );
+}
+
+function PictogramIcon({ kind, size = 28 }: { kind: string; size?: number }) {
+  const cls = "text-foreground";
+  switch (kind) {
+    case "alert":
+      return <AlertTriangle style={{ width: size, height: size }} className={cls} strokeWidth={2.2} />;
+    case "alert-electric":
+      return (
+        <div className="relative" style={{ width: size, height: size }}>
+          <AlertTriangle style={{ width: size, height: size }} className={cls} strokeWidth={2.2} />
+          <Zap
+            className="absolute inset-0 m-auto fill-current"
+            style={{ width: size * 0.5, height: size * 0.5, top: size * 0.25, left: size * 0.25 }}
+          />
+        </div>
+      );
+    case "warning":
+      return <AlertCircle style={{ width: size, height: size }} className="text-yellow-600" strokeWidth={2.2} />;
+    case "info":
+      return <Info style={{ width: size, height: size }} className="text-blue-600" strokeWidth={2.2} />;
+    default:
+      return null;
+  }
 }
 
 function ImageBlockEditor({ block, onChange }: { block: Block; onChange: Props["onChange"] }) {
