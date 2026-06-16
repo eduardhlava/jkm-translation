@@ -160,8 +160,13 @@ function BlockHeader({
             {BLOCK_TYPE_LABELS[block.type]}
           </span>
         )}
+        {collapsed && preview && (
+          <span className="ml-2 truncate text-xs text-muted-foreground/80">— {preview}</span>
+        )}
+      </div>
+      <div className="flex items-center gap-10">
         {block.type.startsWith("heading") && (
-          <div className="flex items-center gap-1 ml-1" title="Nečíslovat a nezahrnovat do obsahu">
+          <div className="flex items-center gap-1" title="Nečíslovat a nezahrnovat do obsahu">
             <ListMinus className="w-3.5 h-3.5 text-muted-foreground" />
             <Switch
               checked={!!block.content.unlisted}
@@ -170,38 +175,35 @@ function BlockHeader({
             />
           </div>
         )}
-        {collapsed && preview && (
-          <span className="ml-2 truncate text-xs text-muted-foreground/80">— {preview}</span>
-        )}
-      </div>
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 ml-10 text-muted-foreground hover:text-destructive"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Smazat blok?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tento blok bude odstraněn. Tuto akci nelze vrátit zpět.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Zrušit</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => onDelete(block.id)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+        <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-destructive"
             >
-              Smazat
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Smazat blok?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tento blok bude odstraněn. Tuto akci nelze vrátit zpět.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Zrušit</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => onDelete(block.id)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Smazat
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </div>
   );
 }
