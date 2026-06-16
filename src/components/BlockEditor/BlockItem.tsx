@@ -95,6 +95,8 @@ function BlockHeader({
   onChange,
   onDelete,
   preview,
+  attributes,
+  listeners,
 }: {
   block: Block;
   collapsed?: boolean;
@@ -102,13 +104,15 @@ function BlockHeader({
   onChange: Props["onChange"];
   onDelete: Props["onDelete"];
   preview: string;
+  attributes: any;
+  listeners: any;
 }) {
   return (
     <div className="flex items-center justify-between border-b bg-muted/30 px-2 py-1">
       <div className="flex items-center gap-1 min-w-0 flex-1">
         <button
-          {...useSortable({ id: block.id }).attributes}
-          {...useSortable({ id: block.id }).listeners}
+          {...attributes}
+          {...listeners}
           className="cursor-grab active:cursor-grabbing rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
           aria-label="Přesunout"
         >
@@ -167,6 +171,7 @@ function BlockHeader({
     </div>
   );
 }
+
 
 
 
