@@ -171,6 +171,7 @@ export type PageMap = Map<string, number>;
 export function collectHeadings(blocks: Block[]): HeadingEntry[] {
   const out: HeadingEntry[] = [];
   [...blocks].sort((a, b) => a.order - b.order).forEach((b) => {
+    if (b.content?.unlisted) return;
     if (b.type === "heading1") out.push({ id: b.id, level: 1, text: b.content?.text ?? "" });
     else if (b.type === "heading2") out.push({ id: b.id, level: 2, text: b.content?.text ?? "" });
     else if (b.type === "heading3") out.push({ id: b.id, level: 3, text: b.content?.text ?? "" });
@@ -426,6 +427,7 @@ export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collect
     for (const b of ordered) {
       const lvl = lvlOf[b.type];
       if (!lvl) continue;
+      if (b.content?.unlisted) continue;
       counters[lvl - 1] += 1;
       for (let i = lvl; i < counters.length; i++) counters[i] = 0;
       numbers.set(b.id, counters.slice(0, lvl).join("."));
