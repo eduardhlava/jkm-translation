@@ -459,8 +459,8 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
             <SelectItem value="none">Bez piktogramu</SelectItem>
             <SelectItem value="alert">Výstraha</SelectItem>
             <SelectItem value="alert-electric">Výstraha – elektrické nebezpečí</SelectItem>
-            <SelectItem value="warning">Upozornění</SelectItem>
             <SelectItem value="info">Informace</SelectItem>
+
           </SelectContent>
         </Select>
       </div>
