@@ -845,6 +845,38 @@ const DocumentCreator = () => {
         value={metadata}
         onChange={setMetadata}
       />
+
+      <AlertDialog open={backDialogOpen} onOpenChange={setBackDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Neuložené změny</AlertDialogTitle>
+            <AlertDialogDescription>
+              V dokumentu máte neuložené změny. Chcete je před návratem na seznam uložit do databáze aplikace?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outline" onClick={() => setBackDialogOpen(false)}>Zrušit</Button>
+            <Button
+              variant="outline"
+              onClick={() => { setBackDialogOpen(false); setActivePage(null); setBaselineSnapshot(""); }}
+            >
+              Zahodit změny
+            </Button>
+            <Button
+              onClick={async () => {
+                await saveDraft();
+                setBackDialogOpen(false);
+                setActivePage(null);
+                setBaselineSnapshot("");
+              }}
+              disabled={savingDraft}
+            >
+              {savingDraft ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
+              Uložit a odejít
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
