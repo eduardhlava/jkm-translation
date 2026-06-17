@@ -52,6 +52,21 @@ function normalizeContent(type: BlockType, raw: any): any {
       ) : base.rows;
       return { headerRow: c.headerRow !== false, rows };
     }
+    case "image-table": {
+      const img = c.image && typeof c.image === "object" ? c.image : {};
+      const tbl = c.table && typeof c.table === "object" ? c.table : {};
+      const rows = Array.isArray(tbl.rows) ? tbl.rows.map((r: any) =>
+        Array.isArray(r) ? r.map((cell: any) => String(cell ?? "")) : []
+      ) : base.table.rows;
+      return {
+        image: {
+          url: String(img.url ?? ""),
+          alt: String(img.alt ?? ""),
+          ...(Number.isFinite(Number(img.width)) ? { width: Number(img.width) } : {}),
+        },
+        table: { headerRow: tbl.headerRow !== false, rows },
+      };
+    }
     case "alert":
     case "info":
     case "warning":
