@@ -194,6 +194,18 @@ const DocumentCreator = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setItems(data.items ?? []);
+      const ids: string[] = (data.items ?? []).map((i: ContentItem) => i.id);
+      if (ids.length > 0) {
+        const { data: rows } = await supabase
+          .from("document_blocks")
+          .select("page_id, notion_exported_at")
+          .in("page_id", ids);
+        const map: Record<string, string | null> = {};
+        (rows ?? []).forEach((r: any) => { map[r.page_id] = r.notion_exported_at ?? null; });
+        setExportMap(map);
+      } else {
+        setExportMap({});
+      }
     } catch (e) {
       toast.error("Načtení selhalo", { description: e instanceof Error ? e.message : "" });
     } finally {
