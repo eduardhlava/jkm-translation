@@ -34,6 +34,9 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
+    --brand: 38 74% 43%;
+    --brand-foreground: 0 0% 100%;
+
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
@@ -80,6 +83,9 @@
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
+
+    --brand: 38 74% 53%;
+    --brand-foreground: 0 0% 100%;
     --destructive: 0 63% 50%;
     --destructive-foreground: 210 40% 98%;
     --border: 217 33% 17%;

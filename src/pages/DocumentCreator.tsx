@@ -563,7 +563,7 @@ const DocumentCreator = () => {
 
         {/* List */}
         {!activePage && (
-          <Card className="p-0 overflow-hidden bg-muted">
+          <Card className="p-0 overflow-hidden bg-muted border-2 border-brand/30">
             <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 260px)" }}>
               <table className="w-full caption-bottom text-sm bg-card">
                 <TableHeader className="bg-muted/70 [&_tr]:border-b-0 [&>tr>th]:sticky [&>tr>th]:top-0 [&>tr>th]:z-20 [&>tr>th]:bg-muted">
@@ -610,8 +610,8 @@ const DocumentCreator = () => {
 
         {/* Editor */}
         {activePage && (
-          <Card className="overflow-hidden flex flex-col" style={{ height: "calc(100vh - 90px)" }}>
-            <div className="flex-shrink-0 flex flex-wrap items-center justify-between gap-2 border-b bg-muted/30 px-4 py-2">
+          <Card className="overflow-hidden flex flex-col border-2 border-brand/30" style={{ height: "calc(100vh - 90px)" }}>
+            <div className="flex-shrink-0 flex flex-wrap items-center justify-between gap-2 border-b-2 border-brand/30 bg-card px-4 py-2">
               <div className="flex items-center gap-2 text-sm flex-1 min-w-0">
                 <Button variant="ghost" size="sm" onClick={() => setActivePage(null)}>
                   ← Zpět na seznam
