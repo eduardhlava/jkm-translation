@@ -229,11 +229,17 @@ const DocumentCreator = () => {
       ]);
       if (contentRes.error) throw contentRes.error;
       if ((contentRes.data as any)?.error) throw new Error((contentRes.data as any).error);
-      editor?.commands.setContent((contentRes.data as any).html || "<p></p>");
+      const html = (contentRes.data as any).html || "<p></p>";
+      editor?.commands.setContent(html);
 
-      const saved = ((blocksRes.data?.blocks as unknown) as Block[] | undefined) ?? [];
+      let saved = ((blocksRes.data?.blocks as unknown) as Block[] | undefined) ?? [];
+      if (saved.length === 0) {
+        // Fallback: derive initial blocks from the Notion HTML so the document
+        // never opens with an empty block view.
+        saved = htmlToBlocks(html);
+      }
       setBlocks(saved);
-      setMode(saved.length > 0 ? "blocks" : "wysiwyg");
+      setMode("blocks");
       setActivePage(item);
       const initialTitle = item.properties[titleProp] || "";
       setDocTitle(initialTitle);
