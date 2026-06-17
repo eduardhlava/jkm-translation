@@ -273,6 +273,8 @@ function BlockBody({ block, onChange, headingNumber }: { block: Block; onChange:
       return <ImageBlockEditor block={block} onChange={onChange} />;
     case "table":
       return <TableBlockEditor block={block} onChange={onChange} />;
+    case "image-table":
+      return <ImageTableBlockEditor block={block} onChange={onChange} />;
     case "alert":
     case "info":
     case "warning":
