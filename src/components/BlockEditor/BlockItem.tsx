@@ -80,7 +80,7 @@ export default function BlockItem({ block, collapsed, onToggleCollapsed, onChang
     <div
       ref={setNodeRef}
       style={style}
-      className="group relative rounded-lg border bg-card shadow-sm"
+      className="group relative rounded-lg border border-muted-foreground/30 bg-card shadow-sm"
     >
       <BlockHeader
         block={block}
@@ -123,7 +123,7 @@ function BlockHeader({
 }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   return (
-    <div className="flex items-center justify-between border-b bg-muted/30 px-2 py-1">
+    <div className="flex items-center justify-between border-b border-muted-foreground/30 bg-muted/30 px-2 py-1">
       <div className="flex items-center gap-1 min-w-0 flex-1">
         <button
           {...attributes}
