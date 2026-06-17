@@ -648,7 +648,7 @@ function ImageBlockEditor({ block, onChange }: { block: Block; onChange: Props["
 
 
 
-function TableBlockEditor({ block, onChange }: { block: Block; onChange: Props["onChange"] }) {
+function TableBlockEditor({ block, onChange, narrowFirstCol }: { block: Block; onChange: Props["onChange"]; narrowFirstCol?: boolean }) {
   const rows: string[][] = block.content.rows ?? [];
   const cols = rows[0]?.length ?? 0;
 
@@ -681,6 +681,12 @@ function TableBlockEditor({ block, onChange }: { block: Block; onChange: Props["
       </div>
       <div className="overflow-auto rounded-md bg-[hsl(220,14%,90%)] p-3 dark:bg-[hsl(217,33%,12%)]">
         <table className="w-full border-collapse">
+          {narrowFirstCol && cols > 0 && (
+            <colgroup>
+              <col style={{ width: "48px" }} />
+              {Array.from({ length: cols - 1 }).map((_, i) => <col key={i} />)}
+            </colgroup>
+          )}
           <tbody>
             {rows.map((row, ri) => (
               <tr key={ri}>
@@ -691,7 +697,7 @@ function TableBlockEditor({ block, onChange }: { block: Block; onChange: Props["
                       onChange={(e) => updateCell(ri, ci, e.target.value)}
                       className={`h-8 rounded-none border-0 shadow-none focus-visible:ring-1 ${
                         block.content.headerRow && ri === 0 ? "font-semibold bg-muted/40" : ""
-                      }`}
+                      } ${narrowFirstCol && ci === 0 ? "text-center" : ""}`}
                     />
                   </td>
                 ))}
