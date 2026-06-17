@@ -6,6 +6,7 @@ export type BlockType =
   | "text"
   | "table"
   | "image"
+  | "image-table"
   | "alert"
   | "info"
   | "warning"
@@ -22,6 +23,7 @@ export interface TableContent {
   rows: string[][]; // rows[r][c]
 }
 export interface ImageContent { url: string; alt: string; width?: number }
+export interface ImageTableContent { image: ImageContent; table: TableContent }
 export interface CalloutContent { text: string }
 export interface PageBreakContent {}
 
@@ -30,6 +32,7 @@ export type BlockContent =
   | TextContent
   | TableContent
   | ImageContent
+  | ImageTableContent
   | CalloutContent
   | PageBreakContent;
 
@@ -49,6 +52,7 @@ export const BLOCK_TYPE_LABELS: Record<BlockType, string> = {
   text: "Text",
   table: "Tabulka",
   image: "Obrázek",
+  "image-table": "Obrázek + Tabulka",
   alert: "Výstraha",
   info: "Informace",
   warning: "Upozornění",
@@ -68,6 +72,19 @@ export function emptyContent(type: BlockType): any {
       return { headerRow: true, rows: [["", ""], ["", ""]] };
     case "image":
       return { url: "", alt: "" };
+    case "image-table":
+      return {
+        image: { url: "", alt: "" },
+        table: {
+          headerRow: true,
+          rows: [
+            ["#", "Název části"],
+            ["1", ""],
+            ["2", ""],
+            ["3", ""],
+          ],
+        },
+      };
     case "alert":
     case "info":
     case "warning":

@@ -55,6 +55,12 @@ function blockPreview(block: Block): string {
       return block.content?.text || "";
     case "image":
       return block.content?.alt || block.content?.url || "";
+    case "image-table": {
+      const alt = block.content?.image?.alt || block.content?.image?.url || "";
+      const rows: string[][] = block.content?.table?.rows ?? [];
+      const tablePreview = rows[0]?.filter(Boolean).join(" • ") || `${rows.length} řádků`;
+      return [alt, tablePreview].filter(Boolean).join(" — ");
+    }
     case "table": {
       const rows: string[][] = block.content?.rows ?? [];
       return rows[0]?.filter(Boolean).join(" • ") || `${rows.length} řádků`;
@@ -267,6 +273,8 @@ function BlockBody({ block, onChange, headingNumber }: { block: Block; onChange:
       return <ImageBlockEditor block={block} onChange={onChange} />;
     case "table":
       return <TableBlockEditor block={block} onChange={onChange} />;
+    case "image-table":
+      return <ImageTableBlockEditor block={block} onChange={onChange} />;
     case "alert":
     case "info":
     case "warning":
@@ -640,7 +648,7 @@ function ImageBlockEditor({ block, onChange }: { block: Block; onChange: Props["
 
 
 
-function TableBlockEditor({ block, onChange }: { block: Block; onChange: Props["onChange"] }) {
+function TableBlockEditor({ block, onChange, narrowFirstCol }: { block: Block; onChange: Props["onChange"]; narrowFirstCol?: boolean }) {
   const rows: string[][] = block.content.rows ?? [];
   const cols = rows[0]?.length ?? 0;
 
@@ -673,6 +681,12 @@ function TableBlockEditor({ block, onChange }: { block: Block; onChange: Props["
       </div>
       <div className="overflow-auto rounded-md bg-[hsl(220,14%,90%)] p-3 dark:bg-[hsl(217,33%,12%)]">
         <table className="w-full border-collapse">
+          {narrowFirstCol && cols > 0 && (
+            <colgroup>
+              <col style={{ width: "48px" }} />
+              {Array.from({ length: cols - 1 }).map((_, i) => <col key={i} />)}
+            </colgroup>
+          )}
           <tbody>
             {rows.map((row, ri) => (
               <tr key={ri}>
@@ -683,7 +697,7 @@ function TableBlockEditor({ block, onChange }: { block: Block; onChange: Props["
                       onChange={(e) => updateCell(ri, ci, e.target.value)}
                       className={`h-8 rounded-none border-0 shadow-none focus-visible:ring-1 ${
                         block.content.headerRow && ri === 0 ? "font-semibold bg-muted/40" : ""
-                      }`}
+                      } ${narrowFirstCol && ci === 0 ? "text-center" : ""}`}
                     />
                   </td>
                 ))}
@@ -713,6 +727,38 @@ function CalloutBlockEditor({ block, onChange }: { block: Block; onChange: Props
         rows={2}
         className="border-0 bg-transparent shadow-none focus-visible:ring-0 resize-none text-foreground"
       />
+    </div>
+  );
+}
+
+function ImageTableBlockEditor({ block, onChange }: { block: Block; onChange: Props["onChange"] }) {
+  const imageContent = block.content?.image ?? { url: "", alt: "" };
+  const tableContent = block.content?.table ?? { headerRow: true, rows: [["#", "Název části"]] };
+
+  const handleSub = (key: "image" | "table") => (_id: string, patch: Partial<Block>) => {
+    if (patch.content !== undefined) {
+      onChange(block.id, { content: { ...block.content, [key]: patch.content } });
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Obrázek</div>
+        <ImageBlockEditor
+          block={{ ...block, type: "image", content: imageContent } as Block}
+          onChange={handleSub("image")}
+        />
+      </div>
+      <div className="border-t border-muted-foreground/20" />
+      <div>
+        <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Tabulka</div>
+        <TableBlockEditor
+          block={{ ...block, type: "table", content: tableContent } as Block}
+          onChange={handleSub("table")}
+          narrowFirstCol
+        />
+      </div>
     </div>
   );
 }

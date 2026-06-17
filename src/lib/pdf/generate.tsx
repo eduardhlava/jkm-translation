@@ -82,6 +82,19 @@ async function inlineImages(blocks: Block[], pageId?: string): Promise<{ blocks:
   const rewrites = new Map<string, string>();
   const out = await Promise.all(
     blocks.map(async (b) => {
+      if (b.type === "image-table") {
+        const imgC: any = (b.content as any)?.image;
+        const url: string | undefined = imgC?.url;
+        if (!url || url.startsWith("data:")) return b;
+        let entry = cache.get(url);
+        if (!entry) {
+          entry = await fetchAsDataUrl(url, pageId);
+          cache.set(url, entry);
+        }
+        if (entry.permanentUrl) rewrites.set(url, entry.permanentUrl);
+        const nextImg = entry.data ? { ...imgC, url: entry.data } : { ...imgC, url: "" };
+        return { ...b, content: { ...b.content, image: nextImg } } as Block;
+      }
       if (b.type !== "image") return b;
       const url: string | undefined = (b.content as any)?.url;
       if (!url || url.startsWith("data:")) return b;

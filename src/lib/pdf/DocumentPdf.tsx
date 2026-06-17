@@ -486,6 +486,12 @@ function BlockNode({ block, collector, number }: { block: Block; collector?: Pag
     case "text":     return <TextBlock block={block} />;
     case "image":    return <ImageBlock block={block} />;
     case "table":    return <TableBlock block={block} />;
+    case "image-table": return (
+      <>
+        <ImageBlock block={{ ...block, type: "image", content: block.content?.image ?? {} } as Block} />
+        <TableBlock block={{ ...block, type: "table", content: block.content?.table ?? { headerRow: true, rows: [] } } as Block} />
+      </>
+    );
     case "alert":
     case "info":
     case "warning":  return <CalloutBlock block={block} />;

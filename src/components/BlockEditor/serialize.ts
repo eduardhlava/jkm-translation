@@ -100,6 +100,13 @@ export function blockToHtml(b: Block): string {
       const body = `<tbody>${bodyRows.map((r) => `<tr>${r.map((c) => `<td ${cellStyle}>${escapeHtml(c)}</td>`).join("")}</tr>`).join("")}</tbody>`;
       return `<table style="width:100%;border-collapse:collapse;border:1px solid #d1d5db;">${head}${body}</table>`;
     }
+    case "image-table": {
+      const img = b.content?.image ?? {};
+      const tbl = b.content?.table ?? { headerRow: true, rows: [] };
+      const imgBlock: Block = { ...b, type: "image", content: img };
+      const tableBlock: Block = { ...b, type: "table", content: tbl };
+      return `${blockToHtml(imgBlock)}\n${blockToHtml(tableBlock)}`;
+    }
     case "alert":
     case "info":
     case "warning": {
