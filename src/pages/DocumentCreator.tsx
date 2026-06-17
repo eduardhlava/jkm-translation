@@ -134,6 +134,15 @@ const DocumentCreator = () => {
   const [collapsedBlocks, setCollapsedBlocks] = useState<Record<string, boolean>>({});
   const [metadata, setMetadata] = useState<DocumentMetadata>(DEFAULT_DOCUMENT_METADATA);
   const [metadataOpen, setMetadataOpen] = useState(false);
+  const [baselineSnapshot, setBaselineSnapshot] = useState<string>("");
+  const [backDialogOpen, setBackDialogOpen] = useState(false);
+  const [exportMap, setExportMap] = useState<Record<string, string | null>>({});
+
+  const currentSnapshot = useMemo(
+    () => JSON.stringify({ blocks, numberHeadings, collapsedBlocks, metadata, docTitle }),
+    [blocks, numberHeadings, collapsedBlocks, metadata, docTitle]
+  );
+  const isDirty = activePage !== null && baselineSnapshot !== "" && currentSnapshot !== baselineSnapshot;
 
 
 
