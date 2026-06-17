@@ -497,8 +497,19 @@ function PictogramIcon({ kind, size = 28 }: { kind: Pictogram; size?: number }) 
   const symbol = (() => {
     switch (kind) {
       case "alert":
+        return (
+          <>
+            <line x1="12" y1="9" x2="12" y2="15" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+            <circle cx="12" cy="18" r="1.2" fill={color} />
+          </>
+        );
       case "alert-electric":
-        return null;
+        return (
+          <path
+            d="M14 8 L9 15 L12 15 L10 20 L16 13 L13 13 L15 8 Z"
+            fill={color}
+          />
+        );
       case "info":
         return (
           <>
@@ -510,6 +521,7 @@ function PictogramIcon({ kind, size = 28 }: { kind: Pictogram; size?: number }) 
         return null;
     }
   })();
+
 
   const shape = (() => {
     switch (kind) {
