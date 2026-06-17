@@ -406,6 +406,11 @@ const DocumentCreator = () => {
         if (!rewrites.size) return;
         setBlocks((prev) => {
           const next = prev.map((b) => {
+            if (b.type === "image-table") {
+              const u = (b.content as any)?.image?.url as string | undefined;
+              const fresh = u ? rewrites.get(u) : undefined;
+              return fresh ? { ...b, content: { ...b.content, image: { ...(b.content as any).image, url: fresh } } } : b;
+            }
             if (b.type !== "image") return b;
             const u = (b.content as any)?.url as string | undefined;
             const fresh = u ? rewrites.get(u) : undefined;
