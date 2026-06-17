@@ -243,6 +243,14 @@ const DocumentCreator = () => {
       setCollapsedBlocks((savedSettings.collapsedBlocks as Record<string, boolean>) ?? {});
       setMetadata(mergeMetadata({ ...(savedSettings.metadata ?? {}), docName: savedSettings.metadata?.docName ?? initialTitle }));
       setLastExportAt((blocksRes.data as any)?.notion_exported_at ?? null);
+      const mergedMeta = mergeMetadata({ ...(savedSettings.metadata ?? {}), docName: savedSettings.metadata?.docName ?? initialTitle });
+      setBaselineSnapshot(JSON.stringify({
+        blocks: saved,
+        numberHeadings: !!savedSettings.numberHeadings,
+        collapsedBlocks: (savedSettings.collapsedBlocks as Record<string, boolean>) ?? {},
+        metadata: mergedMeta,
+        docTitle: initialTitle,
+      }));
       toast.success("Obsah načten");
     } catch (e) {
       toast.error("Načtení obsahu selhalo", { description: e instanceof Error ? e.message : "" });
