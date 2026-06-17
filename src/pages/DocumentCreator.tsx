@@ -707,7 +707,7 @@ const DocumentCreator = () => {
                       <span className="flex-1">Bloky</span>
                       {mode === "blocks" && <Check className="w-4 h-4 ml-2" />}
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setMode("wysiwyg")}>
+                    <DropdownMenuItem disabled onSelect={(e) => e.preventDefault()}>
                       <PencilLine className="w-4 h-4 mr-2" />
                       <span className="flex-1">WYSIWYG</span>
                       {mode === "wysiwyg" && <Check className="w-4 h-4 ml-2" />}
