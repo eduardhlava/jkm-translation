@@ -139,3 +139,71 @@ export const SAMPLE_DOCUMENT_JSON: DocumentImport = {
     },
   ],
 };
+
+// Convert sanitized HTML (as produced by blocksToHtml or Notion fetch) back into blocks.
+// Used as a fallback when a document has no saved block representation.
+export function htmlToBlocks(html: string): Block[] {
+  if (typeof DOMParser === "undefined" || !html) return [];
+  const doc = new DOMParser().parseFromString(`<div>${html}</div>`, "text/html");
+  const root = doc.body.firstChild as HTMLElement | null;
+  if (!root) return [];
+
+  const blocks: Block[] = [];
+  const mkId = () =>
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random()}`;
+  const push = (type: BlockType, content: any) => {
+    blocks.push({ id: mkId(), type, template: "default", order: blocks.length, content });
+  };
+
+  const children = Array.from(root.children);
+  for (const el of children) {
+    const tag = el.tagName.toUpperCase();
+    if (tag === "H1") push("heading1", { text: el.textContent ?? "" });
+    else if (tag === "H2") push("heading2", { text: el.textContent ?? "" });
+    else if (tag === "H3") push("heading3", { text: el.textContent ?? "" });
+    else if (tag === "H4") push("heading4", { text: el.textContent ?? "" });
+    else if (tag === "FIGURE") {
+      const img = el.querySelector("img");
+      if (img) {
+        const w = Number(img.getAttribute("width"));
+        push("image", {
+          url: img.getAttribute("src") ?? "",
+          alt: img.getAttribute("alt") ?? "",
+          ...(Number.isFinite(w) && w > 0 ? { width: w } : {}),
+        });
+      }
+    } else if (tag === "IMG") {
+      const w = Number(el.getAttribute("width"));
+      push("image", {
+        url: el.getAttribute("src") ?? "",
+        alt: el.getAttribute("alt") ?? "",
+        ...(Number.isFinite(w) && w > 0 ? { width: w } : {}),
+      });
+    } else if (tag === "TABLE") {
+      const rows: string[][] = [];
+      el.querySelectorAll("tr").forEach((tr) => {
+        const cells: string[] = [];
+        tr.querySelectorAll("th,td").forEach((c) => cells.push(c.textContent ?? ""));
+        rows.push(cells);
+      });
+      const headerRow = !!el.querySelector("thead th");
+      push("table", { headerRow, rows: rows.length ? rows : [["", ""], ["", ""]] });
+    } else if (tag === "BLOCKQUOTE") {
+      const kind = (el.getAttribute("data-callout") || "info") as BlockType;
+      const t: BlockType =
+        kind === "alert" || kind === "warning" || kind === "info" ? kind : "info";
+      const text = el.querySelector("span:last-of-type")?.textContent ?? el.textContent ?? "";
+      push(t, { text });
+    } else if (tag === "DIV" && /page-break/i.test(el.getAttribute("style") || "")) {
+      push("pagebreak", {});
+    } else if (tag === "UL" || tag === "OL" || tag === "P") {
+      push("text", { html: el.outerHTML, align: "left", size: "normal" });
+    } else {
+      const text = el.textContent?.trim() ?? "";
+      if (text) push("text", { html: `<p>${text}</p>`, align: "left", size: "normal" });
+    }
+  }
+  return blocks;
+}
