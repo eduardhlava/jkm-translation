@@ -706,11 +706,6 @@ const DocumentCreator = () => {
                     numberHeadings={numberHeadings}
                     collapsed={collapsedBlocks}
                     onCollapsedChange={setCollapsedBlocks}
-                    leftSlot={
-                      <Button type="button" variant="outline" size="sm" onClick={() => setMetadataOpen(true)}>
-                        <FileCog className="w-4 h-4 mr-1" /> Metadata dokumentu
-                      </Button>
-                    }
                   />
                 </div>
               </div>
