@@ -724,3 +724,34 @@ function CalloutBlockEditor({ block, onChange }: { block: Block; onChange: Props
     </div>
   );
 }
+
+function ImageTableBlockEditor({ block, onChange }: { block: Block; onChange: Props["onChange"] }) {
+  const imageContent = block.content?.image ?? { url: "", alt: "" };
+  const tableContent = block.content?.table ?? { headerRow: true, rows: [["#", "Název části"]] };
+
+  const handleSub = (key: "image" | "table") => (_id: string, patch: Partial<Block>) => {
+    if (patch.content !== undefined) {
+      onChange(block.id, { content: { ...block.content, [key]: patch.content } });
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Obrázek</div>
+        <ImageBlockEditor
+          block={{ ...block, type: "image", content: imageContent } as Block}
+          onChange={handleSub("image")}
+        />
+      </div>
+      <div className="border-t border-muted-foreground/20" />
+      <div>
+        <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Tabulka</div>
+        <TableBlockEditor
+          block={{ ...block, type: "table", content: tableContent } as Block}
+          onChange={handleSub("table")}
+        />
+      </div>
+    </div>
+  );
+}
