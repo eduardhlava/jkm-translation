@@ -273,6 +273,7 @@ const DocumentCreator = () => {
         .from("document_blocks")
         .upsert({ page_id: activePage.id, blocks: blocks as any, settings: { numberHeadings, collapsedBlocks, metadata } as any }, { onConflict: "page_id" });
       if (error) throw error;
+      setBaselineSnapshot(JSON.stringify({ blocks, numberHeadings, collapsedBlocks, metadata, docTitle }));
       toast.success("Uloženo do databáze aplikace");
     } catch (e) {
       toast.error("Uložení selhalo", { description: e instanceof Error ? e.message : "" });
