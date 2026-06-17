@@ -756,6 +756,7 @@ function ImageTableBlockEditor({ block, onChange }: { block: Block; onChange: Pr
         <TableBlockEditor
           block={{ ...block, type: "table", content: tableContent } as Block}
           onChange={handleSub("table")}
+          narrowFirstCol
         />
       </div>
     </div>
