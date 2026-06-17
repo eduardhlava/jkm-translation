@@ -459,8 +459,8 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
             <SelectItem value="none">Bez piktogramu</SelectItem>
             <SelectItem value="alert">Výstraha</SelectItem>
             <SelectItem value="alert-electric">Výstraha – elektrické nebezpečí</SelectItem>
-            <SelectItem value="warning">Upozornění</SelectItem>
             <SelectItem value="info">Informace</SelectItem>
+
           </SelectContent>
         </Select>
       </div>
@@ -497,7 +497,6 @@ function PictogramIcon({ kind, size = 28 }: { kind: Pictogram; size?: number }) 
   const symbol = (() => {
     switch (kind) {
       case "alert":
-      case "warning":
         return (
           <>
             <line x1="12" y1="9" x2="12" y2="15" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
@@ -523,19 +522,44 @@ function PictogramIcon({ kind, size = 28 }: { kind: Pictogram; size?: number }) 
     }
   })();
 
+
+  const shape = (() => {
+    switch (kind) {
+      case "alert":
+      case "alert-electric":
+        return (
+          <polygon
+            points="12,2 22,21 2,21"
+            fill={fill}
+            stroke={color}
+            strokeWidth={strokeWidth}
+            strokeLinejoin="round"
+          />
+        );
+      case "info":
+        return (
+          <circle
+            cx="12"
+            cy="12"
+            r="10"
+            fill={fill}
+            stroke={color}
+            strokeWidth={strokeWidth}
+          />
+        );
+      default:
+        return null;
+    }
+  })();
+
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" className="text-foreground" fill="none">
-      <polygon
-        points="12,2 22,21 2,21"
-        fill={fill}
-        stroke={color}
-        strokeWidth={strokeWidth}
-        strokeLinejoin="round"
-      />
+      {shape}
       {symbol}
     </svg>
   );
 }
+
 
 function ImageBlockEditor({ block, onChange }: { block: Block; onChange: Props["onChange"] }) {
   const [uploading, setUploading] = useState(false);

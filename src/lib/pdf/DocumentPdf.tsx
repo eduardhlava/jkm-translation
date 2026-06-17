@@ -296,19 +296,12 @@ function PictogramSvg({ kind, size = 26 }: { kind: Pictogram; size?: number }) {
   const renderSymbol = () => {
     switch (kind) {
       case "alert":
-      case "warning":
+      case "alert-electric":
         return (
           <>
             <Path d="M12 9 L12 15" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
             <Circle cx={12} cy={18} r={1.2} fill={color} />
           </>
-        );
-      case "alert-electric":
-        return (
-          <Path
-            d="M14 8 L9 15 L12 15 L10 20 L16 13 L13 13 L15 8 Z"
-            fill={color}
-          />
         );
       case "info":
         return (
@@ -322,13 +315,30 @@ function PictogramSvg({ kind, size = 26 }: { kind: Pictogram; size?: number }) {
     }
   };
 
+  const renderShape = () => {
+    switch (kind) {
+      case "alert":
+      case "alert-electric":
+        return (
+          <Polygon points="12,2 22,21 2,21" fill={fill} stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" />
+        );
+      case "info":
+        return (
+          <Circle cx={12} cy={12} r={10} fill={fill} stroke={color} strokeWidth={strokeWidth} />
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
-      <Polygon points="12,2 22,21 2,21" fill={fill} stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" />
+      {renderShape()}
       {renderSymbol()}
     </Svg>
   );
 }
+
 
 function TextBlock({ block }: { block: Block }) {
   const defaultPStyle = { ...styles.p } as any;
