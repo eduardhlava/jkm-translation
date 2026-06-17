@@ -563,9 +563,9 @@ const DocumentCreator = () => {
 
         {/* List */}
         {!activePage && (
-          <Card className="p-0 overflow-hidden">
+          <Card className="p-0 overflow-hidden bg-muted">
             <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 260px)" }}>
-              <table className="w-full caption-bottom text-sm">
+              <table className="w-full caption-bottom text-sm bg-card">
                 <TableHeader className="bg-muted/70 [&_tr]:border-b-0 [&>tr>th]:sticky [&>tr>th]:top-0 [&>tr>th]:z-20 [&>tr>th]:bg-muted">
                   <TableRow>
                     {tableHeaders.map((h) => <TableHead key={h}>{h}</TableHead>)}
@@ -623,9 +623,9 @@ const DocumentCreator = () => {
                   className="h-8 max-w-md font-medium"
                   placeholder="Název dokumentu"
                 />
-                <a href={activePage.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary flex-shrink-0">
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
+                <Button type="button" variant="outline" size="sm" onClick={() => setMetadataOpen(true)}>
+                  <FileCog className="w-4 h-4 mr-1" /> Nastavení dokumentu
+                </Button>
               </div>
               <div className="flex items-center gap-2">
                 <DropdownMenu>
@@ -635,6 +635,12 @@ const DocumentCreator = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-52">
+                    <DropdownMenuItem asChild>
+                      <a href={activePage.url} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
+                        <ExternalLink className="w-4 h-4 mr-2" /> Zobraz v Notion
+                      </a>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => setMode("blocks")}>
                       <Blocks className="w-4 h-4 mr-2" />
                       <span className="flex-1">Bloky</span>
@@ -700,11 +706,6 @@ const DocumentCreator = () => {
                     numberHeadings={numberHeadings}
                     collapsed={collapsedBlocks}
                     onCollapsedChange={setCollapsedBlocks}
-                    leftSlot={
-                      <Button type="button" variant="outline" size="sm" onClick={() => setMetadataOpen(true)}>
-                        <FileCog className="w-4 h-4 mr-1" /> Metadata dokumentu
-                      </Button>
-                    }
                   />
                 </div>
               </div>
