@@ -2,7 +2,7 @@ import { type Block, type BlockType, emptyContent } from "./types";
 
 const VALID_TYPES: BlockType[] = [
   "heading1", "heading2", "heading3", "heading4",
-  "text", "table", "image", "alert", "info", "warning", "pagebreak",
+  "text", "table", "image", "image-table", "alert", "info", "warning", "pagebreak",
 ];
 
 const VALID_ALIGN = ["left", "center", "right"] as const;
