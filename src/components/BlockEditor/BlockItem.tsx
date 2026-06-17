@@ -55,6 +55,12 @@ function blockPreview(block: Block): string {
       return block.content?.text || "";
     case "image":
       return block.content?.alt || block.content?.url || "";
+    case "image-table": {
+      const alt = block.content?.image?.alt || block.content?.image?.url || "";
+      const rows: string[][] = block.content?.table?.rows ?? [];
+      const tablePreview = rows[0]?.filter(Boolean).join(" • ") || `${rows.length} řádků`;
+      return [alt, tablePreview].filter(Boolean).join(" — ");
+    }
     case "table": {
       const rows: string[][] = block.content?.rows ?? [];
       return rows[0]?.filter(Boolean).join(" • ") || `${rows.length} řádků`;
