@@ -599,15 +599,17 @@ const DocumentCreator = () => {
                 <TableHeader className="bg-muted/70 [&_tr]:border-b-0 [&>tr>th]:sticky [&>tr>th]:top-0 [&>tr>th]:z-20 [&>tr>th]:bg-muted">
                   <TableRow>
                     {tableHeaders.map((h) => <TableHead key={h}>{h}</TableHead>)}
+                    <TableHead className="w-16 text-center">Notion</TableHead>
                     <TableHead className="text-right">Akce</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {items.length === 0 && (
-                    <TableRow><TableCell colSpan={tableHeaders.length + 1} className="text-center text-muted-foreground py-6">Žádné položky</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={tableHeaders.length + 2} className="text-center text-muted-foreground py-6">Žádné položky</TableCell></TableRow>
                   )}
                   {items.map((it) => {
                     const isActive = activePage?.id === it.id;
+                    const exportedAt = exportMap[it.id] ?? null;
                     return (
                       <TableRow key={it.id} className={isActive ? "bg-primary/5" : undefined}>
                         {tableHeaders.map((h) => (
@@ -615,6 +617,22 @@ const DocumentCreator = () => {
                             {it.properties[h] || "—"}
                           </TableCell>
                         ))}
+                        <TableCell className="text-center">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className={`inline-flex items-center justify-center w-6 h-6 rounded border text-[11px] font-bold ${exportedAt ? "bg-foreground text-background border-foreground" : "bg-muted text-muted-foreground/60 border-muted-foreground/30"}`}>
+                                N
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">
+                                {exportedAt
+                                  ? `Poslední export: ${new Date(exportedAt).toLocaleString("cs-CZ")}`
+                                  : "Nebylo exportováno"}
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button variant="ghost" size="sm" asChild>
