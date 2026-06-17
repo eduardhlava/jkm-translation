@@ -134,6 +134,15 @@ const DocumentCreator = () => {
   const [collapsedBlocks, setCollapsedBlocks] = useState<Record<string, boolean>>({});
   const [metadata, setMetadata] = useState<DocumentMetadata>(DEFAULT_DOCUMENT_METADATA);
   const [metadataOpen, setMetadataOpen] = useState(false);
+  const [baselineSnapshot, setBaselineSnapshot] = useState<string>("");
+  const [backDialogOpen, setBackDialogOpen] = useState(false);
+  const [exportMap, setExportMap] = useState<Record<string, string | null>>({});
+
+  const currentSnapshot = useMemo(
+    () => JSON.stringify({ blocks, numberHeadings, collapsedBlocks, metadata, docTitle }),
+    [blocks, numberHeadings, collapsedBlocks, metadata, docTitle]
+  );
+  const isDirty = activePage !== null && baselineSnapshot !== "" && currentSnapshot !== baselineSnapshot;
 
 
 
@@ -185,6 +194,18 @@ const DocumentCreator = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setItems(data.items ?? []);
+      const ids: string[] = (data.items ?? []).map((i: ContentItem) => i.id);
+      if (ids.length > 0) {
+        const { data: rows } = await supabase
+          .from("document_blocks")
+          .select("page_id, notion_exported_at")
+          .in("page_id", ids);
+        const map: Record<string, string | null> = {};
+        (rows ?? []).forEach((r: any) => { map[r.page_id] = r.notion_exported_at ?? null; });
+        setExportMap(map);
+      } else {
+        setExportMap({});
+      }
     } catch (e) {
       toast.error("Načtení selhalo", { description: e instanceof Error ? e.message : "" });
     } finally {
@@ -222,6 +243,14 @@ const DocumentCreator = () => {
       setCollapsedBlocks((savedSettings.collapsedBlocks as Record<string, boolean>) ?? {});
       setMetadata(mergeMetadata({ ...(savedSettings.metadata ?? {}), docName: savedSettings.metadata?.docName ?? initialTitle }));
       setLastExportAt((blocksRes.data as any)?.notion_exported_at ?? null);
+      const mergedMeta = mergeMetadata({ ...(savedSettings.metadata ?? {}), docName: savedSettings.metadata?.docName ?? initialTitle });
+      setBaselineSnapshot(JSON.stringify({
+        blocks: saved,
+        numberHeadings: !!savedSettings.numberHeadings,
+        collapsedBlocks: (savedSettings.collapsedBlocks as Record<string, boolean>) ?? {},
+        metadata: mergedMeta,
+        docTitle: initialTitle,
+      }));
       toast.success("Obsah načten");
     } catch (e) {
       toast.error("Načtení obsahu selhalo", { description: e instanceof Error ? e.message : "" });
@@ -244,6 +273,7 @@ const DocumentCreator = () => {
         .from("document_blocks")
         .upsert({ page_id: activePage.id, blocks: blocks as any, settings: { numberHeadings, collapsedBlocks, metadata } as any }, { onConflict: "page_id" });
       if (error) throw error;
+      setBaselineSnapshot(JSON.stringify({ blocks, numberHeadings, collapsedBlocks, metadata, docTitle }));
       toast.success("Uloženo do databáze aplikace");
     } catch (e) {
       toast.error("Uložení selhalo", { description: e instanceof Error ? e.message : "" });
@@ -569,15 +599,17 @@ const DocumentCreator = () => {
                 <TableHeader className="bg-muted/70 [&_tr]:border-b-0 [&>tr>th]:sticky [&>tr>th]:top-0 [&>tr>th]:z-20 [&>tr>th]:bg-muted">
                   <TableRow>
                     {tableHeaders.map((h) => <TableHead key={h}>{h}</TableHead>)}
+                    <TableHead className="w-16 text-center">Notion</TableHead>
                     <TableHead className="text-right">Akce</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {items.length === 0 && (
-                    <TableRow><TableCell colSpan={tableHeaders.length + 1} className="text-center text-muted-foreground py-6">Žádné položky</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={tableHeaders.length + 2} className="text-center text-muted-foreground py-6">Žádné položky</TableCell></TableRow>
                   )}
                   {items.map((it) => {
                     const isActive = activePage?.id === it.id;
+                    const exportedAt = exportMap[it.id] ?? null;
                     return (
                       <TableRow key={it.id} className={isActive ? "bg-primary/5" : undefined}>
                         {tableHeaders.map((h) => (
@@ -585,6 +617,22 @@ const DocumentCreator = () => {
                             {it.properties[h] || "—"}
                           </TableCell>
                         ))}
+                        <TableCell className="text-center">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className={`inline-flex items-center justify-center w-6 h-6 rounded border text-[11px] font-bold ${exportedAt ? "bg-foreground text-background border-foreground" : "bg-muted text-muted-foreground/60 border-muted-foreground/30"}`}>
+                                N
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">
+                                {exportedAt
+                                  ? `Poslední export: ${new Date(exportedAt).toLocaleString("cs-CZ")}`
+                                  : "Nebylo exportováno"}
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button variant="ghost" size="sm" asChild>
@@ -613,7 +661,9 @@ const DocumentCreator = () => {
           <Card className="overflow-hidden flex flex-col border-2 border-brand/30" style={{ height: "calc(100vh - 90px)" }}>
             <div className="flex-shrink-0 flex flex-wrap items-center justify-between gap-2 border-b-2 border-brand/30 bg-brand/10 px-4 py-2">
               <div className="flex items-center gap-2 text-sm flex-1 min-w-0">
-                <Button variant="ghost" size="sm" onClick={() => setActivePage(null)}>
+                <Button variant="ghost" size="sm" onClick={() => {
+                  if (isDirty) { setBackDialogOpen(true); } else { setActivePage(null); setBaselineSnapshot(""); }
+                }}>
                   ← Zpět na seznam
                 </Button>
                 <FileText className="w-4 h-4 text-primary flex-shrink-0" />
@@ -795,6 +845,38 @@ const DocumentCreator = () => {
         value={metadata}
         onChange={setMetadata}
       />
+
+      <AlertDialog open={backDialogOpen} onOpenChange={setBackDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Neuložené změny</AlertDialogTitle>
+            <AlertDialogDescription>
+              V dokumentu máte neuložené změny. Chcete je před návratem na seznam uložit do databáze aplikace?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outline" onClick={() => setBackDialogOpen(false)}>Zrušit</Button>
+            <Button
+              variant="outline"
+              onClick={() => { setBackDialogOpen(false); setActivePage(null); setBaselineSnapshot(""); }}
+            >
+              Zahodit změny
+            </Button>
+            <Button
+              onClick={async () => {
+                await saveDraft();
+                setBackDialogOpen(false);
+                setActivePage(null);
+                setBaselineSnapshot("");
+              }}
+              disabled={savingDraft}
+            >
+              {savingDraft ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
+              Uložit a odejít
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
