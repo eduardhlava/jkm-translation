@@ -497,20 +497,8 @@ function PictogramIcon({ kind, size = 28 }: { kind: Pictogram; size?: number }) 
   const symbol = (() => {
     switch (kind) {
       case "alert":
-      case "warning":
-        return (
-          <>
-            <line x1="12" y1="9" x2="12" y2="15" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
-            <circle cx="12" cy="18" r="1.2" fill={color} />
-          </>
-        );
       case "alert-electric":
-        return (
-          <path
-            d="M14 8 L9 15 L12 15 L10 20 L16 13 L13 13 L15 8 Z"
-            fill={color}
-          />
-        );
+        return null;
       case "info":
         return (
           <>
@@ -523,19 +511,43 @@ function PictogramIcon({ kind, size = 28 }: { kind: Pictogram; size?: number }) 
     }
   })();
 
+  const shape = (() => {
+    switch (kind) {
+      case "alert":
+      case "alert-electric":
+        return (
+          <polygon
+            points="12,2 22,21 2,21"
+            fill={fill}
+            stroke={color}
+            strokeWidth={strokeWidth}
+            strokeLinejoin="round"
+          />
+        );
+      case "info":
+        return (
+          <circle
+            cx="12"
+            cy="12"
+            r="10"
+            fill={fill}
+            stroke={color}
+            strokeWidth={strokeWidth}
+          />
+        );
+      default:
+        return null;
+    }
+  })();
+
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" className="text-foreground" fill="none">
-      <polygon
-        points="12,2 22,21 2,21"
-        fill={fill}
-        stroke={color}
-        strokeWidth={strokeWidth}
-        strokeLinejoin="round"
-      />
+      {shape}
       {symbol}
     </svg>
   );
 }
+
 
 function ImageBlockEditor({ block, onChange }: { block: Block; onChange: Props["onChange"] }) {
   const [uploading, setUploading] = useState(false);
