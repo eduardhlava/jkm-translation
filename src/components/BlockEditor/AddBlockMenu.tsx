@@ -4,7 +4,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Plus, Heading1, Heading2, Heading3, Heading4, Type, Table as TableIcon, Image as ImageIcon, AlertTriangle, Info, AlertCircle, SeparatorHorizontal } from "lucide-react";
+import { Plus, Heading1, Heading2, Heading3, Heading4, Type, Table as TableIcon, Image as ImageIcon, LayoutPanelTop, AlertTriangle, Info, AlertCircle, SeparatorHorizontal } from "lucide-react";
 import { BLOCK_TYPE_LABELS, type BlockType } from "./types";
 
 const ICONS: Record<BlockType, React.ComponentType<{ className?: string }>> = {
@@ -15,6 +15,7 @@ const ICONS: Record<BlockType, React.ComponentType<{ className?: string }>> = {
   text: Type,
   table: TableIcon,
   image: ImageIcon,
+  "image-table": LayoutPanelTop,
   alert: AlertTriangle,
   info: Info,
   warning: AlertCircle,
@@ -23,7 +24,7 @@ const ICONS: Record<BlockType, React.ComponentType<{ className?: string }>> = {
 
 const ORDER: BlockType[] = [
   "heading1", "heading2", "heading3", "heading4",
-  "text", "table", "image",
+  "text", "table", "image", "image-table",
   "alert", "info", "warning",
   "pagebreak",
 ];
