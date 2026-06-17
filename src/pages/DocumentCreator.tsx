@@ -563,9 +563,9 @@ const DocumentCreator = () => {
 
         {/* List */}
         {!activePage && (
-          <Card className="p-0 overflow-hidden">
+          <Card className="p-0 overflow-hidden bg-muted">
             <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 260px)" }}>
-              <table className="w-full caption-bottom text-sm">
+              <table className="w-full caption-bottom text-sm bg-card">
                 <TableHeader className="bg-muted/70 [&_tr]:border-b-0 [&>tr>th]:sticky [&>tr>th]:top-0 [&>tr>th]:z-20 [&>tr>th]:bg-muted">
                   <TableRow>
                     {tableHeaders.map((h) => <TableHead key={h}>{h}</TableHead>)}
