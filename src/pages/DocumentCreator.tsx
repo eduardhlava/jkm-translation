@@ -643,7 +643,9 @@ const DocumentCreator = () => {
           <Card className="overflow-hidden flex flex-col border-2 border-brand/30" style={{ height: "calc(100vh - 90px)" }}>
             <div className="flex-shrink-0 flex flex-wrap items-center justify-between gap-2 border-b-2 border-brand/30 bg-brand/10 px-4 py-2">
               <div className="flex items-center gap-2 text-sm flex-1 min-w-0">
-                <Button variant="ghost" size="sm" onClick={() => setActivePage(null)}>
+                <Button variant="ghost" size="sm" onClick={() => {
+                  if (isDirty) { setBackDialogOpen(true); } else { setActivePage(null); setBaselineSnapshot(""); }
+                }}>
                   ← Zpět na seznam
                 </Button>
                 <FileText className="w-4 h-4 text-primary flex-shrink-0" />
