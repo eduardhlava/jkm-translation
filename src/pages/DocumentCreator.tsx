@@ -623,9 +623,9 @@ const DocumentCreator = () => {
                   className="h-8 max-w-md font-medium"
                   placeholder="Název dokumentu"
                 />
-                <a href={activePage.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary flex-shrink-0">
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
+                <Button type="button" variant="outline" size="sm" onClick={() => setMetadataOpen(true)}>
+                  <FileCog className="w-4 h-4 mr-1" /> Nastavení dokumentu
+                </Button>
               </div>
               <div className="flex items-center gap-2">
                 <DropdownMenu>
@@ -635,6 +635,12 @@ const DocumentCreator = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-52">
+                    <DropdownMenuItem asChild>
+                      <a href={activePage.url} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
+                        <ExternalLink className="w-4 h-4 mr-2" /> Zobraz v Notion
+                      </a>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => setMode("blocks")}>
                       <Blocks className="w-4 h-4 mr-2" />
                       <span className="flex-1">Bloky</span>
