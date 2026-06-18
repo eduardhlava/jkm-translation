@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
   coverLogoWrap: { alignItems: "center", marginBottom: 28 },
-  coverLogo: { width: 200, objectFit: "contain" },
+  coverLogo: { width: 140, objectFit: "contain" },
   coverSubtitle: { textAlign: "center", fontSize: 11, marginBottom: 16, letterSpacing: 1.2, color: "#4b5563" },
   coverTitle: {
     textAlign: "center",
