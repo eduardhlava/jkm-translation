@@ -190,7 +190,7 @@ function BlockHeader({
                 <Switch
                   checked={!!block.content.unlisted}
                   onCheckedChange={(v) => setContent(block, { unlisted: v }, onChange)}
-                  className="data-[state=unchecked]:bg-muted-foreground/30 data-[state=checked]:bg-foreground"
+                  className="data-[state=unchecked]:bg-muted-foreground/30 data-[state=checked]:bg-foreground scale-75 origin-center"
                   aria-label={
                     block.content.unlisted
                       ? "Nadpis je vyřazen z číslování a obsahu"
