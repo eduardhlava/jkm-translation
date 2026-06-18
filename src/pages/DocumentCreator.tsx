@@ -816,8 +816,13 @@ const DocumentCreator = () => {
                     const a = document.createElement("a");
                     a.href = url;
                     a.download = getPdfFilename();
+                    a.rel = "noopener";
+                    document.body.appendChild(a);
                     a.click();
-                    URL.revokeObjectURL(url);
+                    setTimeout(() => {
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(url);
+                    }, 0);
                   }}
                   disabled={!pdfBlob || pdfBuilding}
                   size="sm"
