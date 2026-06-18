@@ -548,12 +548,11 @@ function CoverPage({ metadata, logoDataUrl, footerVersion }: { metadata: Documen
           <Image src={logoDataUrl} style={styles.coverLogo} />
         ) : null}
       </View>
-      <Text style={styles.coverSubtitle}>PŮVODNÍ NÁVOD K POUŽÍVÁNÍ</Text>
+      {metadata.docName ? (
+        <Text style={styles.coverSubtitle}>{metadata.docName}</Text>
+      ) : null}
       {metadata.docCode ? (
         <Text style={styles.coverTitle}>{metadata.docCode}</Text>
-      ) : null}
-      {metadata.docName ? (
-        <Text style={styles.coverTitle}>{metadata.docName}</Text>
       ) : null}
       {metadata.coverImageUrl ? (
         <View style={styles.coverImageWrap}>
