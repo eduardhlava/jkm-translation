@@ -809,6 +809,22 @@ const DocumentCreator = () => {
               <div className="font-medium">Náhled PDF</div>
               <div className="flex items-center gap-2">
                 <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (!pdfBlob) return;
+                    const url = URL.createObjectURL(pdfBlob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = getPdfFilename();
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                  disabled={!pdfBlob || pdfBuilding}
+                  size="sm"
+                >
+                  <FileDown className="w-4 h-4 mr-1" /> Stáhnout PDF
+                </Button>
+                <Button
                   onClick={uploadPdfToNotion}
                   disabled={!pdfBlob || pdfBuilding || uploadingPdf}
                   size="sm"
