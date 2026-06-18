@@ -178,7 +178,12 @@ function BlockHeader({
             <TooltipTrigger asChild>
               <div className="flex items-center gap-1 cursor-default">
                 {block.content.unlisted ? (
-                  <ListMinus className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span className="relative inline-flex items-center justify-center">
+                    <ListMinus className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <span className="w-[120%] h-[1.5px] bg-destructive rotate-45 rounded-full" />
+                    </span>
+                  </span>
                 ) : (
                   <ListOrdered className="w-3.5 h-3.5 text-muted-foreground" />
                 )}
