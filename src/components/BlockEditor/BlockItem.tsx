@@ -687,7 +687,7 @@ function ImageBlockEditor({ block, onChange, hidePictogram }: { block: Block; on
 
 
 
-function TableBlockEditor({ block, onChange, narrowFirstCol }: { block: Block; onChange: Props["onChange"]; narrowFirstCol?: boolean }) {
+function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { block: Block; onChange: Props["onChange"]; narrowFirstCol?: boolean; hidePictogram?: boolean }) {
   const rows: string[][] = block.content.rows ?? [];
   const cols = rows[0]?.length ?? 0;
 
