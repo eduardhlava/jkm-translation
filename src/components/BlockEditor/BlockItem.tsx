@@ -794,22 +794,34 @@ function ImageTableBlockEditor({ block, onChange }: { block: Block; onChange: Pr
 
   return (
     <div className="space-y-4">
-      <div>
-        <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Obrázek</div>
-        <ImageBlockEditor
-          block={{ ...block, type: "image", content: imageContent } as Block}
-          onChange={handleSub("image")}
+      <div className="flex flex-wrap items-center gap-2">
+        <PictogramSelect
+          value={block.content?.pictogram}
+          onChange={(v) => onChange(block.id, { content: { ...block.content, pictogram: v } })}
         />
       </div>
-      <div className="border-t border-muted-foreground/20" />
-      <div>
-        <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Tabulka</div>
-        <TableBlockEditor
-          block={{ ...block, type: "table", content: tableContent } as Block}
-          onChange={handleSub("table")}
-          narrowFirstCol
-        />
-      </div>
+      <PictogramRow value={block.content?.pictogram} onChange={() => {}}>
+        <div className="space-y-4">
+          <div>
+            <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Obrázek</div>
+            <ImageBlockEditor
+              block={{ ...block, type: "image", content: imageContent } as Block}
+              onChange={handleSub("image")}
+              hidePictogram
+            />
+          </div>
+          <div className="border-t border-muted-foreground/20" />
+          <div>
+            <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Tabulka</div>
+            <TableBlockEditor
+              block={{ ...block, type: "table", content: tableContent } as Block}
+              onChange={handleSub("table")}
+              narrowFirstCol
+              hidePictogram
+            />
+          </div>
+        </div>
+      </PictogramRow>
     </div>
   );
 }
