@@ -607,6 +607,7 @@ function PictogramSelect({ value, onChange }: { value?: Pictogram; onChange: (v:
         <SelectItem value="alert">Výstraha</SelectItem>
         <SelectItem value="alert-electric">Výstraha – elektrické nebezpečí</SelectItem>
         <SelectItem value="info">Informace</SelectItem>
+        <SelectItem value="recycling">Recyklace</SelectItem>
       </SelectContent>
     </Select>
   );
