@@ -182,10 +182,15 @@ export function blockToHtml(b: Block): string {
   }
 }
 
-export function blocksToHtml(blocks: Block[]): string {
-  return [...blocks]
-    .sort((a, b) => a.order - b.order)
-    .map(blockToHtml)
-    .filter(Boolean)
-    .join("\n");
+export function blocksToHtml(blocks: Block[], documentMetadata?: DocumentMetadata): string {
+  const sorted = [...blocks].sort((a, b) => a.order - b.order);
+  const parts: string[] = [];
+  if (documentMetadata) parts.push(docMetaMarker(documentMetadata));
+  for (const b of sorted) {
+    const html = blockToHtml(b);
+    if (!html) continue;
+    parts.push(blockMetaMarker(b));
+    parts.push(html);
+  }
+  return parts.join("\n");
 }
