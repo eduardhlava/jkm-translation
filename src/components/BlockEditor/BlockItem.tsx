@@ -530,6 +530,17 @@ function PictogramIcon({ kind, size = 28 }: { kind: Pictogram; size?: number }) 
             <line x1="12" y1="11" x2="12" y2="17" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
           </>
         );
+      case "recycling":
+        return (
+          <>
+            <path d="M12 4 Q15 8 17 12" stroke={color} strokeWidth={strokeWidth} fill="none" strokeLinecap="round" />
+            <polygon points="17,12 15.45,10.84 16.64,10.10" fill={color} />
+            <path d="M17 12 Q12 14 7 12" stroke={color} strokeWidth={strokeWidth} fill="none" strokeLinecap="round" />
+            <polygon points="7,12 8.80,11.30 8.80,12.70" fill={color} />
+            <path d="M7 12 Q9 8 12 4" stroke={color} strokeWidth={strokeWidth} fill="none" strokeLinecap="round" />
+            <polygon points="12,4 11.64,5.90 10.45,5.16" fill={color} />
+          </>
+        );
       default:
         return null;
     }
