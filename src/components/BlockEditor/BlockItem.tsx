@@ -590,7 +590,7 @@ function PictogramSelect({ value, onChange }: { value?: Pictogram; onChange: (v:
   );
 }
 
-function PictogramRow({ value, onChange, children }: { value?: Pictogram; onChange: (v: Pictogram) => void; children: React.ReactNode }) {
+function PictogramRow({ value, onChange, children }: { value?: Pictogram; onChange: (v: Pictogram) => void; children: ReactNode }) {
   if (!value || value === "none") return <>{children}</>;
   return (
     <div className="flex items-start gap-2">
