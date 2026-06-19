@@ -703,48 +703,60 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-2">
-        <label className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Checkbox
-            checked={!!block.content.headerRow}
-            onCheckedChange={(v) => setContent(block, { headerRow: !!v }, onChange)}
+      {!hidePictogram && (
+        <div className="flex flex-wrap items-center gap-2">
+          <PictogramSelect
+            value={block.content.pictogram}
+            onChange={(v) => setContent(block, { pictogram: v }, onChange)}
           />
-          První řádek je záhlaví
-        </label>
-        <div className="flex items-center gap-1 ml-auto">
-          <Button type="button" variant="outline" size="sm" onClick={addRow}><Plus className="w-3 h-3 mr-1" />Řádek</Button>
-          <Button type="button" variant="outline" size="sm" onClick={removeRow}><Minus className="w-3 h-3 mr-1" />Řádek</Button>
-          <Button type="button" variant="outline" size="sm" onClick={addCol}><Plus className="w-3 h-3 mr-1" />Sloupec</Button>
-          <Button type="button" variant="outline" size="sm" onClick={removeCol}><Minus className="w-3 h-3 mr-1" />Sloupec</Button>
         </div>
-      </div>
-      <div className="overflow-auto rounded-md bg-[hsl(220,14%,90%)] p-3 dark:bg-[hsl(217,33%,12%)]">
-        <table className="w-full border-collapse">
-          {narrowFirstCol && cols > 0 && (
-            <colgroup>
-              <col style={{ width: "48px" }} />
-              {Array.from({ length: cols - 1 }).map((_, i) => <col key={i} />)}
-            </colgroup>
-          )}
-          <tbody>
-            {rows.map((row, ri) => (
-              <tr key={ri}>
-                {row.map((cell, ci) => (
-                  <td key={ci} className="border p-0">
-                    <Input
-                      value={cell}
-                      onChange={(e) => updateCell(ri, ci, e.target.value)}
-                      className={`h-8 rounded-none border-0 shadow-none focus-visible:ring-1 ${
-                        block.content.headerRow && ri === 0 ? "font-semibold bg-muted/40" : ""
-                      } ${narrowFirstCol && ci === 0 ? "text-center" : ""}`}
-                    />
-                  </td>
+      )}
+      <PictogramRow value={hidePictogram ? "none" : block.content.pictogram} onChange={() => {}}>
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Checkbox
+                checked={!!block.content.headerRow}
+                onCheckedChange={(v) => setContent(block, { headerRow: !!v }, onChange)}
+              />
+              První řádek je záhlaví
+            </label>
+            <div className="flex items-center gap-1 ml-auto">
+              <Button type="button" variant="outline" size="sm" onClick={addRow}><Plus className="w-3 h-3 mr-1" />Řádek</Button>
+              <Button type="button" variant="outline" size="sm" onClick={removeRow}><Minus className="w-3 h-3 mr-1" />Řádek</Button>
+              <Button type="button" variant="outline" size="sm" onClick={addCol}><Plus className="w-3 h-3 mr-1" />Sloupec</Button>
+              <Button type="button" variant="outline" size="sm" onClick={removeCol}><Minus className="w-3 h-3 mr-1" />Sloupec</Button>
+            </div>
+          </div>
+          <div className="overflow-auto rounded-md bg-[hsl(220,14%,90%)] p-3 dark:bg-[hsl(217,33%,12%)]">
+            <table className="w-full border-collapse">
+              {narrowFirstCol && cols > 0 && (
+                <colgroup>
+                  <col style={{ width: "48px" }} />
+                  {Array.from({ length: cols - 1 }).map((_, i) => <col key={i} />)}
+                </colgroup>
+              )}
+              <tbody>
+                {rows.map((row, ri) => (
+                  <tr key={ri}>
+                    {row.map((cell, ci) => (
+                      <td key={ci} className="border p-0">
+                        <Input
+                          value={cell}
+                          onChange={(e) => updateCell(ri, ci, e.target.value)}
+                          className={`h-8 rounded-none border-0 shadow-none focus-visible:ring-1 ${
+                            block.content.headerRow && ri === 0 ? "font-semibold bg-muted/40" : ""
+                          } ${narrowFirstCol && ci === 0 ? "text-center" : ""}`}
+                        />
+                      </td>
+                    ))}
+                  </tr>
                 ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </PictogramRow>
     </div>
   );
 }
