@@ -1,4 +1,6 @@
 import { type Block, type BlockType, emptyContent } from "./types";
+import { type DocumentMetadata, mergeMetadata } from "@/components/DocumentMetadata/types";
+import { META_BLOCK_PREFIX, META_DOC_PREFIX } from "./serialize";
 
 const VALID_TYPES: BlockType[] = [
   "heading1", "heading2", "heading3", "heading4",
