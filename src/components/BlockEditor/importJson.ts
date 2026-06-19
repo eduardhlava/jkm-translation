@@ -142,56 +142,149 @@ export const SAMPLE_DOCUMENT_JSON: DocumentImport = {
   ],
 };
 
-// Convert sanitized HTML (as produced by blocksToHtml or Notion fetch) back into blocks.
-// Used as a fallback when a document has no saved block representation.
-export function htmlToBlocks(html: string): Block[] {
-  if (typeof DOMParser === "undefined" || !html) return [];
+// ----- Round-trip marker helpers -----
+function readMarkerJson(el: Element, prefix: string): any | null {
+  if (el.tagName.toUpperCase() !== "P") return null;
+  const text = (el.textContent ?? "").trim();
+  if (!text.startsWith(prefix)) return null;
+  try {
+    return JSON.parse(text.slice(prefix.length));
+  } catch {
+    return null;
+  }
+}
+
+function applyBlockMeta(block: Block, meta: any | null): void {
+  if (!meta || typeof meta !== "object") return;
+  if (typeof meta.id === "string") block.id = meta.id;
+  if (typeof meta.tpl === "string") block.template = meta.tpl;
+  const c: any = block.content ?? {};
+  if (meta.pic && typeof meta.pic === "string") c.pictogram = meta.pic;
+  switch (block.type) {
+    case "text":
+      if (meta.align) c.align = meta.align;
+      if (meta.size) c.size = meta.size;
+      break;
+    case "image":
+      if (Number.isFinite(meta.w)) c.width = meta.w;
+      break;
+    case "table":
+      if (typeof meta.hdr === "boolean") c.headerRow = meta.hdr;
+      break;
+    case "image-table":
+      if (c.image && Number.isFinite(meta.iw)) c.image.width = meta.iw;
+      if (c.table && typeof meta.hdr === "boolean") c.table.headerRow = meta.hdr;
+      break;
+  }
+  block.content = c;
+}
+
+export interface ParsedDocument {
+  blocks: Block[];
+  documentMetadata?: DocumentMetadata;
+}
+
+// Convert sanitized HTML (as produced by blocksToHtml or Notion fetch) back
+// into blocks. Also extracts the optional document-metadata marker so a
+// duplicated Notion page round-trips cleanly.
+export function parseDocumentHtml(html: string): ParsedDocument {
+  if (typeof DOMParser === "undefined" || !html) return { blocks: [] };
   const doc = new DOMParser().parseFromString(`<div>${html}</div>`, "text/html");
   const root = doc.body.firstChild as HTMLElement | null;
-  if (!root) return [];
+  if (!root) return { blocks: [] };
 
   const blocks: Block[] = [];
+  let documentMetadata: DocumentMetadata | undefined;
+  let pendingMeta: any | null = null;
+
   const mkId = () =>
     typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random()}`;
   const push = (type: BlockType, content: any) => {
-    blocks.push({ id: mkId(), type, template: "default", order: blocks.length, content });
+    const block: Block = { id: mkId(), type, template: "default", order: blocks.length, content };
+    applyBlockMeta(block, pendingMeta);
+    pendingMeta = null;
+    block.order = blocks.length;
+    blocks.push(block);
+  };
+
+  const readImageFrom = (el: Element): { url: string; alt: string; width?: number } | null => {
+    const img = el.tagName.toUpperCase() === "IMG" ? (el as HTMLImageElement) : el.querySelector("img");
+    if (!img) return null;
+    const w = Number(img.getAttribute("width"));
+    return {
+      url: img.getAttribute("src") ?? "",
+      alt: img.getAttribute("alt") ?? "",
+      ...(Number.isFinite(w) && w > 0 ? { width: w } : {}),
+    };
+  };
+  const readTableFrom = (el: Element): { headerRow: boolean; rows: string[][] } => {
+    const rows: string[][] = [];
+    el.querySelectorAll("tr").forEach((tr) => {
+      const cells: string[] = [];
+      tr.querySelectorAll("th,td").forEach((c) => cells.push(c.textContent ?? ""));
+      rows.push(cells);
+    });
+    const headerRow = !!el.querySelector("thead th") || !!el.querySelector("tr > th");
+    return { headerRow, rows: rows.length ? rows : [["", ""], ["", ""]] };
   };
 
   const children = Array.from(root.children);
-  for (const el of children) {
+  for (let i = 0; i < children.length; i++) {
+    const el = children[i];
     const tag = el.tagName.toUpperCase();
+
+    // Document metadata marker (first one wins)
+    const docMeta = readMarkerJson(el, META_DOC_PREFIX);
+    if (docMeta) {
+      if (!documentMetadata && docMeta.doc && typeof docMeta.doc === "object") {
+        documentMetadata = mergeMetadata(docMeta.doc as Partial<DocumentMetadata>);
+      }
+      continue;
+    }
+
+    // Per-block marker → buffer for the next real element(s)
+    const blockMeta = readMarkerJson(el, META_BLOCK_PREFIX);
+    if (blockMeta) {
+      pendingMeta = blockMeta;
+      // image-table consumes two following elements (figure/img + table)
+      if (blockMeta.t === "image-table") {
+        const a = children[i + 1];
+        const b = children[i + 2];
+        const imgEl = a && (a.tagName.toUpperCase() === "FIGURE" || a.tagName.toUpperCase() === "IMG") ? a : null;
+        const tblEl = b && b.tagName.toUpperCase() === "TABLE" ? b : null;
+        if (imgEl && tblEl) {
+          const image = readImageFrom(imgEl) ?? { url: "", alt: "" };
+          const table = readTableFrom(tblEl);
+          push("image-table", { image, table });
+          i += 2;
+          continue;
+        }
+      }
+      if (blockMeta.t === "pagebreak") {
+        push("pagebreak", {});
+        continue;
+      }
+      if (blockMeta.t === "heading4") {
+        const next = children[i + 1];
+        const text = next ? (next.textContent ?? "") : "";
+        if (next && /^H[1-6]$/.test(next.tagName)) i += 1;
+        push("heading4", { text });
+        continue;
+      }
+      continue;
+    }
+
     if (tag === "H1") push("heading1", { text: el.textContent ?? "" });
     else if (tag === "H2") push("heading2", { text: el.textContent ?? "" });
     else if (tag === "H3") push("heading3", { text: el.textContent ?? "" });
     else if (tag === "H4") push("heading4", { text: el.textContent ?? "" });
-    else if (tag === "FIGURE") {
-      const img = el.querySelector("img");
-      if (img) {
-        const w = Number(img.getAttribute("width"));
-        push("image", {
-          url: img.getAttribute("src") ?? "",
-          alt: img.getAttribute("alt") ?? "",
-          ...(Number.isFinite(w) && w > 0 ? { width: w } : {}),
-        });
-      }
-    } else if (tag === "IMG") {
-      const w = Number(el.getAttribute("width"));
-      push("image", {
-        url: el.getAttribute("src") ?? "",
-        alt: el.getAttribute("alt") ?? "",
-        ...(Number.isFinite(w) && w > 0 ? { width: w } : {}),
-      });
+    else if (tag === "FIGURE" || tag === "IMG") {
+      const img = readImageFrom(el);
+      if (img) push("image", img);
     } else if (tag === "TABLE") {
-      const rows: string[][] = [];
-      el.querySelectorAll("tr").forEach((tr) => {
-        const cells: string[] = [];
-        tr.querySelectorAll("th,td").forEach((c) => cells.push(c.textContent ?? ""));
-        rows.push(cells);
-      });
-      const headerRow = !!el.querySelector("thead th");
-      push("table", { headerRow, rows: rows.length ? rows : [["", ""], ["", ""]] });
+      push("table", readTableFrom(el));
     } else if (tag === "BLOCKQUOTE") {
       const kind = (el.getAttribute("data-callout") || "info") as BlockType;
       const t: BlockType =
@@ -207,5 +300,10 @@ export function htmlToBlocks(html: string): Block[] {
       if (text) push("text", { html: `<p>${text}</p>`, align: "left", size: "normal" });
     }
   }
-  return blocks;
+  return { blocks, documentMetadata };
+}
+
+// Legacy wrapper — returns only blocks.
+export function htmlToBlocks(html: string): Block[] {
+  return parseDocumentHtml(html).blocks;
 }
