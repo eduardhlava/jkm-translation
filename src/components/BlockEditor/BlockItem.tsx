@@ -628,12 +628,6 @@ function ImageBlockEditor({ block, onChange }: { block: Block; onChange: Props["
           <ImageIcon className="w-4 h-4 mr-1" />
           Vybrat v Notion
         </Button>
-        <Input
-          value={block.content.url ?? ""}
-          onChange={(e) => setContent(block, { url: e.target.value }, onChange)}
-          placeholder="…nebo URL"
-          className="flex-1 min-w-[200px]"
-        />
       </div>
       {block.content.url && (
         <img src={block.content.url} alt={block.content.alt} className="max-h-64 rounded border" />
