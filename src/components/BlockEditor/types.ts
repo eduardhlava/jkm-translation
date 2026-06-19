@@ -21,9 +21,10 @@ export interface TextContent { html: string; align?: TextAlign; size?: TextSize;
 export interface TableContent {
   headerRow: boolean;
   rows: string[][]; // rows[r][c]
+  pictogram?: Pictogram;
 }
-export interface ImageContent { url: string; alt: string; width?: number }
-export interface ImageTableContent { image: ImageContent; table: TableContent }
+export interface ImageContent { url: string; alt: string; width?: number; pictogram?: Pictogram }
+export interface ImageTableContent { image: ImageContent; table: TableContent; pictogram?: Pictogram }
 export interface CalloutContent { text: string }
 export interface PageBreakContent {}
 
