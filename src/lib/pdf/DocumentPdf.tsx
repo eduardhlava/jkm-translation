@@ -310,6 +310,17 @@ function PictogramSvg({ kind, size = 26 }: { kind: Pictogram; size?: number }) {
             <Path d="M12 11 L12 17" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
           </>
         );
+      case "recycling":
+        return (
+          <>
+            <Path d="M12 4 Q15 8 17 12" stroke={color} strokeWidth={strokeWidth} fill="none" strokeLinecap="round" />
+            <Polygon points="17,12 15.45,10.84 16.64,10.10" fill={color} />
+            <Path d="M17 12 Q12 14 7 12" stroke={color} strokeWidth={strokeWidth} fill="none" strokeLinecap="round" />
+            <Polygon points="7,12 8.80,11.30 8.80,12.70" fill={color} />
+            <Path d="M7 12 Q9 8 12 4" stroke={color} strokeWidth={strokeWidth} fill="none" strokeLinecap="round" />
+            <Polygon points="12,4 11.64,5.90 10.45,5.16" fill={color} />
+          </>
+        );
       default:
         return null;
     }
@@ -323,6 +334,7 @@ function PictogramSvg({ kind, size = 26 }: { kind: Pictogram; size?: number }) {
           <Polygon points="12,2 22,21 2,21" fill={fill} stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" />
         );
       case "info":
+      case "recycling":
         return (
           <Circle cx={12} cy={12} r={10} fill={fill} stroke={color} strokeWidth={strokeWidth} />
         );
