@@ -334,6 +334,7 @@ function PictogramSvg({ kind, size = 26 }: { kind: Pictogram; size?: number }) {
           <Polygon points="12,2 22,21 2,21" fill={fill} stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" />
         );
       case "info":
+      case "recycling":
         return (
           <Circle cx={12} cy={12} r={10} fill={fill} stroke={color} strokeWidth={strokeWidth} />
         );
