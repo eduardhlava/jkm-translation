@@ -574,7 +574,36 @@ function PictogramIcon({ kind, size = 28 }: { kind: Pictogram; size?: number }) 
 }
 
 
-function ImageBlockEditor({ block, onChange }: { block: Block; onChange: Props["onChange"] }) {
+function PictogramSelect({ value, onChange }: { value?: Pictogram; onChange: (v: Pictogram) => void }) {
+  return (
+    <Select value={value ?? "none"} onValueChange={(v) => onChange(v as Pictogram)}>
+      <SelectTrigger className="h-7 w-[200px] text-xs">
+        <SelectValue placeholder="Piktogram" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="none">Bez piktogramu</SelectItem>
+        <SelectItem value="alert">Výstraha</SelectItem>
+        <SelectItem value="alert-electric">Výstraha – elektrické nebezpečí</SelectItem>
+        <SelectItem value="info">Informace</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+}
+
+function PictogramRow({ value, onChange, children }: { value?: Pictogram; onChange: (v: Pictogram) => void; children: React.ReactNode }) {
+  if (!value || value === "none") return <>{children}</>;
+  return (
+    <div className="flex items-start gap-2">
+      <div className="shrink-0 pt-2">
+        <PictogramIcon kind={value} size={28} />
+      </div>
+      <div className="flex-1 min-w-0">{children}</div>
+    </div>
+  );
+}
+
+function ImageBlockEditor({ block, onChange, hidePictogram }: { block: Block; onChange: Props["onChange"]; hidePictogram?: boolean }) {
+
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
