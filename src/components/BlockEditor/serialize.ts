@@ -1,4 +1,63 @@
 import type { Block } from "./types";
+import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
+
+// ---------- Round-trip metadata markers ----------
+// We embed app-only metadata (pictograms, templates, header-row flags, image
+// width, document settings…) into the exported HTML as small marker paragraphs
+// with a fixed text prefix. Notion preserves them as ordinary paragraph blocks,
+// so a duplicated page can be re-imported and the original look-and-feel is
+// reconstructed by htmlToBlocks().
+//
+// Prefixes:
+//   LOV-DOC:{json}  — once at the top of the document, carries DocumentMetadata
+//   LOV:{json}      — immediately before each block, carries per-block meta
+export const META_DOC_PREFIX = "LOV-DOC:";
+export const META_BLOCK_PREFIX = "LOV:";
+
+function serializeBlockMeta(b: Block): Record<string, unknown> {
+  const meta: Record<string, unknown> = {
+    id: b.id,
+    t: b.type,
+  };
+  if (b.template && b.template !== "default") meta.tpl = b.template;
+  const c: any = b.content ?? {};
+  switch (b.type) {
+    case "text":
+      if (c.align && c.align !== "left") meta.align = c.align;
+      if (c.size && c.size !== "normal") meta.size = c.size;
+      if (c.pictogram && c.pictogram !== "none") meta.pic = c.pictogram;
+      break;
+    case "image":
+      if (Number.isFinite(c.width)) meta.w = c.width;
+      if (c.pictogram && c.pictogram !== "none") meta.pic = c.pictogram;
+      break;
+    case "table":
+      meta.hdr = c.headerRow !== false;
+      if (c.pictogram && c.pictogram !== "none") meta.pic = c.pictogram;
+      break;
+    case "image-table": {
+      const img = c.image ?? {};
+      const tbl = c.table ?? {};
+      if (Number.isFinite(img.width)) meta.iw = img.width;
+      meta.hdr = tbl.headerRow !== false;
+      if (c.pictogram && c.pictogram !== "none") meta.pic = c.pictogram;
+      break;
+    }
+  }
+  return meta;
+}
+
+function blockMetaMarker(b: Block): string {
+  const json = JSON.stringify(serializeBlockMeta(b));
+  // data-lov attribute makes the marker easy to recognize even if Notion ever
+  // preserves attributes; the prefixed text content is the actual contract.
+  return `<p data-lov="meta">${escapeHtml(META_BLOCK_PREFIX + json)}</p>`;
+}
+
+function docMetaMarker(meta: DocumentMetadata): string {
+  const json = JSON.stringify({ v: 1, doc: meta });
+  return `<p data-lov="doc">${escapeHtml(META_DOC_PREFIX + json)}</p>`;
+}
 
 function escapeHtml(s: string): string {
   return (s ?? "")
