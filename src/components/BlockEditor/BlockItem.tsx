@@ -129,7 +129,7 @@ function BlockHeader({
 }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   return (
-    <div className="flex items-center justify-between border-b border-muted-foreground/30 bg-muted/30 px-2 py-1">
+    <div className={`flex items-center justify-between border-b border-muted-foreground/30 px-2 py-1 ${block.type === "image" || block.type === "image-table" ? "bg-success/10" : "bg-muted/30"}`}>
       <div className="flex items-center gap-1 min-w-0 flex-1">
         <button
           {...attributes}
@@ -628,12 +628,6 @@ function ImageBlockEditor({ block, onChange }: { block: Block; onChange: Props["
           <ImageIcon className="w-4 h-4 mr-1" />
           Vybrat v Notion
         </Button>
-        <Input
-          value={block.content.url ?? ""}
-          onChange={(e) => setContent(block, { url: e.target.value }, onChange)}
-          placeholder="…nebo URL"
-          className="flex-1 min-w-[200px]"
-        />
       </div>
       {block.content.url && (
         <img src={block.content.url} alt={block.content.alt} className="max-h-64 rounded border" />
