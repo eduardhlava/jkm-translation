@@ -300,7 +300,7 @@ const DocumentCreator = () => {
 
   const runNotionExport = async (targetPageId: string, targetUrl: string, finalTitle: string) => {
     if (!editor) return;
-    const html = mode === "blocks" ? blocksToHtml(blocks) : editor.getHTML();
+    const html = mode === "blocks" ? blocksToHtml(blocks, metadata) : editor.getHTML();
     const doc = mode === "blocks" ? undefined : editor.getJSON();
 
     if (mode === "blocks") {
