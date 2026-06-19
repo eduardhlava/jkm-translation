@@ -571,6 +571,17 @@ function PictogramIcon({ kind, size = 28 }: { kind: Pictogram; size?: number }) 
             strokeWidth={strokeWidth}
           />
         );
+      case "recycling":
+        return (
+          <circle
+            cx="12"
+            cy="12"
+            r="10"
+            fill={fill}
+            stroke={color}
+            strokeWidth={strokeWidth}
+          />
+        );
       default:
         return null;
     }
