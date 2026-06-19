@@ -637,36 +637,47 @@ function ImageBlockEditor({ block, onChange, hidePictogram }: { block: Block; on
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-2">
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) onPick(f);
-            e.target.value = "";
-          }}
-        />
-        <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
-          {uploading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Upload className="w-4 h-4 mr-1" />}
-          Nahrát obrázek
-        </Button>
-        <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
-          <ImageIcon className="w-4 h-4 mr-1" />
-          Vybrat v Notion
-        </Button>
-      </div>
-      {block.content.url && (
-        <img src={block.content.url} alt={block.content.alt} className="max-h-64 rounded border" />
+      {!hidePictogram && (
+        <div className="flex flex-wrap items-center gap-2">
+          <PictogramSelect
+            value={block.content.pictogram}
+            onChange={(v) => setContent(block, { pictogram: v }, onChange)}
+          />
+        </div>
       )}
-      <Input
-        value={block.content.alt ?? ""}
-        onChange={(e) => setContent(block, { alt: e.target.value }, onChange)}
-        placeholder="Popis obrázku"
-      />
-
+      <PictogramRow value={hidePictogram ? "none" : block.content.pictogram} onChange={() => {}}>
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) onPick(f);
+                e.target.value = "";
+              }}
+            />
+            <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
+              {uploading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Upload className="w-4 h-4 mr-1" />}
+              Nahrát obrázek
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
+              <ImageIcon className="w-4 h-4 mr-1" />
+              Vybrat v Notion
+            </Button>
+          </div>
+          {block.content.url && (
+            <img src={block.content.url} alt={block.content.alt} className="max-h-64 rounded border" />
+          )}
+          <Input
+            value={block.content.alt ?? ""}
+            onChange={(e) => setContent(block, { alt: e.target.value }, onChange)}
+            placeholder="Popis obrázku"
+          />
+        </div>
+      </PictogramRow>
       <NotionImagePicker open={pickerOpen} onOpenChange={setPickerOpen} onInsert={handleInsertFromNotion} />
     </div>
   );
