@@ -74,7 +74,7 @@ import EditorToolbar from "@/components/EditorToolbar";
 import BlockEditor from "@/components/BlockEditor";
 import type { Block } from "@/components/BlockEditor/types";
 import { blocksToHtml } from "@/components/BlockEditor/serialize";
-import { parseDocumentJson, SAMPLE_DOCUMENT_JSON, htmlToBlocks } from "@/components/BlockEditor/importJson";
+import { parseDocumentJson, SAMPLE_DOCUMENT_JSON, parseDocumentHtml } from "@/components/BlockEditor/importJson";
 import PdfCanvasPreview from "@/components/PdfCanvasPreview";
 import { Blocks, PencilLine, Upload, FileDown, MoreHorizontal, Check, FileCog } from "lucide-react";
 import { useRef } from "react";
@@ -233,10 +233,14 @@ const DocumentCreator = () => {
       editor?.commands.setContent(html);
 
       let saved = ((blocksRes.data?.blocks as unknown) as Block[] | undefined) ?? [];
+      // Always parse the Notion HTML — even when we have a local cache, the
+      // HTML may carry a document-metadata marker from a Notion duplicate
+      // that we want to honor when the DB has no settings yet.
+      const parsedHtml = parseDocumentHtml(html);
       if (saved.length === 0) {
         // Fallback: derive initial blocks from the Notion HTML so the document
         // never opens with an empty block view.
-        saved = htmlToBlocks(html);
+        saved = parsedHtml.blocks;
       }
       setBlocks(saved);
       setMode("blocks");
@@ -247,9 +251,15 @@ const DocumentCreator = () => {
       const savedSettings = (blocksRes.data as any)?.settings ?? {};
       setNumberHeadings(!!savedSettings.numberHeadings);
       setCollapsedBlocks((savedSettings.collapsedBlocks as Record<string, boolean>) ?? {});
-      setMetadata(mergeMetadata({ ...(savedSettings.metadata ?? {}), docName: savedSettings.metadata?.docName ?? initialTitle }));
+      // Source of truth precedence: DB-saved metadata > Notion-embedded marker > defaults
+      const metaSource =
+        savedSettings.metadata
+          ? savedSettings.metadata
+          : (parsedHtml.documentMetadata ?? {});
+      const mergedMeta = mergeMetadata({ ...metaSource, docName: (metaSource as any).docName ?? initialTitle });
+      setMetadata(mergedMeta);
       setLastExportAt((blocksRes.data as any)?.notion_exported_at ?? null);
-      const mergedMeta = mergeMetadata({ ...(savedSettings.metadata ?? {}), docName: savedSettings.metadata?.docName ?? initialTitle });
+
       setBaselineSnapshot(JSON.stringify({
         blocks: saved,
         numberHeadings: !!savedSettings.numberHeadings,
@@ -290,7 +300,7 @@ const DocumentCreator = () => {
 
   const runNotionExport = async (targetPageId: string, targetUrl: string, finalTitle: string) => {
     if (!editor) return;
-    const html = mode === "blocks" ? blocksToHtml(blocks) : editor.getHTML();
+    const html = mode === "blocks" ? blocksToHtml(blocks, metadata) : editor.getHTML();
     const doc = mode === "blocks" ? undefined : editor.getJSON();
 
     if (mode === "blocks") {
