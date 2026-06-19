@@ -129,7 +129,7 @@ function BlockHeader({
 }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   return (
-    <div className="flex items-center justify-between border-b border-muted-foreground/30 bg-muted/30 px-2 py-1">
+    <div className={`flex items-center justify-between border-b border-muted-foreground/30 px-2 py-1 ${block.type === "image" || block.type === "image-table" ? "bg-success/10" : "bg-muted/30"}`}>
       <div className="flex items-center gap-1 min-w-0 flex-1">
         <button
           {...attributes}
