@@ -74,7 +74,7 @@ import EditorToolbar from "@/components/EditorToolbar";
 import BlockEditor from "@/components/BlockEditor";
 import type { Block } from "@/components/BlockEditor/types";
 import { blocksToHtml } from "@/components/BlockEditor/serialize";
-import { parseDocumentJson, SAMPLE_DOCUMENT_JSON, htmlToBlocks } from "@/components/BlockEditor/importJson";
+import { parseDocumentJson, SAMPLE_DOCUMENT_JSON, parseDocumentHtml } from "@/components/BlockEditor/importJson";
 import PdfCanvasPreview from "@/components/PdfCanvasPreview";
 import { Blocks, PencilLine, Upload, FileDown, MoreHorizontal, Check, FileCog } from "lucide-react";
 import { useRef } from "react";
