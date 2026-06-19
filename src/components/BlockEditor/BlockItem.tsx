@@ -24,7 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BLOCK_TYPE_LABELS, type Block, type Pictogram } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 import NotionImagePicker from "@/components/NotionImagePicker";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 interface Props {
@@ -574,7 +574,36 @@ function PictogramIcon({ kind, size = 28 }: { kind: Pictogram; size?: number }) 
 }
 
 
-function ImageBlockEditor({ block, onChange }: { block: Block; onChange: Props["onChange"] }) {
+function PictogramSelect({ value, onChange }: { value?: Pictogram; onChange: (v: Pictogram) => void }) {
+  return (
+    <Select value={value ?? "none"} onValueChange={(v) => onChange(v as Pictogram)}>
+      <SelectTrigger className="h-7 w-[200px] text-xs">
+        <SelectValue placeholder="Piktogram" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="none">Bez piktogramu</SelectItem>
+        <SelectItem value="alert">Výstraha</SelectItem>
+        <SelectItem value="alert-electric">Výstraha – elektrické nebezpečí</SelectItem>
+        <SelectItem value="info">Informace</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+}
+
+function PictogramRow({ value, onChange, children }: { value?: Pictogram; onChange: (v: Pictogram) => void; children: ReactNode }) {
+  if (!value || value === "none") return <>{children}</>;
+  return (
+    <div className="flex items-start gap-2">
+      <div className="shrink-0 pt-2">
+        <PictogramIcon kind={value} size={28} />
+      </div>
+      <div className="flex-1 min-w-0">{children}</div>
+    </div>
+  );
+}
+
+function ImageBlockEditor({ block, onChange, hidePictogram }: { block: Block; onChange: Props["onChange"]; hidePictogram?: boolean }) {
+
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -608,36 +637,47 @@ function ImageBlockEditor({ block, onChange }: { block: Block; onChange: Props["
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-2">
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) onPick(f);
-            e.target.value = "";
-          }}
-        />
-        <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
-          {uploading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Upload className="w-4 h-4 mr-1" />}
-          Nahrát obrázek
-        </Button>
-        <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
-          <ImageIcon className="w-4 h-4 mr-1" />
-          Vybrat v Notion
-        </Button>
-      </div>
-      {block.content.url && (
-        <img src={block.content.url} alt={block.content.alt} className="max-h-64 rounded border" />
+      {!hidePictogram && (
+        <div className="flex flex-wrap items-center gap-2">
+          <PictogramSelect
+            value={block.content.pictogram}
+            onChange={(v) => setContent(block, { pictogram: v }, onChange)}
+          />
+        </div>
       )}
-      <Input
-        value={block.content.alt ?? ""}
-        onChange={(e) => setContent(block, { alt: e.target.value }, onChange)}
-        placeholder="Popis obrázku"
-      />
-
+      <PictogramRow value={hidePictogram ? "none" : block.content.pictogram} onChange={() => {}}>
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) onPick(f);
+                e.target.value = "";
+              }}
+            />
+            <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
+              {uploading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Upload className="w-4 h-4 mr-1" />}
+              Nahrát obrázek
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
+              <ImageIcon className="w-4 h-4 mr-1" />
+              Vybrat v Notion
+            </Button>
+          </div>
+          {block.content.url && (
+            <img src={block.content.url} alt={block.content.alt} className="max-h-64 rounded border" />
+          )}
+          <Input
+            value={block.content.alt ?? ""}
+            onChange={(e) => setContent(block, { alt: e.target.value }, onChange)}
+            placeholder="Popis obrázku"
+          />
+        </div>
+      </PictogramRow>
       <NotionImagePicker open={pickerOpen} onOpenChange={setPickerOpen} onInsert={handleInsertFromNotion} />
     </div>
   );
@@ -647,7 +687,7 @@ function ImageBlockEditor({ block, onChange }: { block: Block; onChange: Props["
 
 
 
-function TableBlockEditor({ block, onChange, narrowFirstCol }: { block: Block; onChange: Props["onChange"]; narrowFirstCol?: boolean }) {
+function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { block: Block; onChange: Props["onChange"]; narrowFirstCol?: boolean; hidePictogram?: boolean }) {
   const rows: string[][] = block.content.rows ?? [];
   const cols = rows[0]?.length ?? 0;
 
@@ -663,48 +703,60 @@ function TableBlockEditor({ block, onChange, narrowFirstCol }: { block: Block; o
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-2">
-        <label className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Checkbox
-            checked={!!block.content.headerRow}
-            onCheckedChange={(v) => setContent(block, { headerRow: !!v }, onChange)}
+      {!hidePictogram && (
+        <div className="flex flex-wrap items-center gap-2">
+          <PictogramSelect
+            value={block.content.pictogram}
+            onChange={(v) => setContent(block, { pictogram: v }, onChange)}
           />
-          První řádek je záhlaví
-        </label>
-        <div className="flex items-center gap-1 ml-auto">
-          <Button type="button" variant="outline" size="sm" onClick={addRow}><Plus className="w-3 h-3 mr-1" />Řádek</Button>
-          <Button type="button" variant="outline" size="sm" onClick={removeRow}><Minus className="w-3 h-3 mr-1" />Řádek</Button>
-          <Button type="button" variant="outline" size="sm" onClick={addCol}><Plus className="w-3 h-3 mr-1" />Sloupec</Button>
-          <Button type="button" variant="outline" size="sm" onClick={removeCol}><Minus className="w-3 h-3 mr-1" />Sloupec</Button>
         </div>
-      </div>
-      <div className="overflow-auto rounded-md bg-[hsl(220,14%,90%)] p-3 dark:bg-[hsl(217,33%,12%)]">
-        <table className="w-full border-collapse">
-          {narrowFirstCol && cols > 0 && (
-            <colgroup>
-              <col style={{ width: "48px" }} />
-              {Array.from({ length: cols - 1 }).map((_, i) => <col key={i} />)}
-            </colgroup>
-          )}
-          <tbody>
-            {rows.map((row, ri) => (
-              <tr key={ri}>
-                {row.map((cell, ci) => (
-                  <td key={ci} className="border p-0">
-                    <Input
-                      value={cell}
-                      onChange={(e) => updateCell(ri, ci, e.target.value)}
-                      className={`h-8 rounded-none border-0 shadow-none focus-visible:ring-1 ${
-                        block.content.headerRow && ri === 0 ? "font-semibold bg-muted/40" : ""
-                      } ${narrowFirstCol && ci === 0 ? "text-center" : ""}`}
-                    />
-                  </td>
+      )}
+      <PictogramRow value={hidePictogram ? "none" : block.content.pictogram} onChange={() => {}}>
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Checkbox
+                checked={!!block.content.headerRow}
+                onCheckedChange={(v) => setContent(block, { headerRow: !!v }, onChange)}
+              />
+              První řádek je záhlaví
+            </label>
+            <div className="flex items-center gap-1 ml-auto">
+              <Button type="button" variant="outline" size="sm" onClick={addRow}><Plus className="w-3 h-3 mr-1" />Řádek</Button>
+              <Button type="button" variant="outline" size="sm" onClick={removeRow}><Minus className="w-3 h-3 mr-1" />Řádek</Button>
+              <Button type="button" variant="outline" size="sm" onClick={addCol}><Plus className="w-3 h-3 mr-1" />Sloupec</Button>
+              <Button type="button" variant="outline" size="sm" onClick={removeCol}><Minus className="w-3 h-3 mr-1" />Sloupec</Button>
+            </div>
+          </div>
+          <div className="overflow-auto rounded-md bg-[hsl(220,14%,90%)] p-3 dark:bg-[hsl(217,33%,12%)]">
+            <table className="w-full border-collapse">
+              {narrowFirstCol && cols > 0 && (
+                <colgroup>
+                  <col style={{ width: "48px" }} />
+                  {Array.from({ length: cols - 1 }).map((_, i) => <col key={i} />)}
+                </colgroup>
+              )}
+              <tbody>
+                {rows.map((row, ri) => (
+                  <tr key={ri}>
+                    {row.map((cell, ci) => (
+                      <td key={ci} className="border p-0">
+                        <Input
+                          value={cell}
+                          onChange={(e) => updateCell(ri, ci, e.target.value)}
+                          className={`h-8 rounded-none border-0 shadow-none focus-visible:ring-1 ${
+                            block.content.headerRow && ri === 0 ? "font-semibold bg-muted/40" : ""
+                          } ${narrowFirstCol && ci === 0 ? "text-center" : ""}`}
+                        />
+                      </td>
+                    ))}
+                  </tr>
                 ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </PictogramRow>
     </div>
   );
 }
@@ -742,22 +794,34 @@ function ImageTableBlockEditor({ block, onChange }: { block: Block; onChange: Pr
 
   return (
     <div className="space-y-4">
-      <div>
-        <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Obrázek</div>
-        <ImageBlockEditor
-          block={{ ...block, type: "image", content: imageContent } as Block}
-          onChange={handleSub("image")}
+      <div className="flex flex-wrap items-center gap-2">
+        <PictogramSelect
+          value={block.content?.pictogram}
+          onChange={(v) => onChange(block.id, { content: { ...block.content, pictogram: v } })}
         />
       </div>
-      <div className="border-t border-muted-foreground/20" />
-      <div>
-        <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Tabulka</div>
-        <TableBlockEditor
-          block={{ ...block, type: "table", content: tableContent } as Block}
-          onChange={handleSub("table")}
-          narrowFirstCol
-        />
-      </div>
+      <PictogramRow value={block.content?.pictogram} onChange={() => {}}>
+        <div className="space-y-4">
+          <div>
+            <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Obrázek</div>
+            <ImageBlockEditor
+              block={{ ...block, type: "image", content: imageContent } as Block}
+              onChange={handleSub("image")}
+              hidePictogram
+            />
+          </div>
+          <div className="border-t border-muted-foreground/20" />
+          <div>
+            <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Tabulka</div>
+            <TableBlockEditor
+              block={{ ...block, type: "table", content: tableContent } as Block}
+              onChange={handleSub("table")}
+              narrowFirstCol
+              hidePictogram
+            />
+          </div>
+        </div>
+      </PictogramRow>
     </div>
   );
 }

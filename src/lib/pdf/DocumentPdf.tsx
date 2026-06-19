@@ -477,6 +477,19 @@ function CalloutBlock({ block }: { block: Block }) {
   );
 }
 
+function withPictogram(block: Block, node: JSX.Element) {
+  const pictogram = block.content?.pictogram;
+  if (!pictogram || pictogram === "none") return node;
+  return (
+    <View style={{ position: "relative", marginVertical: 4 }} wrap={false}>
+      <View style={{ position: "absolute", left: -36, top: 2, width: 30, alignItems: "center" }}>
+        <PictogramSvg kind={pictogram} size={26} />
+      </View>
+      {node}
+    </View>
+  );
+}
+
 function BlockNode({ block, collector, number }: { block: Block; collector?: PageMap; number?: string }) {
   switch (block.type) {
     case "heading1": return <Heading block={block} level={1} collector={collector} number={number} />;
@@ -484,19 +497,20 @@ function BlockNode({ block, collector, number }: { block: Block; collector?: Pag
     case "heading3": return <Heading block={block} level={3} collector={collector} number={number} />;
     case "heading4": return <Heading block={block} level={4} number={number} />;
     case "text":     return <TextBlock block={block} />;
-    case "image":    return <ImageBlock block={block} />;
-    case "table":    return <TableBlock block={block} />;
-    case "image-table": return (
+    case "image":    return withPictogram(block, <ImageBlock block={block} />);
+    case "table":    return withPictogram(block, <TableBlock block={block} />);
+    case "image-table": return withPictogram(block, (
       <>
         <ImageBlock block={{ ...block, type: "image", content: block.content?.image ?? {} } as Block} />
         <TableBlock block={{ ...block, type: "table", content: block.content?.table ?? { headerRow: true, rows: [] } } as Block} />
       </>
-    );
+    ));
     case "alert":
     case "info":
     case "warning":  return <CalloutBlock block={block} />;
     case "pagebreak": return <View break />;
     default: return null;
+
   }
 }
 
