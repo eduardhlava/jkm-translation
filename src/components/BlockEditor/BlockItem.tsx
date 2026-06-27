@@ -249,7 +249,7 @@ function setContent(block: Block, patch: any, onChange: Props["onChange"]) {
   onChange(block.id, { content: { ...block.content, ...patch } });
 }
 
-function BlockBody({ block, onChange, headingNumber }: { block: Block; onChange: Props["onChange"]; headingNumber?: string }) {
+function BlockBody({ block, onChange, headingNumber, imageNumber, imageLabelPrefix }: { block: Block; onChange: Props["onChange"]; headingNumber?: string; imageNumber?: number; imageLabelPrefix?: string }) {
   switch (block.type) {
     case "heading1":
     case "heading2":
@@ -278,11 +278,11 @@ function BlockBody({ block, onChange, headingNumber }: { block: Block; onChange:
     case "text":
       return <TextBlockEditor block={block} onChange={onChange} />;
     case "image":
-      return <ImageBlockEditor block={block} onChange={onChange} />;
+      return <ImageBlockEditor block={block} onChange={onChange} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} />;
     case "table":
       return <TableBlockEditor block={block} onChange={onChange} />;
     case "image-table":
-      return <ImageTableBlockEditor block={block} onChange={onChange} />;
+      return <ImageTableBlockEditor block={block} onChange={onChange} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} />;
     case "alert":
     case "info":
     case "warning":
