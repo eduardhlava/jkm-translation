@@ -144,12 +144,12 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert }
             }`}
           >
             <Upload className="h-6 w-6" />
-            <div>Přetáhněte obrázky sem nebo kliknutím vyberte z disku</div>
+            <div>Přetáhněte obrázek sem nebo kliknutím vyberte z disku</div>
             <input
               ref={inputRef}
               type="file"
               accept="image/*"
-              multiple
+              
               className="hidden"
               onChange={(e) => {
                 if (e.target.files?.length) addFiles(e.target.files);
