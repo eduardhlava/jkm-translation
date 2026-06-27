@@ -35,6 +35,8 @@ interface Props {
   onChange: (id: string, patch: Partial<Block>) => void;
   onDelete: (id: string) => void;
   headingNumber?: string;
+  imageNumber?: number;
+  imageLabelPrefix?: string;
 }
 
 
