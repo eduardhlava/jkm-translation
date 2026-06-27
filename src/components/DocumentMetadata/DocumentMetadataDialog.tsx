@@ -66,7 +66,10 @@ export default function DocumentMetadataDialog({ open, onOpenChange, value, onCh
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        className="max-w-2xl w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto"
+        style={{ ["--border" as any]: "220 13% 70%", ["--input" as any]: "220 13% 70%" }}
+      >
         <DialogHeader>
           <DialogTitle>Metadata dokumentu</DialogTitle>
         </DialogHeader>
