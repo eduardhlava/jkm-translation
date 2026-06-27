@@ -628,7 +628,7 @@ function PictogramRow({ value, onChange, children }: { value?: Pictogram; onChan
   );
 }
 
-function ImageBlockEditor({ block, onChange, hidePictogram }: { block: Block; onChange: Props["onChange"]; hidePictogram?: boolean }) {
+function ImageBlockEditor({ block, onChange, hidePictogram, imageNumber, imageLabelPrefix }: { block: Block; onChange: Props["onChange"]; hidePictogram?: boolean; imageNumber?: number; imageLabelPrefix?: string }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
 
@@ -641,6 +641,9 @@ function ImageBlockEditor({ block, onChange, hidePictogram }: { block: Block; on
     setContent(block, { url: item.image, alt: block.content.alt || item.title }, onChange);
     setUploadOpen(false);
   };
+
+  const captionLabel =
+    imageNumber !== undefined ? `${imageLabelPrefix ?? "Obrázek č. "}${imageNumber}` : undefined;
 
   return (
     <div className="space-y-2">
@@ -667,11 +670,18 @@ function ImageBlockEditor({ block, onChange, hidePictogram }: { block: Block; on
           {block.content.url && (
             <img src={block.content.url} alt={block.content.alt} className="max-h-64 rounded border" />
           )}
-          <Input
-            value={block.content.alt ?? ""}
-            onChange={(e) => setContent(block, { alt: e.target.value }, onChange)}
-            placeholder="Popis obrázku"
-          />
+          <div className="space-y-1">
+            {captionLabel && (
+              <Label className="text-xs text-muted-foreground">
+                Popis obrázku — v exportu: <span className="font-medium text-foreground">{captionLabel}: {block.content.alt || "…"}</span>
+              </Label>
+            )}
+            <Input
+              value={block.content.alt ?? ""}
+              onChange={(e) => setContent(block, { alt: e.target.value }, onChange)}
+              placeholder="Popis obrázku"
+            />
+          </div>
         </div>
       </PictogramRow>
       <NotionImagePicker open={pickerOpen} onOpenChange={setPickerOpen} onInsert={handleInsertFromNotion} />
