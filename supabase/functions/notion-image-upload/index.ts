@@ -82,9 +82,15 @@ Deno.serve(async (req) => {
     const { data: pub } = supabase.storage.from("notion-images").getPublicUrl(path);
     const publicUrl = pub.publicUrl;
 
-    // 2) Create Notion page
+    // 2) Create Notion page (also fill "soubor" files property so the image
+    // shows in the database's gallery/table view, not only as page cover).
     const properties: Record<string, unknown> = {
       "název": { title: [{ text: { content: title } }] },
+      "soubor": {
+        files: [
+          { name: `${title}.${ext}`, type: "external", external: { url: publicUrl } },
+        ],
+      },
     };
     if (typ) properties["typ"] = { select: { name: typ } };
     if (stroj) properties["stroj"] = { select: { name: stroj } };
