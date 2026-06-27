@@ -9,7 +9,8 @@ import { ImageIcon, Upload, Loader2 } from "lucide-react";
 import NotionImagePicker from "@/components/NotionImagePicker";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { DEFAULT_DOCUMENT_METADATA, type DocumentMetadata, type DocumentDisclaimer } from "./types";
+import { DEFAULT_DOCUMENT_METADATA, DOCUMENT_LANGUAGES, type DocumentMetadata, type DocumentDisclaimer } from "./types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRef } from "react";
 
 interface Props {
