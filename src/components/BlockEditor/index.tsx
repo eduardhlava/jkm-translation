@@ -20,18 +20,20 @@ import BlockItem from "./BlockItem";
 import AddBlockMenu from "./AddBlockMenu";
 import { createBlock, type Block, type BlockType } from "./types";
 import { computeHeadingNumbers } from "./headingNumbers";
+import { computeImageNumbers } from "./imageNumbers";
 
 interface Props {
   blocks: Block[];
   onChange: (next: Block[]) => void;
   numberHeadings?: boolean;
+  imageLabelPrefix?: string;
   collapsed?: Record<string, boolean>;
   onCollapsedChange?: (next: Record<string, boolean>) => void;
   leftSlot?: React.ReactNode;
 }
 
 
-export default function BlockEditor({ blocks, onChange, numberHeadings, collapsed: collapsedProp, onCollapsedChange, leftSlot }: Props) {
+export default function BlockEditor({ blocks, onChange, numberHeadings, imageLabelPrefix, collapsed: collapsedProp, onCollapsedChange, leftSlot }: Props) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -39,6 +41,7 @@ export default function BlockEditor({ blocks, onChange, numberHeadings, collapse
 
   const sorted = [...blocks].sort((a, b) => a.order - b.order);
   const numbersMap = numberHeadings ? computeHeadingNumbers(sorted, 4) : null;
+  const imageNumbersMap = computeImageNumbers(sorted);
 
 
   const [collapsedLocal, setCollapsedLocal] = useState<Record<string, boolean>>({});
@@ -123,6 +126,8 @@ export default function BlockEditor({ blocks, onChange, numberHeadings, collapse
                   onChange={updateBlock}
                   onDelete={deleteBlock}
                   headingNumber={numbersMap?.get(b.id)}
+                  imageNumber={imageNumbersMap.get(b.id)}
+                  imageLabelPrefix={imageLabelPrefix}
                 />
                 <div className="group relative flex h-2 items-center justify-center">
                   <div className="opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">

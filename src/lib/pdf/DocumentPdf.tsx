@@ -437,7 +437,7 @@ function TextBlock({ block }: { block: Block }) {
   return body;
 }
 
-function ImageBlock({ block }: { block: Block }) {
+function ImageBlock({ block, captionOverride }: { block: Block; captionOverride?: string }) {
   const url = block.content?.url;
   const alt = block.content?.alt;
   if (!url) return null;
@@ -445,11 +445,12 @@ function ImageBlock({ block }: { block: Block }) {
   const width = Number.isFinite(requestedWidth) && requestedWidth > 0
     ? Math.max(120, Math.min(440, requestedWidth))
     : 340;
+  const caption = captionOverride !== undefined ? captionOverride : alt;
   return (
     <View wrap={false} style={styles.imageBlock}>
       {/* eslint-disable-next-line jsx-a11y/alt-text */}
       <Image src={url} style={[styles.image, { width }] as any} />
-      {alt ? <Text style={styles.caption}>{alt}</Text> : null}
+      {caption ? <Text style={styles.caption}>{caption}</Text> : null}
     </View>
   );
 }
@@ -502,18 +503,18 @@ function withPictogram(block: Block, node: JSX.Element) {
   );
 }
 
-function BlockNode({ block, collector, number }: { block: Block; collector?: PageMap; number?: string }) {
+function BlockNode({ block, collector, number, imageCaption }: { block: Block; collector?: PageMap; number?: string; imageCaption?: string }) {
   switch (block.type) {
     case "heading1": return <Heading block={block} level={1} collector={collector} number={number} />;
     case "heading2": return <Heading block={block} level={2} collector={collector} number={number} />;
     case "heading3": return <Heading block={block} level={3} collector={collector} number={number} />;
     case "heading4": return <Heading block={block} level={4} number={number} />;
     case "text":     return <TextBlock block={block} />;
-    case "image":    return withPictogram(block, <ImageBlock block={block} />);
+    case "image":    return withPictogram(block, <ImageBlock block={block} captionOverride={imageCaption} />);
     case "table":    return withPictogram(block, <TableBlock block={block} />);
     case "image-table": return withPictogram(block, (
       <>
-        <ImageBlock block={{ ...block, type: "image", content: block.content?.image ?? {} } as Block} />
+        <ImageBlock block={{ ...block, type: "image", content: block.content?.image ?? {} } as Block} captionOverride={imageCaption} />
         <TableBlock block={{ ...block, type: "table", content: block.content?.table ?? { headerRow: true, rows: [] } } as Block} />
       </>
     ));
@@ -652,6 +653,7 @@ export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collect
   const tocEntries = headings;
   const showToc = includeToc && (metadata?.showToc ?? true);
   const footerVersion = metadata?.footerVersion;
+  const imageLabelPrefix = metadata?.imageLabelPrefix ?? "Obrázek č. ";
   let numbers: Map<string, string> | undefined;
   if (numberHeadings) {
     const counters = [0, 0, 0, 0];
@@ -666,6 +668,26 @@ export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collect
       numbers.set(b.id, counters.slice(0, lvl).join("."));
     }
   }
+
+  // Sequential image numbering (image + image-table blocks).
+  const imageNumbers = new Map<string, number>();
+  {
+    let n = 0;
+    for (const b of ordered) {
+      if (b.type === "image" || b.type === "image-table") {
+        n += 1;
+        imageNumbers.set(b.id, n);
+      }
+    }
+  }
+
+  const captionFor = (b: Block): string | undefined => {
+    const n = imageNumbers.get(b.id);
+    if (!n) return undefined;
+    const alt = b.type === "image-table" ? (b.content?.image?.alt ?? "") : (b.content?.alt ?? "");
+    const label = `${imageLabelPrefix}${n}`;
+    return alt ? `${label}: ${alt}` : label;
+  };
 
   return (
     <Document title={title}>
@@ -686,7 +708,7 @@ export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collect
         <Footer footerVersion={footerVersion} />
         {!showToc && !metadata && <Text style={styles.docTitle}>{title}</Text>}
         {ordered.map((b) => (
-          <BlockNode key={b.id} block={b} collector={collector} number={numbers?.get(b.id)} />
+          <BlockNode key={b.id} block={b} collector={collector} number={numbers?.get(b.id)} imageCaption={captionFor(b)} />
         ))}
       </Page>
     </Document>

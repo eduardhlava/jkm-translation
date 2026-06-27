@@ -35,6 +35,8 @@ interface Props {
   onChange: (id: string, patch: Partial<Block>) => void;
   onDelete: (id: string) => void;
   headingNumber?: string;
+  imageNumber?: number;
+  imageLabelPrefix?: string;
 }
 
 
@@ -73,7 +75,7 @@ function blockPreview(block: Block): string {
   }
 }
 
-export default function BlockItem({ block, collapsed, onToggleCollapsed, onChange, onDelete, headingNumber }: Props) {
+export default function BlockItem({ block, collapsed, onToggleCollapsed, onChange, onDelete, headingNumber, imageNumber, imageLabelPrefix }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -101,7 +103,7 @@ export default function BlockItem({ block, collapsed, onToggleCollapsed, onChang
       />
       {!collapsed && (
         <div className="p-3">
-          <BlockBody block={block} onChange={onChange} headingNumber={headingNumber} />
+          <BlockBody block={block} onChange={onChange} headingNumber={headingNumber} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} />
         </div>
       )}
     </div>
@@ -247,7 +249,7 @@ function setContent(block: Block, patch: any, onChange: Props["onChange"]) {
   onChange(block.id, { content: { ...block.content, ...patch } });
 }
 
-function BlockBody({ block, onChange, headingNumber }: { block: Block; onChange: Props["onChange"]; headingNumber?: string }) {
+function BlockBody({ block, onChange, headingNumber, imageNumber, imageLabelPrefix }: { block: Block; onChange: Props["onChange"]; headingNumber?: string; imageNumber?: number; imageLabelPrefix?: string }) {
   switch (block.type) {
     case "heading1":
     case "heading2":
@@ -276,11 +278,11 @@ function BlockBody({ block, onChange, headingNumber }: { block: Block; onChange:
     case "text":
       return <TextBlockEditor block={block} onChange={onChange} />;
     case "image":
-      return <ImageBlockEditor block={block} onChange={onChange} />;
+      return <ImageBlockEditor block={block} onChange={onChange} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} />;
     case "table":
       return <TableBlockEditor block={block} onChange={onChange} />;
     case "image-table":
-      return <ImageTableBlockEditor block={block} onChange={onChange} />;
+      return <ImageTableBlockEditor block={block} onChange={onChange} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} />;
     case "alert":
     case "info":
     case "warning":
@@ -626,7 +628,7 @@ function PictogramRow({ value, onChange, children }: { value?: Pictogram; onChan
   );
 }
 
-function ImageBlockEditor({ block, onChange, hidePictogram }: { block: Block; onChange: Props["onChange"]; hidePictogram?: boolean }) {
+function ImageBlockEditor({ block, onChange, hidePictogram, imageNumber, imageLabelPrefix }: { block: Block; onChange: Props["onChange"]; hidePictogram?: boolean; imageNumber?: number; imageLabelPrefix?: string }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
 
@@ -639,6 +641,9 @@ function ImageBlockEditor({ block, onChange, hidePictogram }: { block: Block; on
     setContent(block, { url: item.image, alt: block.content.alt || item.title }, onChange);
     setUploadOpen(false);
   };
+
+  const captionLabel =
+    imageNumber !== undefined ? `${imageLabelPrefix ?? "Obrázek č. "}${imageNumber}` : undefined;
 
   return (
     <div className="space-y-2">
@@ -665,11 +670,18 @@ function ImageBlockEditor({ block, onChange, hidePictogram }: { block: Block; on
           {block.content.url && (
             <img src={block.content.url} alt={block.content.alt} className="max-h-64 rounded border" />
           )}
-          <Input
-            value={block.content.alt ?? ""}
-            onChange={(e) => setContent(block, { alt: e.target.value }, onChange)}
-            placeholder="Popis obrázku"
-          />
+          <div className="space-y-1">
+            {captionLabel && (
+              <Label className="text-xs text-muted-foreground">
+                Popis obrázku — v exportu: <span className="font-medium text-foreground">{captionLabel}: {block.content.alt || "…"}</span>
+              </Label>
+            )}
+            <Input
+              value={block.content.alt ?? ""}
+              onChange={(e) => setContent(block, { alt: e.target.value }, onChange)}
+              placeholder="Popis obrázku"
+            />
+          </div>
         </div>
       </PictogramRow>
       <NotionImagePicker open={pickerOpen} onOpenChange={setPickerOpen} onInsert={handleInsertFromNotion} />
@@ -777,7 +789,7 @@ function CalloutBlockEditor({ block, onChange }: { block: Block; onChange: Props
   );
 }
 
-function ImageTableBlockEditor({ block, onChange }: { block: Block; onChange: Props["onChange"] }) {
+function ImageTableBlockEditor({ block, onChange, imageNumber, imageLabelPrefix }: { block: Block; onChange: Props["onChange"]; imageNumber?: number; imageLabelPrefix?: string }) {
   const imageContent = block.content?.image ?? { url: "", alt: "" };
   const tableContent = block.content?.table ?? { headerRow: true, rows: [["#", "Název části"]] };
 
@@ -803,6 +815,8 @@ function ImageTableBlockEditor({ block, onChange }: { block: Block; onChange: Pr
               block={{ ...block, type: "image", content: imageContent } as Block}
               onChange={handleSub("image")}
               hidePictogram
+              imageNumber={imageNumber}
+              imageLabelPrefix={imageLabelPrefix}
             />
           </div>
           <div className="border-t border-muted-foreground/20" />
