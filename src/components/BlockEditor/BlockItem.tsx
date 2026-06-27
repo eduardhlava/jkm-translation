@@ -671,17 +671,18 @@ function ImageBlockEditor({ block, onChange, hidePictogram, imageNumber, imageLa
             <img src={block.content.url} alt={block.content.alt} className="max-h-64 rounded border" />
           )}
           <div className="space-y-1">
-            {captionLabel && (
-              <Label className="text-xs text-muted-foreground">
-                Popis obrázku — v exportu: <span className="font-medium text-foreground">{captionLabel}: {block.content.alt || "…"}</span>
-              </Label>
-            )}
             <Input
               value={block.content.alt ?? ""}
               onChange={(e) => setContent(block, { alt: e.target.value }, onChange)}
               placeholder="Popis obrázku"
             />
+            {captionLabel && (
+              <Label className="text-xs text-muted-foreground/70 font-normal">
+                Popis obrázku — v PDF: <span className="font-medium text-muted-foreground">{captionLabel}: {block.content.alt || "…"}</span>
+              </Label>
+            )}
           </div>
+
         </div>
       </PictogramRow>
       <NotionImagePicker open={pickerOpen} onOpenChange={setPickerOpen} onInsert={handleInsertFromNotion} />
