@@ -6,6 +6,8 @@ export interface DocumentDisclaimer {
 export interface DocumentMetadata {
   docCode: string;
   docName: string;
+  language: string;
+  imageLabelPrefix: string;
   coverImageUrl: string;
   coverImageAlt: string;
   disclaimerWarning: DocumentDisclaimer;
@@ -17,9 +19,28 @@ export interface DocumentMetadata {
   showToc: boolean;
 }
 
+// Language options — code + native name in the language itself.
+export const DOCUMENT_LANGUAGES: Array<{ code: string; nativeName: string }> = [
+  { code: "en", nativeName: "English" },
+  { code: "de", nativeName: "Deutsch" },
+  { code: "ru", nativeName: "Русский" },
+  { code: "it", nativeName: "Italiano" },
+  { code: "es", nativeName: "Español" },
+  { code: "pl", nativeName: "Polski" },
+  { code: "fr", nativeName: "Français" },
+  { code: "sk", nativeName: "Slovenčina" },
+  { code: "ua", nativeName: "Українська" },
+  { code: "cz", nativeName: "Čeština" },
+  { code: "fi", nativeName: "Suomi" },
+  { code: "se", nativeName: "Svenska" },
+  { code: "ro", nativeName: "Română" },
+];
+
 export const DEFAULT_DOCUMENT_METADATA: DocumentMetadata = {
   docCode: "",
   docName: "",
+  language: "cz",
+  imageLabelPrefix: "Obrázek č. ",
   coverImageUrl: "",
   coverImageAlt: "",
   disclaimerWarning: {
