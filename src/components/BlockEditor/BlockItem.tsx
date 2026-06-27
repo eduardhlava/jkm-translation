@@ -75,7 +75,7 @@ function blockPreview(block: Block): string {
   }
 }
 
-export default function BlockItem({ block, collapsed, onToggleCollapsed, onChange, onDelete, headingNumber }: Props) {
+export default function BlockItem({ block, collapsed, onToggleCollapsed, onChange, onDelete, headingNumber, imageNumber, imageLabelPrefix }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -103,7 +103,7 @@ export default function BlockItem({ block, collapsed, onToggleCollapsed, onChang
       />
       {!collapsed && (
         <div className="p-3">
-          <BlockBody block={block} onChange={onChange} headingNumber={headingNumber} />
+          <BlockBody block={block} onChange={onChange} headingNumber={headingNumber} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} />
         </div>
       )}
     </div>
