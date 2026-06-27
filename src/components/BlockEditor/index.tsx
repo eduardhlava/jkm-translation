@@ -126,6 +126,8 @@ export default function BlockEditor({ blocks, onChange, numberHeadings, imageLab
                   onChange={updateBlock}
                   onDelete={deleteBlock}
                   headingNumber={numbersMap?.get(b.id)}
+                  imageNumber={imageNumbersMap.get(b.id)}
+                  imageLabelPrefix={imageLabelPrefix}
                 />
                 <div className="group relative flex h-2 items-center justify-center">
                   <div className="opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
