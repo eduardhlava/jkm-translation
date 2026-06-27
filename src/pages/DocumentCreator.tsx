@@ -775,6 +775,7 @@ const DocumentCreator = () => {
                     blocks={blocks}
                     onChange={setBlocks}
                     numberHeadings={numberHeadings}
+                    imageLabelPrefix={metadata.imageLabelPrefix}
                     collapsed={collapsedBlocks}
                     onCollapsedChange={setCollapsedBlocks}
                   />
