@@ -789,7 +789,7 @@ function CalloutBlockEditor({ block, onChange }: { block: Block; onChange: Props
   );
 }
 
-function ImageTableBlockEditor({ block, onChange }: { block: Block; onChange: Props["onChange"] }) {
+function ImageTableBlockEditor({ block, onChange, imageNumber, imageLabelPrefix }: { block: Block; onChange: Props["onChange"]; imageNumber?: number; imageLabelPrefix?: string }) {
   const imageContent = block.content?.image ?? { url: "", alt: "" };
   const tableContent = block.content?.table ?? { headerRow: true, rows: [["#", "Název části"]] };
 
@@ -815,6 +815,8 @@ function ImageTableBlockEditor({ block, onChange }: { block: Block; onChange: Pr
               block={{ ...block, type: "image", content: imageContent } as Block}
               onChange={handleSub("image")}
               hidePictogram
+              imageNumber={imageNumber}
+              imageLabelPrefix={imageLabelPrefix}
             />
           </div>
           <div className="border-t border-muted-foreground/20" />
