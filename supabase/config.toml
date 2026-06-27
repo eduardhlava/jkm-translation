@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.refresh-image]
 verify_jwt = false
+
+[functions.notion-image-upload]
+verify_jwt = false
