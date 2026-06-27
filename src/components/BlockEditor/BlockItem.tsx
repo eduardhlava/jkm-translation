@@ -694,9 +694,25 @@ function ImageBlockEditor({ block, onChange, hidePictogram, imageNumber, imageLa
 
 
 
+function defaultColWidths(cols: number, narrowFirstCol?: boolean): number[] {
+  if (cols <= 0) return [];
+  if (narrowFirstCol && cols > 1) {
+    const rest = (100 - 6) / (cols - 1);
+    return [6, ...Array(cols - 1).fill(rest)];
+  }
+  return Array(cols).fill(100 / cols);
+}
+
 function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { block: Block; onChange: Props["onChange"]; narrowFirstCol?: boolean; hidePictogram?: boolean }) {
   const rows: string[][] = block.content.rows ?? [];
   const cols = rows[0]?.length ?? 0;
+  const storedWidths: number[] | undefined = block.content.colWidths;
+  const widths: number[] =
+    storedWidths && storedWidths.length === cols
+      ? storedWidths
+      : defaultColWidths(cols, narrowFirstCol);
+
+  const tableRef = useRef<HTMLTableElement>(null);
 
   const updateCell = (r: number, c: number, v: string) => {
     const next = rows.map((row, ri) => row.map((cell, ci) => (ri === r && ci === c ? v : cell)));
@@ -705,8 +721,46 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
 
   const addRow = () => setContent(block, { rows: [...rows, Array(cols).fill("")] }, onChange);
   const removeRow = () => rows.length > 1 && setContent(block, { rows: rows.slice(0, -1) }, onChange);
-  const addCol = () => setContent(block, { rows: rows.map((r) => [...r, ""]) }, onChange);
-  const removeCol = () => cols > 1 && setContent(block, { rows: rows.map((r) => r.slice(0, -1)) }, onChange);
+  const addCol = () =>
+    setContent(
+      block,
+      { rows: rows.map((r) => [...r, ""]), colWidths: defaultColWidths(cols + 1, narrowFirstCol) },
+      onChange,
+    );
+  const removeCol = () => {
+    if (cols <= 1) return;
+    setContent(
+      block,
+      { rows: rows.map((r) => r.slice(0, -1)), colWidths: defaultColWidths(cols - 1, narrowFirstCol) },
+      onChange,
+    );
+  };
+
+  const startResize = (idx: number) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const tableWidth = tableRef.current?.getBoundingClientRect().width ?? 1;
+    const startW = widths[idx];
+    const startNext = widths[idx + 1];
+    const minPct = 4;
+    const onMove = (ev: MouseEvent) => {
+      const deltaPct = ((ev.clientX - startX) / tableWidth) * 100;
+      let w = startW + deltaPct;
+      w = Math.max(minPct, Math.min(startW + startNext - minPct, w));
+      const next = startW + startNext - w;
+      const newWidths = [...widths];
+      newWidths[idx] = w;
+      newWidths[idx + 1] = next;
+      setContent(block, { colWidths: newWidths }, onChange);
+    };
+    const onUp = () => {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+    };
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  };
 
   return (
     <div className="space-y-2">
@@ -733,30 +787,52 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
               <Button type="button" variant="outline" size="sm" onClick={removeRow}><Minus className="w-3 h-3 mr-1" />Řádek</Button>
               <Button type="button" variant="outline" size="sm" onClick={addCol}><Plus className="w-3 h-3 mr-1" />Sloupec</Button>
               <Button type="button" variant="outline" size="sm" onClick={removeCol}><Minus className="w-3 h-3 mr-1" />Sloupec</Button>
+              {cols > 1 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setContent(block, { colWidths: defaultColWidths(cols, narrowFirstCol) }, onChange)}
+                  title="Rozdělit šířku sloupců rovnoměrně"
+                >
+                  Vyrovnat sloupce
+                </Button>
+              )}
             </div>
           </div>
           <div className="overflow-auto rounded-md bg-[hsl(220,14%,90%)] p-3 dark:bg-[hsl(217,33%,12%)]">
-            <table className="w-full border-collapse">
-              {narrowFirstCol && cols > 0 && (
+            <table ref={tableRef} className="w-full border-collapse table-fixed">
+              {cols > 0 && (
                 <colgroup>
-                  <col style={{ width: "48px" }} />
-                  {Array.from({ length: cols - 1 }).map((_, i) => <col key={i} />)}
+                  {widths.map((w, i) => (
+                    <col key={i} style={{ width: `${w}%` }} />
+                  ))}
                 </colgroup>
               )}
               <tbody>
                 {rows.map((row, ri) => (
                   <tr key={ri}>
-                    {row.map((cell, ci) => (
-                      <td key={ci} className="border p-0">
-                        <Input
-                          value={cell}
-                          onChange={(e) => updateCell(ri, ci, e.target.value)}
-                          className={`h-8 rounded-none border-0 shadow-none focus-visible:ring-1 ${
-                            block.content.headerRow && ri === 0 ? "font-semibold bg-muted/40" : ""
-                          } ${narrowFirstCol && ci === 0 ? "text-center" : ""}`}
-                        />
-                      </td>
-                    ))}
+                    {row.map((cell, ci) => {
+                      const showHandle = ri === 0 && ci < widths.length - 1;
+                      return (
+                        <td key={ci} className="border p-0 relative">
+                          <Input
+                            value={cell}
+                            onChange={(e) => updateCell(ri, ci, e.target.value)}
+                            className={`h-8 rounded-none border-0 shadow-none focus-visible:ring-1 ${
+                              block.content.headerRow && ri === 0 ? "font-semibold bg-muted/40" : ""
+                            } ${narrowFirstCol && ci === 0 ? "text-center" : ""}`}
+                          />
+                          {showHandle && (
+                            <div
+                              onMouseDown={startResize(ci)}
+                              className="absolute top-0 right-0 h-full w-1.5 -mr-[3px] cursor-col-resize hover:bg-primary/60 z-10"
+                              title="Táhnutím změňte šířku sloupce"
+                            />
+                          )}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>

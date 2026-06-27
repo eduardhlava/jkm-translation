@@ -458,16 +458,24 @@ function ImageBlock({ block, captionOverride }: { block: Block; captionOverride?
 function TableBlock({ block }: { block: Block }) {
   const rows: string[][] = block.content?.rows ?? [];
   const headerRow = !!block.content?.headerRow;
+  const colWidths: number[] | undefined = block.content?.colWidths;
   if (rows.length === 0) return null;
+  const cols = rows[0]?.length ?? 0;
+  const hasWidths = !!colWidths && colWidths.length === cols && cols > 0;
   return (
     <View style={styles.table}>
       {rows.map((row, ri) => (
         <View key={ri} style={styles.tr} wrap={false}>
-          {row.map((cell, ci) => (
-            <Text key={ci} style={[styles.td, headerRow && ri === 0 ? styles.th : {}] as any}>
-              {cell}
-            </Text>
-          ))}
+          {row.map((cell, ci) => {
+            const wStyle = hasWidths
+              ? { width: `${colWidths![ci]}%`, flexGrow: 0, flexShrink: 0, flexBasis: `${colWidths![ci]}%` }
+              : { flex: 1 };
+            return (
+              <Text key={ci} style={[styles.td, wStyle, headerRow && ri === 0 ? styles.th : {}] as any}>
+                {cell}
+              </Text>
+            );
+          })}
         </View>
       ))}
     </View>
