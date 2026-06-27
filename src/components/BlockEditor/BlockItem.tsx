@@ -24,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BLOCK_TYPE_LABELS, type Block, type Pictogram } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 import NotionImagePicker from "@/components/NotionImagePicker";
+import NotionImageUploadDialog from "@/components/NotionImageUploadDialog";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -626,36 +627,17 @@ function PictogramRow({ value, onChange, children }: { value?: Pictogram; onChan
 }
 
 function ImageBlockEditor({ block, onChange, hidePictogram }: { block: Block; onChange: Props["onChange"]; hidePictogram?: boolean }) {
-
-  const [uploading, setUploading] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
-
-  const onPick = async (file: File) => {
-    setUploading(true);
-    try {
-      const ext = file.name.split(".").pop() ?? "png";
-      const path = `block-editor/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("notion-images").upload(path, file, {
-        cacheControl: "3600",
-        upsert: false,
-        contentType: file.type,
-      });
-      if (error) throw error;
-      const { data } = supabase.storage.from("notion-images").getPublicUrl(path);
-      setContent(block, { url: data.publicUrl, alt: block.content.alt || file.name }, onChange);
-      toast.success("Obrázek nahrán");
-    } catch (e) {
-      toast.error("Nahrání selhalo", { description: e instanceof Error ? e.message : "" });
-    } finally {
-      setUploading(false);
-    }
-  };
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const handleInsertFromNotion = (item: { image: string; title: string }) => {
     setContent(block, { url: item.image, alt: block.content.alt || item.title }, onChange);
     setPickerOpen(false);
-    toast.success("Obrázek vložen");
+  };
+
+  const handleInsertUploaded = (item: { image: string; title: string }) => {
+    setContent(block, { url: item.image, alt: block.content.alt || item.title }, onChange);
+    setUploadOpen(false);
   };
 
   return (
@@ -671,19 +653,8 @@ function ImageBlockEditor({ block, onChange, hidePictogram }: { block: Block; on
       <PictogramRow value={hidePictogram ? "none" : block.content.pictogram} onChange={() => {}}>
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) onPick(f);
-                e.target.value = "";
-              }}
-            />
-            <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
-              {uploading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Upload className="w-4 h-4 mr-1" />}
+            <Button type="button" variant="outline" size="sm" onClick={() => setUploadOpen(true)}>
+              <Upload className="w-4 h-4 mr-1" />
               Nahrát obrázek
             </Button>
             <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
@@ -702,6 +673,7 @@ function ImageBlockEditor({ block, onChange, hidePictogram }: { block: Block; on
         </div>
       </PictogramRow>
       <NotionImagePicker open={pickerOpen} onOpenChange={setPickerOpen} onInsert={handleInsertFromNotion} />
+      <NotionImageUploadDialog open={uploadOpen} onOpenChange={setUploadOpen} onInsert={handleInsertUploaded} />
     </div>
   );
 }
