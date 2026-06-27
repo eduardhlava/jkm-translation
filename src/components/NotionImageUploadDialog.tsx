@@ -125,7 +125,10 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert }
         if (!v) reset();
       }}
     >
-      <DialogContent className="max-w-3xl w-[calc(100vw-2rem)] overflow-hidden">
+      <DialogContent
+        className="max-w-3xl w-[calc(100vw-2rem)] overflow-hidden"
+        style={{ ["--border" as any]: "220 13% 70%", ["--input" as any]: "220 13% 70%" }}
+      >
         <DialogHeader>
           <DialogTitle>Nahrát obrázek do Notion</DialogTitle>
         </DialogHeader>
