@@ -81,6 +81,25 @@ export default function DocumentMetadataDialog({ open, onOpenChange, value, onCh
               <Label className="text-xs text-muted-foreground">Název dokumentu</Label>
               <Input value={draft.docName} onChange={(e) => update({ docName: e.target.value })} />
             </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Jazyk dokumentu</Label>
+              <Select value={draft.language} onValueChange={(v) => update({ language: v })}>
+                <SelectTrigger><SelectValue placeholder="Vyberte jazyk" /></SelectTrigger>
+                <SelectContent>
+                  {DOCUMENT_LANGUAGES.map((l) => (
+                    <SelectItem key={l.code} value={l.code}>{l.code} – {l.nativeName}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Označení obrázků</Label>
+              <Input
+                value={draft.imageLabelPrefix}
+                onChange={(e) => update({ imageLabelPrefix: e.target.value })}
+                placeholder="Obrázek č. "
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
