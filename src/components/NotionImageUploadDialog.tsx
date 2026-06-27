@@ -8,8 +8,12 @@ import { Loader2, Upload, X, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const TYP_OPTIONS = ["schéma", "3D model", "fotografie"];
-const STROJ_OPTIONS = ["JCM", "JCC", "JAB"];
+const TYP_OPTIONS = ["schéma", "3D model", "fotografie", "elektrické schéma", "ostatní"];
+const STROJ_OPTIONS = [
+  "JCM", "JGS", "JGP", "JHA", "JHV", "JHP", "JHS", "JHI", "JHD", "JHC",
+  "JCT", "JGT", "JGD", "JGC", "JCR", "JCC", "JAB", "JVR",
+  "JCP", "JTE", "JMS", "JTU", "JCS", "JVE", "JVL", "JVC", "JTR",
+];
 
 export type UploadedNotionImage = {
   id: string;
