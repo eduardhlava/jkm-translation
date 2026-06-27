@@ -653,6 +653,7 @@ export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collect
   const tocEntries = headings;
   const showToc = includeToc && (metadata?.showToc ?? true);
   const footerVersion = metadata?.footerVersion;
+  const imageLabelPrefix = metadata?.imageLabelPrefix ?? "Obrázek č. ";
   let numbers: Map<string, string> | undefined;
   if (numberHeadings) {
     const counters = [0, 0, 0, 0];
@@ -667,6 +668,26 @@ export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collect
       numbers.set(b.id, counters.slice(0, lvl).join("."));
     }
   }
+
+  // Sequential image numbering (image + image-table blocks).
+  const imageNumbers = new Map<string, number>();
+  {
+    let n = 0;
+    for (const b of ordered) {
+      if (b.type === "image" || b.type === "image-table") {
+        n += 1;
+        imageNumbers.set(b.id, n);
+      }
+    }
+  }
+
+  const captionFor = (b: Block): string | undefined => {
+    const n = imageNumbers.get(b.id);
+    if (!n) return undefined;
+    const alt = b.type === "image-table" ? (b.content?.image?.alt ?? "") : (b.content?.alt ?? "");
+    const label = `${imageLabelPrefix}${n}`;
+    return alt ? `${label}: ${alt}` : label;
+  };
 
   return (
     <Document title={title}>
@@ -687,7 +708,7 @@ export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collect
         <Footer footerVersion={footerVersion} />
         {!showToc && !metadata && <Text style={styles.docTitle}>{title}</Text>}
         {ordered.map((b) => (
-          <BlockNode key={b.id} block={b} collector={collector} number={numbers?.get(b.id)} />
+          <BlockNode key={b.id} block={b} collector={collector} number={numbers?.get(b.id)} imageCaption={captionFor(b)} />
         ))}
       </Page>
     </Document>
