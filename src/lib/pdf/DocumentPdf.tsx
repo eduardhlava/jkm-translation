@@ -437,7 +437,7 @@ function TextBlock({ block }: { block: Block }) {
   return body;
 }
 
-function ImageBlock({ block }: { block: Block }) {
+function ImageBlock({ block, captionOverride }: { block: Block; captionOverride?: string }) {
   const url = block.content?.url;
   const alt = block.content?.alt;
   if (!url) return null;
@@ -445,11 +445,12 @@ function ImageBlock({ block }: { block: Block }) {
   const width = Number.isFinite(requestedWidth) && requestedWidth > 0
     ? Math.max(120, Math.min(440, requestedWidth))
     : 340;
+  const caption = captionOverride !== undefined ? captionOverride : alt;
   return (
     <View wrap={false} style={styles.imageBlock}>
       {/* eslint-disable-next-line jsx-a11y/alt-text */}
       <Image src={url} style={[styles.image, { width }] as any} />
-      {alt ? <Text style={styles.caption}>{alt}</Text> : null}
+      {caption ? <Text style={styles.caption}>{caption}</Text> : null}
     </View>
   );
 }
