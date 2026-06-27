@@ -25,6 +25,21 @@ Deno.serve(async (req) => {
     const NOTION_API_KEY = Deno.env.get("NOTION_API_KEY");
     if (!NOTION_API_KEY) throw new Error("NOTION_API_KEY is not configured");
 
+    // Debug: GET returns DB schema so we can inspect property names/types
+    if (req.method === "GET") {
+      const url = new URL(req.url);
+      const dbId = url.searchParams.get("db") || DEFAULT_DB_ID;
+      const r = await fetch(`https://api.notion.com/v1/databases/${dbId}`, {
+        headers: { Authorization: `Bearer ${NOTION_API_KEY}`, "Notion-Version": NOTION_VERSION },
+      });
+      const j = await r.json();
+      const props: Record<string, string> = {};
+      for (const [k, v] of Object.entries(j.properties ?? {})) props[k] = (v as any).type;
+      return new Response(JSON.stringify({ properties: props }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
@@ -67,9 +82,15 @@ Deno.serve(async (req) => {
     const { data: pub } = supabase.storage.from("notion-images").getPublicUrl(path);
     const publicUrl = pub.publicUrl;
 
-    // 2) Create Notion page
+    // 2) Create Notion page (also fill "soubor" files property so the image
+    // shows in the database's gallery/table view, not only as page cover).
     const properties: Record<string, unknown> = {
       "název": { title: [{ text: { content: title } }] },
+      "soubor": {
+        files: [
+          { name: `${title}.${ext}`, type: "external", external: { url: publicUrl } },
+        ],
+      },
     };
     if (typ) properties["typ"] = { select: { name: typ } };
     if (stroj) properties["stroj"] = { select: { name: stroj } };

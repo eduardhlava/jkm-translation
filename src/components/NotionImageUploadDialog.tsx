@@ -63,17 +63,17 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert }
   const reset = () => setFiles([]);
 
   const addFiles = useCallback((list: FileList | File[]) => {
-    const arr = Array.from(list).filter((f) => f.type.startsWith("image/"));
-    setFiles((prev) => [
-      ...prev,
-      ...arr.map((file) => ({
+    const first = Array.from(list).find((f) => f.type.startsWith("image/"));
+    if (!first) return;
+    setFiles([
+      {
         localId: crypto.randomUUID(),
-        file,
-        preview: URL.createObjectURL(file),
-        title: stripExt(file.name),
+        file: first,
+        preview: URL.createObjectURL(first),
+        title: stripExt(first.name),
         typ: "",
         stroj: "",
-      })),
+      },
     ]);
   }, []);
 
@@ -144,12 +144,12 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert }
             }`}
           >
             <Upload className="h-6 w-6" />
-            <div>Přetáhněte obrázky sem nebo kliknutím vyberte z disku</div>
+            <div>Přetáhněte obrázek sem nebo kliknutím vyberte z disku</div>
             <input
               ref={inputRef}
               type="file"
               accept="image/*"
-              multiple
+              
               className="hidden"
               onChange={(e) => {
                 if (e.target.files?.length) addFiles(e.target.files);
