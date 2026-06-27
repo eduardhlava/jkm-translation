@@ -503,18 +503,18 @@ function withPictogram(block: Block, node: JSX.Element) {
   );
 }
 
-function BlockNode({ block, collector, number }: { block: Block; collector?: PageMap; number?: string }) {
+function BlockNode({ block, collector, number, imageCaption }: { block: Block; collector?: PageMap; number?: string; imageCaption?: string }) {
   switch (block.type) {
     case "heading1": return <Heading block={block} level={1} collector={collector} number={number} />;
     case "heading2": return <Heading block={block} level={2} collector={collector} number={number} />;
     case "heading3": return <Heading block={block} level={3} collector={collector} number={number} />;
     case "heading4": return <Heading block={block} level={4} number={number} />;
     case "text":     return <TextBlock block={block} />;
-    case "image":    return withPictogram(block, <ImageBlock block={block} />);
+    case "image":    return withPictogram(block, <ImageBlock block={block} captionOverride={imageCaption} />);
     case "table":    return withPictogram(block, <TableBlock block={block} />);
     case "image-table": return withPictogram(block, (
       <>
-        <ImageBlock block={{ ...block, type: "image", content: block.content?.image ?? {} } as Block} />
+        <ImageBlock block={{ ...block, type: "image", content: block.content?.image ?? {} } as Block} captionOverride={imageCaption} />
         <TableBlock block={{ ...block, type: "table", content: block.content?.table ?? { headerRow: true, rows: [] } } as Block} />
       </>
     ));
