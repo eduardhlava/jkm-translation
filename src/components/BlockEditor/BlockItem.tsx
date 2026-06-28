@@ -378,7 +378,15 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
 
   const exec = (cmd: string, value?: string) => {
     restoreSelection();
+    try { document.execCommand("styleWithCSS", false, "true"); } catch {}
     document.execCommand(cmd, false, value);
+    syncHtml();
+  };
+
+  const applyHighlight = (color: string | null) => {
+    restoreSelection();
+    try { document.execCommand("styleWithCSS", false, "true"); } catch {}
+    document.execCommand("hiliteColor", false, color ?? "transparent");
     syncHtml();
   };
 
