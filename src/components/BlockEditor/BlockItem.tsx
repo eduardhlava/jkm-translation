@@ -29,6 +29,14 @@ import NotionImageUploadDialog from "@/components/NotionImageUploadDialog";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
+// Shared highlight palette — used for text background and table row background.
+export const HIGHLIGHT_COLORS: Array<{ key: string; label: string; color: string }> = [
+  { key: "orange", label: "Oranžová", color: "#f5a25d" },
+  { key: "red",    label: "Červená",  color: "#e07856" },
+  { key: "green",  label: "Zelená",   color: "#9ec99a" },
+  { key: "blue",   label: "Modrá",    color: "#a9c8e6" },
+];
+
 interface Props {
   block: Block;
   collapsed?: boolean;
