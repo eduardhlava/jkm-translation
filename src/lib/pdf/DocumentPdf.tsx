@@ -97,6 +97,14 @@ const styles = StyleSheet.create({
   },
   coverImageWrap: { alignItems: "center", marginVertical: 18 },
   coverImage: { maxHeight: 280, width: 260, objectFit: "contain" },
+  coverLanguage: {
+    textAlign: "center",
+    fontSize: 12,
+    fontFamily: "NotoSans",
+    fontWeight: "bold",
+    marginTop: 10,
+    letterSpacing: 0.5,
+  },
   coverManufacturer: {
     position: "absolute",
     left: 50,
