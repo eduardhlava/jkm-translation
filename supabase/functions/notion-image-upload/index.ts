@@ -70,9 +70,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 1) Upload to public storage
+    // 1) Upload to public storage — use the user-provided title as the file name
     const ext = (fileName.split(".").pop() || "png").toLowerCase();
-    const path = `notion-uploads/${crypto.randomUUID()}.${ext}`;
+    const safeTitle = title
+      .trim()
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9-_]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80) || "image";
+    const path = `notion-uploads/${safeTitle}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
     const bytes = decodeBase64(fileBase64);
     const { error: upErr } = await supabase.storage.from("notion-images").upload(path, bytes, {
       contentType: contentType || "application/octet-stream",
