@@ -209,7 +209,7 @@ function fontStyleFor(r: Run): Record<string, string> {
 }
 
 function RunsText({ runs }: { runs: Run[] }) {
-  const hasInlineStyles = runs.some((r) => r.bold || r.italic || r.underline || r.href);
+  const hasInlineStyles = runs.some((r) => r.bold || r.italic || r.underline || r.href || r.bg);
   if (!hasInlineStyles) return <>{runs.map((r) => r.text).join("")}</>;
 
   return (
@@ -218,6 +218,7 @@ function RunsText({ runs }: { runs: Run[] }) {
         const style: any = fontStyleFor(r);
         if (r.underline || r.href) style.textDecoration = "underline";
         if (r.href) style.color = "#2563eb";
+        if (r.bg) style.backgroundColor = r.bg;
         if (r.href) {
           return (
             <Link key={i} src={r.href} style={style}>
