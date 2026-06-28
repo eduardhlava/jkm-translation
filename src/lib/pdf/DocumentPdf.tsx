@@ -473,25 +473,30 @@ function TableBlock({ block }: { block: Block }) {
   const rows: string[][] = block.content?.rows ?? [];
   const headerRow = !!block.content?.headerRow;
   const colWidths: number[] | undefined = block.content?.colWidths;
+  const rowColors: Array<string | null> = block.content?.rowColors ?? [];
   if (rows.length === 0) return null;
   const cols = rows[0]?.length ?? 0;
   const hasWidths = !!colWidths && colWidths.length === cols && cols > 0;
   return (
     <View style={styles.table}>
-      {rows.map((row, ri) => (
-        <View key={ri} style={styles.tr} wrap={false}>
-          {row.map((cell, ci) => {
-            const wStyle = hasWidths
-              ? { width: `${colWidths![ci]}%`, flexGrow: 0, flexShrink: 0, flexBasis: `${colWidths![ci]}%` }
-              : { flex: 1 };
-            return (
-              <Text key={ci} style={[styles.td, wStyle, headerRow && ri === 0 ? styles.th : {}] as any}>
-                {cell}
-              </Text>
-            );
-          })}
-        </View>
-      ))}
+      {rows.map((row, ri) => {
+        const rowBg = rowColors[ri] ?? null;
+        return (
+          <View key={ri} style={[styles.tr, rowBg ? { backgroundColor: rowBg } : {}] as any} wrap={false}>
+            {row.map((cell, ci) => {
+              const wStyle = hasWidths
+                ? { width: `${colWidths![ci]}%`, flexGrow: 0, flexShrink: 0, flexBasis: `${colWidths![ci]}%` }
+                : { flex: 1 };
+              const isHeader = headerRow && ri === 0 && !rowBg;
+              return (
+                <Text key={ci} style={[styles.td, wStyle, isHeader ? styles.th : {}, headerRow && ri === 0 ? { fontFamily: "NotoSans", fontWeight: "bold" } : {}] as any}>
+                  {cell}
+                </Text>
+              );
+            })}
+          </View>
+        );
+      })}
     </View>
   );
 }
