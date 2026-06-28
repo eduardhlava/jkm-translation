@@ -918,7 +918,7 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                       {i < widths.length - 1 && (
                         <div
                           onMouseDown={startResize(i)}
-                          className="absolute top-0 right-0 h-full w-1.5 -mr-[3px] cursor-col-resize hover:bg-primary/60 z-10"
+                          className="absolute top-0 right-0 h-full w-2 -mr-[4px] cursor-col-resize bg-foreground/40 hover:bg-primary z-10 rounded-sm"
                           title="Táhnutím změňte šířku sloupce"
                         />
                       )}
