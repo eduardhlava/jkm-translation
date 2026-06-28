@@ -1,7 +1,8 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Trash2, AlertTriangle, Info, AlertCircle, Loader2, Upload, Plus, Minus, ChevronDown, ChevronRight, List, ListMinus, ListOrdered, Link, ImageIcon, AlignLeft, AlignCenter, AlignRight, SeparatorHorizontal, Pencil } from "lucide-react";
+import { GripVertical, Trash2, AlertTriangle, Info, AlertCircle, Loader2, Upload, Plus, Minus, ChevronDown, ChevronRight, List, ListMinus, ListOrdered, Link, ImageIcon, AlignLeft, AlignCenter, AlignRight, SeparatorHorizontal, Pencil, MoreVertical } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +28,14 @@ import NotionImagePicker from "@/components/NotionImagePicker";
 import NotionImageUploadDialog from "@/components/NotionImageUploadDialog";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
+
+// Shared highlight palette — used for text background and table row background.
+export const HIGHLIGHT_COLORS: Array<{ key: string; label: string; color: string }> = [
+  { key: "orange", label: "Oranžová", color: "#f5a25d" },
+  { key: "red",    label: "Červená",  color: "#e07856" },
+  { key: "green",  label: "Zelená",   color: "#9ec99a" },
+  { key: "blue",   label: "Modrá",    color: "#a9c8e6" },
+];
 
 interface Props {
   block: Block;
@@ -378,7 +387,15 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
 
   const exec = (cmd: string, value?: string) => {
     restoreSelection();
+    try { document.execCommand("styleWithCSS", false, "true"); } catch {}
     document.execCommand(cmd, false, value);
+    syncHtml();
+  };
+
+  const applyHighlight = (color: string | null) => {
+    restoreSelection();
+    try { document.execCommand("styleWithCSS", false, "true"); } catch {}
+    document.execCommand("hiliteColor", false, color ?? "transparent");
     syncHtml();
   };
 
@@ -464,6 +481,34 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
             <SelectItem value="large">Velké</SelectItem>
           </SelectContent>
         </Select>
+        <div className="mx-1 h-5 w-px bg-border" />
+        {HIGHLIGHT_COLORS.map((c) => (
+          <Button
+            key={c.key}
+            type="button"
+            variant="ghost"
+            size="icon"
+            title={`Podbarvit – ${c.label}`}
+            aria-label={`Podbarvit ${c.label}`}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => applyHighlight(c.color)}
+            className="h-7 w-7"
+          >
+            <span className="block h-4 w-4 rounded-sm border border-foreground/30" style={{ backgroundColor: c.color }} />
+          </Button>
+        ))}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          title="Odebrat podbarvení"
+          aria-label="Odebrat podbarvení"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => applyHighlight(null)}
+          className="h-7 w-7 text-xs"
+        >
+          ×
+        </Button>
         <Select
           value={block.content.pictogram ?? "none"}
           onValueChange={(v) => onChange(block.id, { content: { ...block.content, pictogram: v } })}
@@ -715,13 +760,34 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
 
   const tableRef = useRef<HTMLTableElement>(null);
 
+  const rowColors: Array<string | null> = block.content.rowColors ?? [];
+  const getRowColor = (ri: number): string | null => rowColors[ri] ?? null;
+
   const updateCell = (r: number, c: number, v: string) => {
     const next = rows.map((row, ri) => row.map((cell, ci) => (ri === r && ci === c ? v : cell)));
     setContent(block, { rows: next }, onChange);
   };
 
-  const addRow = () => setContent(block, { rows: [...rows, Array(cols).fill("")] }, onChange);
-  const removeRow = () => rows.length > 1 && setContent(block, { rows: rows.slice(0, -1) }, onChange);
+  const addRow = () => {
+    const nextRows = [...rows, Array(cols).fill("")];
+    setContent(block, { rows: nextRows }, onChange);
+  };
+  const removeRow = () => rows.length > 1 && setContent(block, {
+    rows: rows.slice(0, -1),
+    rowColors: rowColors.slice(0, -1),
+  }, onChange);
+  const deleteRowAt = (idx: number) => {
+    if (rows.length <= 1) return;
+    setContent(block, {
+      rows: rows.filter((_, i) => i !== idx),
+      rowColors: rowColors.length ? rowColors.filter((_, i) => i !== idx) : rowColors,
+    }, onChange);
+  };
+  const setRowColor = (idx: number, color: string | null) => {
+    const next = rows.map((_, i) => rowColors[i] ?? null);
+    next[idx] = color;
+    setContent(block, { rowColors: next }, onChange);
+  };
   const addCol = () =>
     setContent(
       block,
@@ -733,6 +799,14 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
     setContent(
       block,
       { rows: rows.map((r) => r.slice(0, -1)), colWidths: defaultColWidths(cols - 1, narrowFirstCol) },
+      onChange,
+    );
+  };
+  const deleteColAt = (idx: number) => {
+    if (cols <= 1) return;
+    setContent(
+      block,
+      { rows: rows.map((r) => r.filter((_, i) => i !== idx)), colWidths: defaultColWidths(cols - 1, narrowFirstCol) },
       onChange,
     );
   };
@@ -805,37 +879,115 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
             <table ref={tableRef} className="w-full border-collapse table-fixed">
               {cols > 0 && (
                 <colgroup>
+                  <col style={{ width: "28px" }} />
                   {widths.map((w, i) => (
                     <col key={i} style={{ width: `${w}%` }} />
                   ))}
                 </colgroup>
               )}
+              <thead>
+                <tr>
+                  <th className="p-0" />
+                  {widths.map((_, i) => (
+                    <th key={i} className="p-0 h-5 text-center align-middle">
+                      {cols > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => deleteColAt(i)}
+                          className="opacity-30 hover:opacity-100 hover:text-destructive transition-opacity"
+                          title="Smazat sloupec"
+                          aria-label="Smazat sloupec"
+                        >
+                          <Trash2 className="w-3 h-3 inline" />
+                        </button>
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
               <tbody>
-                {rows.map((row, ri) => (
-                  <tr key={ri}>
-                    {row.map((cell, ci) => {
-                      const showHandle = ri === 0 && ci < widths.length - 1;
-                      return (
-                        <td key={ci} className="border p-0 relative">
-                          <Input
-                            value={cell}
-                            onChange={(e) => updateCell(ri, ci, e.target.value)}
-                            className={`h-8 rounded-none border-0 shadow-none focus-visible:ring-1 ${
-                              block.content.headerRow && ri === 0 ? "font-semibold bg-muted/40" : ""
-                            } ${narrowFirstCol && ci === 0 ? "text-center" : ""}`}
-                          />
-                          {showHandle && (
-                            <div
-                              onMouseDown={startResize(ci)}
-                              className="absolute top-0 right-0 h-full w-1.5 -mr-[3px] cursor-col-resize hover:bg-primary/60 z-10"
-                              title="Táhnutím změňte šířku sloupce"
+                {rows.map((row, ri) => {
+                  const rowBg = getRowColor(ri);
+                  return (
+                    <tr key={ri} style={rowBg ? { backgroundColor: rowBg } : undefined}>
+                      <td className="p-0 align-middle border-0 text-center">
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button
+                              type="button"
+                              className="p-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-accent"
+                              title="Možnosti řádku"
+                              aria-label="Možnosti řádku"
+                            >
+                              <MoreVertical className="w-3.5 h-3.5" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent side="left" align="center" className="w-auto p-2">
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1">
+                                {HIGHLIGHT_COLORS.map((c) => (
+                                  <button
+                                    key={c.key}
+                                    type="button"
+                                    onClick={() => setRowColor(ri, c.color)}
+                                    title={`Podbarvit řádek – ${c.label}`}
+                                    aria-label={`Podbarvit řádek ${c.label}`}
+                                    className="w-5 h-5 rounded border border-foreground/30 hover:scale-110 transition-transform"
+                                    style={{ backgroundColor: c.color }}
+                                  />
+                                ))}
+                                <button
+                                  type="button"
+                                  onClick={() => setRowColor(ri, null)}
+                                  title="Bez podbarvení"
+                                  aria-label="Bez podbarvení"
+                                  className="w-5 h-5 rounded border border-foreground/30 bg-background text-xs leading-none"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                              {rows.length > 1 && (
+                                <>
+                                  <div className="w-px h-5 bg-border" />
+                                  <button
+                                    type="button"
+                                    onClick={() => deleteRowAt(ri)}
+                                    title="Smazat řádek"
+                                    aria-label="Smazat řádek"
+                                    className="p-1 rounded text-destructive hover:bg-destructive/10"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </td>
+                      {row.map((cell, ci) => {
+                        const showHandle = ri === 0 && ci < widths.length - 1;
+                        return (
+                          <td key={ci} className="border p-0 relative">
+                            <Input
+                              value={cell}
+                              onChange={(e) => updateCell(ri, ci, e.target.value)}
+                              className={`h-8 rounded-none border-0 shadow-none focus-visible:ring-1 bg-transparent ${
+                                block.content.headerRow && ri === 0 && !rowBg ? "font-semibold bg-muted/40" : ""
+                              } ${block.content.headerRow && ri === 0 ? "font-semibold" : ""} ${narrowFirstCol && ci === 0 ? "text-center" : ""}`}
                             />
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
+                            {showHandle && (
+                              <div
+                                onMouseDown={startResize(ci)}
+                                className="absolute top-0 right-0 h-full w-1.5 -mr-[3px] cursor-col-resize hover:bg-primary/60 z-10"
+                                title="Táhnutím změňte šířku sloupce"
+                              />
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

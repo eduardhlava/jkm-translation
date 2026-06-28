@@ -4,7 +4,7 @@ import notoRegular from "@/assets/fonts/NotoSans-Regular.ttf?url";
 import notoBold from "@/assets/fonts/NotoSans-Bold.ttf?url";
 import notoItalic from "@/assets/fonts/NotoSans-Italic.ttf?url";
 import notoBoldItalic from "@/assets/fonts/NotoSans-BoldItalic.ttf?url";
-import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
+import { DOCUMENT_LANGUAGES, type DocumentMetadata } from "@/components/DocumentMetadata/types";
 
 Font.register({
   family: "NotoSans",
@@ -97,6 +97,14 @@ const styles = StyleSheet.create({
   },
   coverImageWrap: { alignItems: "center", marginVertical: 18 },
   coverImage: { maxHeight: 280, width: 260, objectFit: "contain" },
+  coverLanguage: {
+    textAlign: "center",
+    fontSize: 12,
+    fontFamily: "NotoSans",
+    fontWeight: "bold",
+    marginTop: 10,
+    letterSpacing: 0.5,
+  },
   coverManufacturer: {
     position: "absolute",
     left: 50,
@@ -139,7 +147,7 @@ const calloutCfg = {
 } as const;
 
 // ---------- HTML → inline runs ----------
-type Run = { text: string; bold?: boolean; italic?: boolean; underline?: boolean; href?: string };
+type Run = { text: string; bold?: boolean; italic?: boolean; underline?: boolean; href?: string; bg?: string };
 
 function parseInline(html: string): Run[][] {
   if (!html) return [[]];
@@ -154,6 +162,15 @@ function parseInline(html: string): Run[][] {
     current = [];
   };
 
+  const readBg = (el: HTMLElement): string | undefined => {
+    const style = el.getAttribute("style") || "";
+    const m = style.match(/background-color\s*:\s*([^;]+)/i);
+    if (!m) return undefined;
+    const v = m[1].trim();
+    if (!v || v === "transparent" || v.toLowerCase() === "initial" || v.toLowerCase() === "inherit") return undefined;
+    return v;
+  };
+
   const walk = (node: Node, ann: Omit<Run, "text">) => {
     if (node.nodeType === Node.TEXT_NODE) {
       const t = node.textContent ?? "";
@@ -166,7 +183,9 @@ function parseInline(html: string): Run[][] {
     if (tag === "BR") { current.push({ text: "\n" }); return; }
     if (tag === "P" || tag === "DIV") {
       if (current.length) flushPara();
-      el.childNodes.forEach((c) => walk(c, ann));
+      const bg = readBg(el);
+      const next = bg ? { ...ann, bg } : ann;
+      el.childNodes.forEach((c) => walk(c, next));
       flushPara();
       return;
     }
@@ -175,6 +194,8 @@ function parseInline(html: string): Run[][] {
     if (tag === "EM" || tag === "I") next.italic = true;
     if (tag === "U") next.underline = true;
     if (tag === "A") next.href = el.getAttribute("href") ?? undefined;
+    const bg = readBg(el);
+    if (bg) next.bg = bg;
     el.childNodes.forEach((c) => walk(c, next));
   };
 
@@ -196,7 +217,7 @@ function fontStyleFor(r: Run): Record<string, string> {
 }
 
 function RunsText({ runs }: { runs: Run[] }) {
-  const hasInlineStyles = runs.some((r) => r.bold || r.italic || r.underline || r.href);
+  const hasInlineStyles = runs.some((r) => r.bold || r.italic || r.underline || r.href || r.bg);
   if (!hasInlineStyles) return <>{runs.map((r) => r.text).join("")}</>;
 
   return (
@@ -205,6 +226,7 @@ function RunsText({ runs }: { runs: Run[] }) {
         const style: any = fontStyleFor(r);
         if (r.underline || r.href) style.textDecoration = "underline";
         if (r.href) style.color = "#2563eb";
+        if (r.bg) style.backgroundColor = r.bg;
         if (r.href) {
           return (
             <Link key={i} src={r.href} style={style}>
@@ -459,25 +481,30 @@ function TableBlock({ block }: { block: Block }) {
   const rows: string[][] = block.content?.rows ?? [];
   const headerRow = !!block.content?.headerRow;
   const colWidths: number[] | undefined = block.content?.colWidths;
+  const rowColors: Array<string | null> = block.content?.rowColors ?? [];
   if (rows.length === 0) return null;
   const cols = rows[0]?.length ?? 0;
   const hasWidths = !!colWidths && colWidths.length === cols && cols > 0;
   return (
     <View style={styles.table}>
-      {rows.map((row, ri) => (
-        <View key={ri} style={styles.tr} wrap={false}>
-          {row.map((cell, ci) => {
-            const wStyle = hasWidths
-              ? { width: `${colWidths![ci]}%`, flexGrow: 0, flexShrink: 0, flexBasis: `${colWidths![ci]}%` }
-              : { flex: 1 };
-            return (
-              <Text key={ci} style={[styles.td, wStyle, headerRow && ri === 0 ? styles.th : {}] as any}>
-                {cell}
-              </Text>
-            );
-          })}
-        </View>
-      ))}
+      {rows.map((row, ri) => {
+        const rowBg = rowColors[ri] ?? null;
+        return (
+          <View key={ri} style={[styles.tr, rowBg ? { backgroundColor: rowBg } : {}] as any} wrap={false}>
+            {row.map((cell, ci) => {
+              const wStyle = hasWidths
+                ? { width: `${colWidths![ci]}%`, flexGrow: 0, flexShrink: 0, flexBasis: `${colWidths![ci]}%` }
+                : { flex: 1 };
+              const isHeader = headerRow && ri === 0 && !rowBg;
+              return (
+                <Text key={ci} style={[styles.td, wStyle, isHeader ? styles.th : {}, headerRow && ri === 0 ? { fontFamily: "NotoSans", fontWeight: "bold" } : {}] as any}>
+                  {cell}
+                </Text>
+              );
+            })}
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -595,6 +622,11 @@ function CoverPage({ metadata, logoDataUrl, footerVersion }: { metadata: Documen
           <Image src={metadata.coverImageUrl} style={styles.coverImage} />
         </View>
       ) : null}
+      {(() => {
+        const lang = DOCUMENT_LANGUAGES.find((l) => l.code === metadata.language);
+        const label = lang?.nativeName;
+        return label ? <Text style={styles.coverLanguage}>{label.toUpperCase()}</Text> : null;
+      })()}
       <View style={styles.coverManufacturer} fixed>
         <View style={styles.coverColLeft}>
           <Text>Údaje o výrobci:</Text>
