@@ -622,6 +622,11 @@ function CoverPage({ metadata, logoDataUrl, footerVersion }: { metadata: Documen
           <Image src={metadata.coverImageUrl} style={styles.coverImage} />
         </View>
       ) : null}
+      {(() => {
+        const lang = DOCUMENT_LANGUAGES.find((l) => l.code === metadata.language);
+        const label = lang?.nativeName;
+        return label ? <Text style={styles.coverLanguage}>{label.toUpperCase()}</Text> : null;
+      })()}
       <View style={styles.coverManufacturer} fixed>
         <View style={styles.coverColLeft}>
           <Text>Údaje o výrobci:</Text>
