@@ -993,7 +993,7 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                             ? "bg-muted/40"
                             : "bg-background";
                         return (
-                          <td key={ci} className="border p-0 relative">
+                          <td key={ci} className="border border-muted-foreground/50 p-0 relative">
                             <Input
                               value={cell}
                               onChange={(e) => updateCell(ri, ci, e.target.value)}
