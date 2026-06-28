@@ -889,17 +889,38 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                 <tr>
                   <th className="p-0" />
                   {widths.map((_, i) => (
-                    <th key={i} className="p-0 h-5 text-center align-middle">
-                      {cols > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => deleteColAt(i)}
-                          className="opacity-30 hover:opacity-100 hover:text-destructive transition-opacity"
-                          title="Smazat sloupec"
-                          aria-label="Smazat sloupec"
-                        >
-                          <Trash2 className="w-3 h-3 inline" />
-                        </button>
+                    <th key={i} className="p-0 h-5 text-center align-middle relative">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button
+                            type="button"
+                            className="p-0.5 rounded text-muted-foreground/60 hover:text-foreground hover:bg-accent opacity-60 hover:opacity-100 transition"
+                            title="Možnosti sloupce"
+                            aria-label="Možnosti sloupce"
+                          >
+                            <MoreVertical className="w-3.5 h-3.5 inline" />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent side="top" align="center" className="w-auto p-1">
+                          {cols > 1 ? (
+                            <button
+                              type="button"
+                              onClick={() => deleteColAt(i)}
+                              className="flex items-center gap-2 px-2 py-1 rounded text-sm text-destructive hover:bg-destructive/10 w-full"
+                            >
+                              <Trash2 className="w-4 h-4" /> Smazat sloupec
+                            </button>
+                          ) : (
+                            <div className="px-2 py-1 text-xs text-muted-foreground">Žádné akce</div>
+                          )}
+                        </PopoverContent>
+                      </Popover>
+                      {i < widths.length - 1 && (
+                        <div
+                          onMouseDown={startResize(i)}
+                          className="absolute top-0 right-0 h-full w-1.5 -mr-[3px] cursor-col-resize hover:bg-primary/60 z-10"
+                          title="Táhnutím změňte šířku sloupce"
+                        />
                       )}
                     </th>
                   ))}
@@ -965,23 +986,21 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                         </Popover>
                       </td>
                       {row.map((cell, ci) => {
-                        const showHandle = ri === 0 && ci < widths.length - 1;
+                        const isHeaderCell = !!block.content.headerRow && ri === 0;
+                        const bgCls = rowBg
+                          ? "bg-transparent"
+                          : isHeaderCell
+                            ? "bg-muted/40"
+                            : "bg-background";
                         return (
                           <td key={ci} className="border p-0 relative">
                             <Input
                               value={cell}
                               onChange={(e) => updateCell(ri, ci, e.target.value)}
-                              className={`h-8 rounded-none border-0 shadow-none focus-visible:ring-1 bg-transparent ${
-                                block.content.headerRow && ri === 0 && !rowBg ? "font-semibold bg-muted/40" : ""
-                              } ${block.content.headerRow && ri === 0 ? "font-semibold" : ""} ${narrowFirstCol && ci === 0 ? "text-center" : ""}`}
+                              className={`h-8 rounded-none border-0 shadow-none focus-visible:ring-1 ${bgCls} ${
+                                isHeaderCell ? "font-semibold" : ""
+                              } ${narrowFirstCol && ci === 0 ? "text-center" : ""}`}
                             />
-                            {showHandle && (
-                              <div
-                                onMouseDown={startResize(ci)}
-                                className="absolute top-0 right-0 h-full w-1.5 -mr-[3px] cursor-col-resize hover:bg-primary/60 z-10"
-                                title="Táhnutím změňte šířku sloupce"
-                              />
-                            )}
                           </td>
                         );
                       })}
