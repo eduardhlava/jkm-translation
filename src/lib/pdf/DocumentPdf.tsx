@@ -139,7 +139,7 @@ const calloutCfg = {
 } as const;
 
 // ---------- HTML → inline runs ----------
-type Run = { text: string; bold?: boolean; italic?: boolean; underline?: boolean; href?: string };
+type Run = { text: string; bold?: boolean; italic?: boolean; underline?: boolean; href?: string; bg?: string };
 
 function parseInline(html: string): Run[][] {
   if (!html) return [[]];
@@ -154,6 +154,15 @@ function parseInline(html: string): Run[][] {
     current = [];
   };
 
+  const readBg = (el: HTMLElement): string | undefined => {
+    const style = el.getAttribute("style") || "";
+    const m = style.match(/background-color\s*:\s*([^;]+)/i);
+    if (!m) return undefined;
+    const v = m[1].trim();
+    if (!v || v === "transparent" || v.toLowerCase() === "initial" || v.toLowerCase() === "inherit") return undefined;
+    return v;
+  };
+
   const walk = (node: Node, ann: Omit<Run, "text">) => {
     if (node.nodeType === Node.TEXT_NODE) {
       const t = node.textContent ?? "";
@@ -166,7 +175,9 @@ function parseInline(html: string): Run[][] {
     if (tag === "BR") { current.push({ text: "\n" }); return; }
     if (tag === "P" || tag === "DIV") {
       if (current.length) flushPara();
-      el.childNodes.forEach((c) => walk(c, ann));
+      const bg = readBg(el);
+      const next = bg ? { ...ann, bg } : ann;
+      el.childNodes.forEach((c) => walk(c, next));
       flushPara();
       return;
     }
@@ -175,6 +186,8 @@ function parseInline(html: string): Run[][] {
     if (tag === "EM" || tag === "I") next.italic = true;
     if (tag === "U") next.underline = true;
     if (tag === "A") next.href = el.getAttribute("href") ?? undefined;
+    const bg = readBg(el);
+    if (bg) next.bg = bg;
     el.childNodes.forEach((c) => walk(c, next));
   };
 
