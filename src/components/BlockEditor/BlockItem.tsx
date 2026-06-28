@@ -918,7 +918,7 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                       {i < widths.length - 1 && (
                         <div
                           onMouseDown={startResize(i)}
-                          className="absolute top-0 right-0 h-full w-2 -mr-[4px] cursor-col-resize bg-foreground/40 hover:bg-primary z-10 rounded-sm"
+                          className="absolute top-0 right-0 h-full w-1 -mr-[2px] cursor-col-resize bg-muted-foreground/50 hover:bg-primary z-10"
                           title="Táhnutím změňte šířku sloupce"
                         />
                       )}
@@ -993,7 +993,7 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                             ? "bg-muted/40"
                             : "bg-background";
                         return (
-                          <td key={ci} className="border p-0 relative">
+                          <td key={ci} className="border border-muted-foreground/50 p-0 relative">
                             <Input
                               value={cell}
                               onChange={(e) => updateCell(ri, ci, e.target.value)}
