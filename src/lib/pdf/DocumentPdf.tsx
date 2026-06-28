@@ -4,7 +4,7 @@ import notoRegular from "@/assets/fonts/NotoSans-Regular.ttf?url";
 import notoBold from "@/assets/fonts/NotoSans-Bold.ttf?url";
 import notoItalic from "@/assets/fonts/NotoSans-Italic.ttf?url";
 import notoBoldItalic from "@/assets/fonts/NotoSans-BoldItalic.ttf?url";
-import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
+import { DOCUMENT_LANGUAGES, type DocumentMetadata } from "@/components/DocumentMetadata/types";
 
 Font.register({
   family: "NotoSans",
