@@ -472,6 +472,34 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
             <SelectItem value="large">Velké</SelectItem>
           </SelectContent>
         </Select>
+        <div className="mx-1 h-5 w-px bg-border" />
+        {HIGHLIGHT_COLORS.map((c) => (
+          <Button
+            key={c.key}
+            type="button"
+            variant="ghost"
+            size="icon"
+            title={`Podbarvit – ${c.label}`}
+            aria-label={`Podbarvit ${c.label}`}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => applyHighlight(c.color)}
+            className="h-7 w-7"
+          >
+            <span className="block h-4 w-4 rounded-sm border border-foreground/30" style={{ backgroundColor: c.color }} />
+          </Button>
+        ))}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          title="Odebrat podbarvení"
+          aria-label="Odebrat podbarvení"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => applyHighlight(null)}
+          className="h-7 w-7 text-xs"
+        >
+          ×
+        </Button>
         <Select
           value={block.content.pictogram ?? "none"}
           onValueChange={(v) => onChange(block.id, { content: { ...block.content, pictogram: v } })}
