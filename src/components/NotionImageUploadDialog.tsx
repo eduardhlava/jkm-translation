@@ -69,7 +69,39 @@ function fileToBase64(file: File): Promise<string> {
 export default function NotionImageUploadDialog({ open, onOpenChange, onInsert }: Props) {
   const [files, setFiles] = useState<PendingFile[]>([]);
   const [dragOver, setDragOver] = useState(false);
+  const [folders, setFolders] = useState<NotionFolder[]>([]);
+  const [foldersLoading, setFoldersLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open || folders.length > 0 || foldersLoading) return;
+    setFoldersLoading(true);
+    supabase.functions
+      .invoke("notion-library", { body: { allFolders: true } })
+      .then(({ data, error }) => {
+        if (error) throw error;
+        setFolders(((data as any)?.allFolders ?? []) as NotionFolder[]);
+      })
+      .catch(() => toast.error("Složky se nepodařilo načíst"))
+      .finally(() => setFoldersLoading(false));
+  }, [open, folders.length, foldersLoading]);
+
+  const folderOptions = useMemo(() => {
+    const byId = new Map(folders.map((f) => [f.id.replace(/-/g, ""), f]));
+    const pathOf = (f: NotionFolder): string => {
+      const parts: string[] = [];
+      let cur: NotionFolder | undefined = f;
+      let guard = 20;
+      while (cur && guard-- > 0) {
+        parts.unshift(cur.name || "—");
+        cur = cur.parentId ? byId.get(cur.parentId.replace(/-/g, "")) : undefined;
+      }
+      return parts.join(" / ");
+    };
+    return folders
+      .map((f) => ({ id: f.id, label: pathOf(f) }))
+      .sort((a, b) => a.label.localeCompare(b.label, "cs"));
+  }, [folders]);
 
   const reset = () => setFiles([]);
 
@@ -84,6 +116,7 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert }
         title: stripExt(first.name),
         typ: "",
         stroj: "",
+        folderId: "",
       },
     ]);
   }, []);
