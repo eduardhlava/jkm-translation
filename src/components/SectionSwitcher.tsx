@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { FileText, Languages } from "lucide-react";
+import { FileText, FolderOpen, Languages } from "lucide-react";
 
 interface Props {
   showCreator: boolean;
@@ -21,6 +21,11 @@ const SectionSwitcher = ({ showCreator }: Props) => {
       {showCreator && (
         <Link to="/document-creator" className={tab(pathname.startsWith("/document-creator"))}>
           <FileText className="w-4 h-4" /> JKM Document Creator
+        </Link>
+      )}
+      {showCreator && (
+        <Link to="/library" className={tab(pathname.startsWith("/library"))}>
+          <FolderOpen className="w-4 h-4" /> Obrázky / Dokumenty
         </Link>
       )}
     </nav>
