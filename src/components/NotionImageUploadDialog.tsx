@@ -90,28 +90,47 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert }
       .finally(() => setFoldersLoading(false));
   }, [open, folders.length, foldersLoading]);
 
-  const folderOptions = useMemo(() => {
-    const byId = new Map(folders.map((f) => [f.id.replace(/-/g, ""), f]));
-    const pathOf = (f: NotionFolder): string => {
+  const norm = (id: string | null | undefined) => (id ? id.replace(/-/g, "") : null);
+
+  const byNormId = useMemo(
+    () => new Map(folders.map((f) => [norm(f.id) as string, f])),
+    [folders],
+  );
+
+  const childrenOf = useCallback(
+    (parentId: string | null) =>
+      folders
+        .filter((f) => norm(f.parentId) === norm(parentId))
+        .sort((a, b) => (a.name || "").localeCompare(b.name || "", "cs")),
+    [folders],
+  );
+
+  const pathOf = useCallback(
+    (id: string | null): string => {
+      if (!id) return "";
       const parts: string[] = [];
-      let cur: NotionFolder | undefined = f;
+      let cur = byNormId.get(norm(id) as string);
       let guard = 20;
       while (cur && guard-- > 0) {
         parts.unshift(cur.name || "—");
-        cur = cur.parentId ? byId.get(cur.parentId.replace(/-/g, "")) : undefined;
+        cur = cur.parentId ? byNormId.get(norm(cur.parentId) as string) : undefined;
       }
       return parts.join(" / ");
-    };
-    return folders
-      .map((f) => ({ id: f.id, label: pathOf(f) }))
-      .sort((a, b) => a.label.localeCompare(b.label, "cs"));
-  }, [folders]);
+    },
+    [byNormId],
+  );
 
   const reset = () => setFiles([]);
 
   const addFiles = useCallback((list: FileList | File[]) => {
     const first = Array.from(list).find((f) => f.type.startsWith("image/"));
     if (!first) return;
+    let last = "";
+    try {
+      last = localStorage.getItem(LAST_FOLDER_KEY) ?? "";
+    } catch {
+      last = "";
+    }
     setFiles([
       {
         localId: crypto.randomUUID(),
@@ -120,10 +139,11 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert }
         title: stripExt(first.name),
         typ: "",
         stroj: "",
-        folderId: "",
+        folderId: last,
       },
     ]);
   }, []);
+
 
   const updateOne = (id: string, patch: Partial<PendingFile>) =>
     setFiles((prev) => prev.map((f) => (f.localId === id ? { ...f, ...patch } : f)));
