@@ -303,34 +303,43 @@ const Library = () => {
                 </div>
               ) : (
                 <Card className="divide-y">
-                  {shown.map((it) => (
-                    <div key={it.id} className="flex items-center gap-3 p-2">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded border bg-muted">
-                        {it.image ? (
-                          <img
-                            src={it.image}
-                            alt={it.title}
-                            loading="lazy"
-                            className="h-full w-full rounded object-cover"
-                          />
-                        ) : (
-                          <FileIcon className="h-5 w-5 text-muted-foreground" />
-                        )}
+                  {shown.map((it) => {
+                    const clickable = Boolean(it.image && isImageUrl(it.image));
+                    return (
+                      <div key={it.id} className="flex items-center gap-3 p-2">
+                        <div
+                          className={cn(
+                            "flex h-12 w-12 shrink-0 items-center justify-center rounded border bg-muted",
+                            clickable && "cursor-pointer hover:bg-muted/80",
+                          )}
+                          onClick={() => clickable && setDetail(it)}
+                        >
+                          {it.image ? (
+                            <img
+                              src={it.image}
+                              alt={it.title}
+                              loading="lazy"
+                              className="h-full w-full rounded object-cover"
+                            />
+                          ) : (
+                            <FileIcon className="h-5 w-5 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1 truncate text-sm font-medium">
+                          {it.title || "Bez názvu"}
+                        </div>
+                        <div className="hidden w-32 shrink-0 truncate text-xs text-muted-foreground sm:block">
+                          {it.typ || "—"}
+                        </div>
+                        <div className="hidden w-24 shrink-0 truncate text-xs text-muted-foreground sm:block">
+                          {it.stroj || "—"}
+                        </div>
+                        <div className="hidden w-24 shrink-0 truncate text-xs text-muted-foreground sm:block">
+                          {it.stav || "—"}
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1 truncate text-sm font-medium">
-                        {it.title || "Bez názvu"}
-                      </div>
-                      <div className="hidden w-32 shrink-0 truncate text-xs text-muted-foreground sm:block">
-                        {it.typ || "—"}
-                      </div>
-                      <div className="hidden w-24 shrink-0 truncate text-xs text-muted-foreground sm:block">
-                        {it.stroj || "—"}
-                      </div>
-                      <div className="hidden w-24 shrink-0 truncate text-xs text-muted-foreground sm:block">
-                        {it.stav || "—"}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </Card>
               )}
 
