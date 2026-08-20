@@ -22,6 +22,12 @@ export type UploadedNotionImage = {
   url?: string;
 };
 
+interface NotionFolder {
+  id: string;
+  name: string;
+  parentId: string | null;
+}
+
 interface PendingFile {
   localId: string;
   file: File;
@@ -29,6 +35,7 @@ interface PendingFile {
   title: string;
   typ: string;
   stroj: string;
+  folderId: string;
   uploading?: boolean;
   done?: boolean;
   result?: UploadedNotionImage;
