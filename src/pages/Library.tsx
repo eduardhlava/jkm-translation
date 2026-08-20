@@ -156,17 +156,18 @@ const Library = () => {
           </div>
         </div>
 
-        <nav className="flex flex-wrap items-center gap-1 text-sm">
+        <nav className={cn("flex flex-wrap items-center gap-1 text-sm", allFolders && "opacity-50 pointer-events-none")}>
           <button
             className="inline-flex items-center gap-1 rounded px-2 py-1 hover:bg-muted"
             onClick={() => setFolderId(null)}
+            disabled={allFolders}
           >
             <Home className="h-3.5 w-3.5" /> Kořen
           </button>
           {breadcrumbs.map((b) => (
             <span key={b.id} className="inline-flex items-center gap-1">
               <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-              <button className="rounded px-2 py-1 hover:bg-muted" onClick={() => setFolderId(b.id)}>
+              <button className="rounded px-2 py-1 hover:bg-muted" onClick={() => setFolderId(b.id)} disabled={allFolders}>
                 {b.name || "Bez názvu"}
               </button>
             </span>
