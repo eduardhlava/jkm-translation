@@ -145,6 +145,7 @@ const Library = () => {
             <img src={jkLogo} alt="JK Machinery" className="h-8 w-auto" />
           </Link>
           <div className="ml-auto flex items-center gap-2">
+            <SectionSwitcher showCreator />
             <Button variant="outline" size="icon" onClick={() => void load()} disabled={loading}>
               <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
             </Button>
@@ -155,7 +156,6 @@ const Library = () => {
       <main className="container mx-auto space-y-4 px-4 py-6">
         <div className="flex flex-wrap items-center gap-4">
           <h1 className="text-xl font-semibold">Obrázky / Dokumenty</h1>
-          <SectionSwitcher showCreator />
           <div className="ml-auto flex items-center gap-2">
             <div className="flex rounded-md border p-0.5">
               <Button
