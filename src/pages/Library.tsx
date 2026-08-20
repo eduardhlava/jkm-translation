@@ -173,7 +173,7 @@ const Library = () => {
           ))}
         </nav>
 
-        <Card className="grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-5">
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Název (fulltext)</Label>
             <Input
@@ -204,6 +204,12 @@ const Library = () => {
               </Select>
             </div>
           ))}
+          <div className="flex items-end">
+            <label className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted">
+              <Checkbox checked={allFolders} onCheckedChange={(v) => setAllFolders(Boolean(v))} />
+              Filtrovat ve všech složkách
+            </label>
+          </div>
         </Card>
 
         {error && (
@@ -218,7 +224,7 @@ const Library = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            {folders.length > 0 && (
+            {!allFolders && folders.length > 0 && (
               <section className="space-y-2">
                 <h2 className="text-sm font-medium text-muted-foreground">Složky</h2>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
