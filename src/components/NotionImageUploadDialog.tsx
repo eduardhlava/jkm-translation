@@ -143,6 +143,7 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert }
           title: item.title.trim(),
           typ: item.typ || undefined,
           stroj: item.stroj || undefined,
+          folderId: item.folderId || undefined,
         },
       });
       if (error) throw error;
