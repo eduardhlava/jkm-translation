@@ -193,6 +193,9 @@ const Library = () => {
         <div className="flex flex-wrap items-center gap-4">
           <h1 className="text-xl font-semibold">Obrázky / Dokumenty</h1>
           <div className="ml-auto flex items-center gap-2">
+            <Button variant="outline" size="icon" onClick={() => void load()} disabled={loading}>
+              <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+            </Button>
             <div className="flex rounded-md border p-0.5">
               <Button
                 variant={view === "gallery" ? "default" : "ghost"}
