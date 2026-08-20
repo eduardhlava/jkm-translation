@@ -349,13 +349,65 @@ function FolderBrowser({
   onChange: (id: string) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [current, setCurrent] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
+  const key = (id: string) => id.replace(/-/g, "");
+
+  // expand ancestors of selected value when opening
   useEffect(() => {
-    if (open) setCurrent(value ? parentOf(value) : null);
-  }, [open]);
+    if (!open || !value) return;
+    const next: Record<string, boolean> = {};
+    let cur = parentOf(value);
+    let guard = 20;
+    while (cur && guard-- > 0) {
+      next[key(cur)] = true;
+      cur = parentOf(cur);
+    }
+    setExpanded((e) => ({ ...e, ...next }));
+  }, [open, value]);
 
-  const items = childrenOf(current);
+  const renderRow = (f: NotionFolder, depth: number) => {
+    const k = key(f.id);
+    const kids = childrenOf(f.id);
+    const isOpen = !!expanded[k];
+    const selected = k === key(value || "");
+    return (
+      <div key={f.id}>
+        <div
+          className={`flex cursor-pointer items-center gap-1 rounded-sm py-1 pr-2 text-sm ${
+            selected ? "bg-primary text-primary-foreground" : "hover:bg-muted/60"
+          }`}
+          style={{ paddingLeft: 4 + depth * 16 }}
+          onClick={() => onChange(f.id)}
+          onDoubleClick={() => setExpanded((e) => ({ ...e, [k]: !isOpen }))}
+        >
+          {kids.length > 0 ? (
+            <button
+              type="button"
+              className="flex h-4 w-4 shrink-0 items-center justify-center opacity-70"
+              onClick={(e) => {
+                e.stopPropagation();
+                setExpanded((s) => ({ ...s, [k]: !isOpen }));
+              }}
+            >
+              {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+            </button>
+          ) : (
+            <span className="h-4 w-4 shrink-0" />
+          )}
+          <Folder
+            className={`h-4 w-4 shrink-0 ${selected ? "" : "text-sky-500"}`}
+            fill="currentColor"
+            strokeWidth={1.5}
+          />
+          <span className="truncate">{f.name || "—"}</span>
+        </div>
+        {isOpen && kids.map((c) => renderRow(c, depth + 1))}
+      </div>
+    );
+  };
+
+  const roots = childrenOf(null);
 
   return (
     <Popover open={open} onOpenChange={(v) => !disabled && setOpen(v)}>
@@ -368,61 +420,29 @@ function FolderBrowser({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-        <div className="flex items-center gap-1 border-b p-2 text-xs text-muted-foreground">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-6 w-6"
-            disabled={!current}
-            onClick={() => setCurrent(parentOf(current))}
+        <div className="max-h-72 overflow-auto p-1">
+          <div
+            className={`flex cursor-pointer items-center gap-1 rounded-sm py-1 pl-1 pr-2 text-sm ${
+              !value ? "bg-primary text-primary-foreground" : "hover:bg-muted/60"
+            }`}
+            onClick={() => onChange("")}
           >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setCurrent(null)}>
-            <Home className="h-4 w-4" />
-          </Button>
-          <span className="truncate">{current ? pathOf(current) : "Kořen"}</span>
-        </div>
-        <div className="max-h-64 overflow-auto py-1">
-          {items.length === 0 && (
-            <div className="px-3 py-2 text-xs text-muted-foreground">Žádné podsložky</div>
+            <span className="h-4 w-4 shrink-0" />
+            <Home className="h-4 w-4 shrink-0" />
+            <span className="truncate">Kořen (bez složky)</span>
+          </div>
+          {roots.length === 0 && (
+            <div className="px-3 py-2 text-xs text-muted-foreground">Žádné složky</div>
           )}
-          {items.map((f) => {
-            const selected = f.id.replace(/-/g, "") === (value || "").replace(/-/g, "");
-            return (
-              <div
-                key={f.id}
-                className={`flex items-center gap-1 px-2 py-1 text-sm hover:bg-muted/60 ${
-                  selected ? "bg-primary/10" : ""
-                }`}
-              >
-                <button
-                  type="button"
-                  className="flex flex-1 items-center gap-2 min-w-0 text-left"
-                  onClick={() => {
-                    onChange(f.id);
-                    setOpen(false);
-                  }}
-                >
-                  <Folder className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="truncate">{f.name || "—"}</span>
-                  {selected && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
-                </button>
-                {childrenOf(f.id).length > 0 && (
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-6 w-6 shrink-0"
-                    onClick={() => setCurrent(f.id)}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            );
-          })}
+          {roots.map((f) => renderRow(f, 0))}
+        </div>
+        <div className="flex justify-end border-t p-2">
+          <Button size="sm" onClick={() => setOpen(false)}>
+            Hotovo
+          </Button>
         </div>
       </PopoverContent>
     </Popover>
   );
 }
+
