@@ -97,7 +97,8 @@ Deno.serve(async (req) => {
     if (!NOTION_API_KEY) throw new Error("NOTION_API_KEY is not configured");
 
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
-    const folderId: string | null = body.folderId ?? null;
+    const allFolders: boolean = Boolean(body.allFolders);
+    const folderId: string | null = allFolders ? null : (body.folderId ?? null);
     const search: string = typeof body.search === "string" ? body.search.trim() : "";
 
     // 1) All folders (small dataset) → tree + breadcrumbs
@@ -114,22 +115,29 @@ Deno.serve(async (req) => {
     const byId = new Map(folders.map((f) => [f.id, f]));
     const norm = (id: string | null) => (id ? id.replace(/-/g, "") : null);
     const target = norm(folderId);
-    const children = folders.filter((f) => norm(f.parentId) === target);
+    const children = allFolders ? [] : folders.filter((f) => norm(f.parentId) === target);
 
     // Breadcrumbs
     const breadcrumbs: { id: string; name: string }[] = [];
-    let cur = folderId ? byId.get(folderId) ?? folders.find((f) => norm(f.id) === target) : undefined;
-    let guard = 20;
-    while (cur && guard-- > 0) {
-      breadcrumbs.unshift({ id: cur.id, name: cur.name });
-      const parent = cur.parentId;
-      cur = parent ? byId.get(parent) ?? folders.find((f) => norm(f.id) === norm(parent)) : undefined;
+    if (!allFolders) {
+      let cur = folderId ? byId.get(folderId) ?? folders.find((f) => norm(f.id) === target) : undefined;
+      let guard = 20;
+      while (cur && guard-- > 0) {
+        breadcrumbs.unshift({ id: cur.id, name: cur.name });
+        const parent = cur.parentId;
+        cur = parent ? byId.get(parent) ?? folders.find((f) => norm(f.id) === norm(parent)) : undefined;
+      }
     }
 
-    // 2) Files in this folder (or unassigned when at root)
+    // 2) Files in this folder (or unassigned when at root, or all folders)
     const filters: any[] = [];
-    if (folderId) filters.push({ property: "slozka", relation: { contains: folderId } });
-    else filters.push({ property: "slozka", relation: { is_empty: true } });
+    if (allFolders) {
+      // no folder filter
+    } else if (folderId) {
+      filters.push({ property: "slozka", relation: { contains: folderId } });
+    } else {
+      filters.push({ property: "slozka", relation: { is_empty: true } });
+    }
     if (search) filters.push({ property: "název", title: { contains: search } });
 
     const filePages = await queryAll(FILES_DB_ID, {
