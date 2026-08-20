@@ -52,6 +52,7 @@ Deno.serve(async (req) => {
       title,
       typ,
       stroj,
+      folderId,
       databaseId,
     }: {
       fileBase64: string;
@@ -60,6 +61,7 @@ Deno.serve(async (req) => {
       title: string;
       typ?: string;
       stroj?: string;
+      folderId?: string;
       databaseId?: string;
     } = body ?? {};
 
