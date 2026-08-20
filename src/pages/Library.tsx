@@ -271,26 +271,35 @@ const Library = () => {
                 <p className="text-sm text-muted-foreground">Nic nenalezeno.</p>
               ) : view === "gallery" ? (
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                  {shown.map((it) => (
-                    <Card key={it.id} className="overflow-hidden">
-                      <div className="flex h-32 items-center justify-center bg-muted">
-                        {it.image ? (
-                          <img
-                            src={it.image}
-                            alt={it.title}
-                            loading="lazy"
-                            className="h-full w-full object-contain"
-                          />
-                        ) : (
-                          <FileIcon className="h-8 w-8 text-muted-foreground" />
-                        )}
-                      </div>
-                      <div className="space-y-1 p-3">
-                        <div className="truncate text-sm font-medium">{it.title || "Bez názvu"}</div>
-                        {meta(it)}
-                      </div>
-                    </Card>
-                  ))}
+                  {shown.map((it) => {
+                    const clickable = Boolean(it.image && isImageUrl(it.image));
+                    return (
+                      <Card key={it.id} className="overflow-hidden">
+                        <div
+                          className={cn(
+                            "flex h-32 items-center justify-center bg-muted",
+                            clickable && "cursor-pointer hover:bg-muted/80",
+                          )}
+                          onClick={() => clickable && setDetail(it)}
+                        >
+                          {it.image ? (
+                            <img
+                              src={it.image}
+                              alt={it.title}
+                              loading="lazy"
+                              className="h-full w-full object-contain"
+                            />
+                          ) : (
+                            <FileIcon className="h-8 w-8 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="space-y-1 p-3">
+                          <div className="truncate text-sm font-medium">{it.title || "Bez názvu"}</div>
+                          {meta(it)}
+                        </div>
+                      </Card>
+                    );
+                  })}
                 </div>
               ) : (
                 <Card className="divide-y">
