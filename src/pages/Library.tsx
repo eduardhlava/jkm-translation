@@ -54,8 +54,9 @@ const Library = () => {
   const [typ, setTyp] = useState(ALL);
   const [stroj, setStroj] = useState(ALL);
   const [stav, setStav] = useState(ALL);
-  const [view, setView] = useState<"gallery" | "list">("gallery");
+  const [view, setView] = useState<"gallery" | "list">("list");
   const [visible, setVisible] = useState(PAGE_SIZE);
+  const [allFolders, setAllFolders] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(search.trim()), 300);
@@ -66,7 +67,7 @@ const Library = () => {
     setLoading(true);
     setError(null);
     const { data, error } = await supabase.functions.invoke("notion-library", {
-      body: { folderId },
+      body: { folderId: allFolders ? null : folderId, allFolders },
     });
     if (error) {
       setError(error.message);
@@ -76,7 +77,7 @@ const Library = () => {
       setBreadcrumbs((data?.breadcrumbs ?? []) as { id: string; name: string }[]);
     }
     setLoading(false);
-  }, [folderId]);
+  }, [folderId, allFolders]);
 
   useEffect(() => {
     void load();
