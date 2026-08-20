@@ -252,6 +252,23 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert }
                         </Select>
                       </div>
                     </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Složka</Label>
+                      <Select
+                        value={f.folderId}
+                        onValueChange={(v) => updateOne(f.localId, { folderId: v })}
+                        disabled={f.done || foldersLoading}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={foldersLoading ? "Načítání složek…" : "Vybrat složku"} />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-72">
+                          {folderOptions.map((o) => (
+                            <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     {f.error && <div className="text-xs text-destructive">{f.error}</div>}
                   </div>
                   <div className="flex flex-col gap-2 shrink-0 justify-center">
