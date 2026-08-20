@@ -172,9 +172,15 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert }
       });
       if (error) throw error;
       const result = data as UploadedNotionImage;
+      if (item.folderId) {
+        try {
+          localStorage.setItem(LAST_FOLDER_KEY, item.folderId);
+        } catch { /* ignore */ }
+      }
       updateOne(item.localId, { uploading: false, done: true, result });
       onInsert(result);
       toast.success("Obrázek nahrán do Notion a vložen");
+
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Nahrání selhalo";
       updateOne(item.localId, { uploading: false, error: msg });
