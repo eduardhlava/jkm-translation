@@ -9,6 +9,13 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -26,6 +33,17 @@ import {
   RefreshCw,
 } from "lucide-react";
 import jkLogo from "@/assets/jk-machinery-logo.png";
+
+const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp"]);
+
+const isImageUrl = (url: string) => {
+  try {
+    const pathname = new URL(url).pathname.toLowerCase();
+    return IMAGE_EXTENSIONS.has(pathname.slice(pathname.lastIndexOf(".")));
+  } catch {
+    return false;
+  }
+};
 
 type FolderItem = { id: string; name: string; parentId: string | null; url: string };
 type FileItem = {
