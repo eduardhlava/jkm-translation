@@ -330,3 +330,99 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert }
     </Dialog>
   );
 }
+
+function FolderBrowser({
+  value,
+  disabled,
+  loading,
+  pathOf,
+  childrenOf,
+  parentOf,
+  onChange,
+}: {
+  value: string;
+  disabled?: boolean;
+  loading?: boolean;
+  pathOf: (id: string | null) => string;
+  childrenOf: (parentId: string | null) => NotionFolder[];
+  parentOf: (id: string | null) => string | null;
+  onChange: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [current, setCurrent] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) setCurrent(value ? parentOf(value) : null);
+  }, [open]);
+
+  const items = childrenOf(current);
+
+  return (
+    <Popover open={open} onOpenChange={(v) => !disabled && setOpen(v)}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" disabled={disabled} className="w-full justify-start font-normal">
+          <Folder className="h-4 w-4 mr-2 shrink-0" />
+          <span className="truncate">
+            {loading ? "Načítání složek…" : value ? pathOf(value) : "Vybrat složku"}
+          </span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <div className="flex items-center gap-1 border-b p-2 text-xs text-muted-foreground">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-6 w-6"
+            disabled={!current}
+            onClick={() => setCurrent(parentOf(current))}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setCurrent(null)}>
+            <Home className="h-4 w-4" />
+          </Button>
+          <span className="truncate">{current ? pathOf(current) : "Kořen"}</span>
+        </div>
+        <div className="max-h-64 overflow-auto py-1">
+          {items.length === 0 && (
+            <div className="px-3 py-2 text-xs text-muted-foreground">Žádné podsložky</div>
+          )}
+          {items.map((f) => {
+            const selected = f.id.replace(/-/g, "") === (value || "").replace(/-/g, "");
+            return (
+              <div
+                key={f.id}
+                className={`flex items-center gap-1 px-2 py-1 text-sm hover:bg-muted/60 ${
+                  selected ? "bg-primary/10" : ""
+                }`}
+              >
+                <button
+                  type="button"
+                  className="flex flex-1 items-center gap-2 min-w-0 text-left"
+                  onClick={() => {
+                    onChange(f.id);
+                    setOpen(false);
+                  }}
+                >
+                  <Folder className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="truncate">{f.name || "—"}</span>
+                  {selected && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
+                </button>
+                {childrenOf(f.id).length > 0 && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-6 w-6 shrink-0"
+                    onClick={() => setCurrent(f.id)}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
