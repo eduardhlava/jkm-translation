@@ -353,6 +353,30 @@ const Library = () => {
             </section>
           </div>
         )}
+
+        <Dialog open={!!detail} onOpenChange={(open) => !open && setDetail(null)}>
+          {detail && (
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>{detail.title || "Bez názvu"}</DialogTitle>
+                <DialogDescription>
+                  Typ: {detail.typ || "—"} · Stroj: {detail.stroj || "—"} · Stav: {detail.stav || "—"}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex max-h-[70vh] items-center justify-center rounded-md border bg-muted p-2">
+                {detail.image ? (
+                  <img
+                    src={detail.image}
+                    alt={detail.title}
+                    className="max-h-full max-w-full object-contain"
+                  />
+                ) : (
+                  <FileIcon className="h-16 w-16 text-muted-foreground" />
+                )}
+              </div>
+            </DialogContent>
+          )}
+        </Dialog>
       </main>
     </div>
   );
