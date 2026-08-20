@@ -76,6 +76,7 @@ const Library = () => {
   const [view, setView] = useState<"gallery" | "list">("list");
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [allFolders, setAllFolders] = useState(false);
+  const [detail, setDetail] = useState<FileItem | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(search.trim()), 300);
