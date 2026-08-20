@@ -105,7 +105,7 @@ const Library = () => {
 
   useEffect(() => {
     setVisible(PAGE_SIZE);
-  }, [debounced, typ, stroj, stav, folderId, view]);
+  }, [debounced, typ, stroj, stav, folderId, view, allFolders]);
 
   const shown = filtered.slice(0, visible);
 
@@ -124,6 +124,17 @@ const Library = () => {
           <Link to="/">
             <img src={jkLogo} alt="JK Machinery" className="h-8 w-auto" />
           </Link>
+          <div className="ml-auto flex items-center gap-2">
+            <Button variant="outline" size="icon" onClick={() => void load()} disabled={loading}>
+              <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto space-y-4 px-4 py-6">
+        <div className="flex flex-wrap items-center gap-4">
+          <h1 className="text-xl font-semibold">Obrázky / Dokumenty</h1>
           <SectionSwitcher showCreator />
           <div className="ml-auto flex items-center gap-2">
             <div className="flex rounded-md border p-0.5">
@@ -142,15 +153,8 @@ const Library = () => {
                 <ListIcon className="mr-1 h-4 w-4" /> Seznam
               </Button>
             </div>
-            <Button variant="outline" size="icon" onClick={() => void load()} disabled={loading}>
-              <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
-            </Button>
           </div>
         </div>
-      </header>
-
-      <main className="container mx-auto space-y-4 px-4 py-6">
-        <h1 className="text-xl font-semibold">Obrázky / Dokumenty</h1>
 
         <nav className="flex flex-wrap items-center gap-1 text-sm">
           <button
