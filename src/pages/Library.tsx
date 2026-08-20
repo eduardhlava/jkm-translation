@@ -159,16 +159,18 @@ const Library = () => {
           <div className="ml-auto flex items-center gap-2">
             <div className="flex rounded-md border p-0.5">
               <Button
-                variant={view === "gallery" ? "secondary" : "ghost"}
+                variant={view === "gallery" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setView("gallery")}
+                className={cn(view === "gallery" && "ring-2 ring-ring ring-offset-1")}
               >
                 <LayoutGrid className="mr-1 h-4 w-4" /> Galerie
               </Button>
               <Button
-                variant={view === "list" ? "secondary" : "ghost"}
+                variant={view === "list" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setView("list")}
+                className={cn(view === "list" && "ring-2 ring-ring ring-offset-1")}
               >
                 <ListIcon className="mr-1 h-4 w-4" /> Seznam
               </Button>
