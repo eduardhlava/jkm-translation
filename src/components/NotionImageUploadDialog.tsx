@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Upload, X, Check } from "lucide-react";
+import { Loader2, Upload, X, Check, Folder, ChevronRight, ChevronLeft, Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+const LAST_FOLDER_KEY = "notion-upload-last-folder";
+
 
 const TYP_OPTIONS = ["schéma", "3D model", "fotografie", "elektrické schéma", "ostatní"];
 const STROJ_OPTIONS = [
@@ -86,28 +90,47 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert }
       .finally(() => setFoldersLoading(false));
   }, [open, folders.length, foldersLoading]);
 
-  const folderOptions = useMemo(() => {
-    const byId = new Map(folders.map((f) => [f.id.replace(/-/g, ""), f]));
-    const pathOf = (f: NotionFolder): string => {
+  const norm = (id: string | null | undefined) => (id ? id.replace(/-/g, "") : null);
+
+  const byNormId = useMemo(
+    () => new Map(folders.map((f) => [norm(f.id) as string, f])),
+    [folders],
+  );
+
+  const childrenOf = useCallback(
+    (parentId: string | null) =>
+      folders
+        .filter((f) => norm(f.parentId) === norm(parentId))
+        .sort((a, b) => (a.name || "").localeCompare(b.name || "", "cs")),
+    [folders],
+  );
+
+  const pathOf = useCallback(
+    (id: string | null): string => {
+      if (!id) return "";
       const parts: string[] = [];
-      let cur: NotionFolder | undefined = f;
+      let cur = byNormId.get(norm(id) as string);
       let guard = 20;
       while (cur && guard-- > 0) {
         parts.unshift(cur.name || "—");
-        cur = cur.parentId ? byId.get(cur.parentId.replace(/-/g, "")) : undefined;
+        cur = cur.parentId ? byNormId.get(norm(cur.parentId) as string) : undefined;
       }
       return parts.join(" / ");
-    };
-    return folders
-      .map((f) => ({ id: f.id, label: pathOf(f) }))
-      .sort((a, b) => a.label.localeCompare(b.label, "cs"));
-  }, [folders]);
+    },
+    [byNormId],
+  );
 
   const reset = () => setFiles([]);
 
   const addFiles = useCallback((list: FileList | File[]) => {
     const first = Array.from(list).find((f) => f.type.startsWith("image/"));
     if (!first) return;
+    let last = "";
+    try {
+      last = localStorage.getItem(LAST_FOLDER_KEY) ?? "";
+    } catch {
+      last = "";
+    }
     setFiles([
       {
         localId: crypto.randomUUID(),
@@ -116,10 +139,11 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert }
         title: stripExt(first.name),
         typ: "",
         stroj: "",
-        folderId: "",
+        folderId: last,
       },
     ]);
   }, []);
+
 
   const updateOne = (id: string, patch: Partial<PendingFile>) =>
     setFiles((prev) => prev.map((f) => (f.localId === id ? { ...f, ...patch } : f)));
@@ -148,9 +172,15 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert }
       });
       if (error) throw error;
       const result = data as UploadedNotionImage;
+      if (item.folderId) {
+        try {
+          localStorage.setItem(LAST_FOLDER_KEY, item.folderId);
+        } catch { /* ignore */ }
+      }
       updateOne(item.localId, { uploading: false, done: true, result });
       onInsert(result);
       toast.success("Obrázek nahrán do Notion a vložen");
+
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Nahrání selhalo";
       updateOne(item.localId, { uploading: false, error: msg });
@@ -254,21 +284,17 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert }
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs text-muted-foreground">Složka</Label>
-                      <Select
+                      <FolderBrowser
                         value={f.folderId}
-                        onValueChange={(v) => updateOne(f.localId, { folderId: v })}
                         disabled={f.done || foldersLoading}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={foldersLoading ? "Načítání složek…" : "Vybrat složku"} />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-72">
-                          {folderOptions.map((o) => (
-                            <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        loading={foldersLoading}
+                        pathOf={pathOf}
+                        childrenOf={childrenOf}
+                        parentOf={(id) => byNormId.get((id || "").replace(/-/g, ""))?.parentId ?? null}
+                        onChange={(v) => updateOne(f.localId, { folderId: v })}
+                      />
                     </div>
+
                     {f.error && <div className="text-xs text-destructive">{f.error}</div>}
                   </div>
                   <div className="flex flex-col gap-2 shrink-0 justify-center">
@@ -302,5 +328,101 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert }
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function FolderBrowser({
+  value,
+  disabled,
+  loading,
+  pathOf,
+  childrenOf,
+  parentOf,
+  onChange,
+}: {
+  value: string;
+  disabled?: boolean;
+  loading?: boolean;
+  pathOf: (id: string | null) => string;
+  childrenOf: (parentId: string | null) => NotionFolder[];
+  parentOf: (id: string | null) => string | null;
+  onChange: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [current, setCurrent] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) setCurrent(value ? parentOf(value) : null);
+  }, [open]);
+
+  const items = childrenOf(current);
+
+  return (
+    <Popover open={open} onOpenChange={(v) => !disabled && setOpen(v)}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" disabled={disabled} className="w-full justify-start font-normal">
+          <Folder className="h-4 w-4 mr-2 shrink-0" />
+          <span className="truncate">
+            {loading ? "Načítání složek…" : value ? pathOf(value) : "Vybrat složku"}
+          </span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <div className="flex items-center gap-1 border-b p-2 text-xs text-muted-foreground">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-6 w-6"
+            disabled={!current}
+            onClick={() => setCurrent(parentOf(current))}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setCurrent(null)}>
+            <Home className="h-4 w-4" />
+          </Button>
+          <span className="truncate">{current ? pathOf(current) : "Kořen"}</span>
+        </div>
+        <div className="max-h-64 overflow-auto py-1">
+          {items.length === 0 && (
+            <div className="px-3 py-2 text-xs text-muted-foreground">Žádné podsložky</div>
+          )}
+          {items.map((f) => {
+            const selected = f.id.replace(/-/g, "") === (value || "").replace(/-/g, "");
+            return (
+              <div
+                key={f.id}
+                className={`flex items-center gap-1 px-2 py-1 text-sm hover:bg-muted/60 ${
+                  selected ? "bg-primary/10" : ""
+                }`}
+              >
+                <button
+                  type="button"
+                  className="flex flex-1 items-center gap-2 min-w-0 text-left"
+                  onClick={() => {
+                    onChange(f.id);
+                    setOpen(false);
+                  }}
+                >
+                  <Folder className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="truncate">{f.name || "—"}</span>
+                  {selected && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
+                </button>
+                {childrenOf(f.id).length > 0 && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-6 w-6 shrink-0"
+                    onClick={() => setCurrent(f.id)}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
