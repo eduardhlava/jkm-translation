@@ -2,10 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import SectionSwitcher from "@/components/SectionSwitcher";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -53,8 +55,9 @@ const Library = () => {
   const [typ, setTyp] = useState(ALL);
   const [stroj, setStroj] = useState(ALL);
   const [stav, setStav] = useState(ALL);
-  const [view, setView] = useState<"gallery" | "list">("gallery");
+  const [view, setView] = useState<"gallery" | "list">("list");
   const [visible, setVisible] = useState(PAGE_SIZE);
+  const [allFolders, setAllFolders] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(search.trim()), 300);
@@ -65,7 +68,7 @@ const Library = () => {
     setLoading(true);
     setError(null);
     const { data, error } = await supabase.functions.invoke("notion-library", {
-      body: { folderId },
+      body: { folderId: allFolders ? null : folderId, allFolders },
     });
     if (error) {
       setError(error.message);
@@ -75,7 +78,7 @@ const Library = () => {
       setBreadcrumbs((data?.breadcrumbs ?? []) as { id: string; name: string }[]);
     }
     setLoading(false);
-  }, [folderId]);
+  }, [folderId, allFolders]);
 
   useEffect(() => {
     void load();
@@ -103,7 +106,7 @@ const Library = () => {
 
   useEffect(() => {
     setVisible(PAGE_SIZE);
-  }, [debounced, typ, stroj, stav, folderId, view]);
+  }, [debounced, typ, stroj, stav, folderId, view, allFolders]);
 
   const shown = filtered.slice(0, visible);
 
@@ -122,6 +125,17 @@ const Library = () => {
           <Link to="/">
             <img src={jkLogo} alt="JK Machinery" className="h-8 w-auto" />
           </Link>
+          <div className="ml-auto flex items-center gap-2">
+            <Button variant="outline" size="icon" onClick={() => void load()} disabled={loading}>
+              <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto space-y-4 px-4 py-6">
+        <div className="flex flex-wrap items-center gap-4">
+          <h1 className="text-xl font-semibold">Obrázky / Dokumenty</h1>
           <SectionSwitcher showCreator />
           <div className="ml-auto flex items-center gap-2">
             <div className="flex rounded-md border p-0.5">
@@ -140,34 +154,28 @@ const Library = () => {
                 <ListIcon className="mr-1 h-4 w-4" /> Seznam
               </Button>
             </div>
-            <Button variant="outline" size="icon" onClick={() => void load()} disabled={loading}>
-              <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
-            </Button>
           </div>
         </div>
-      </header>
 
-      <main className="container mx-auto space-y-4 px-4 py-6">
-        <h1 className="text-xl font-semibold">Obrázky / Dokumenty</h1>
-
-        <nav className="flex flex-wrap items-center gap-1 text-sm">
+        <nav className={cn("flex flex-wrap items-center gap-1 text-sm", allFolders && "opacity-50 pointer-events-none")}>
           <button
             className="inline-flex items-center gap-1 rounded px-2 py-1 hover:bg-muted"
             onClick={() => setFolderId(null)}
+            disabled={allFolders}
           >
             <Home className="h-3.5 w-3.5" /> Kořen
           </button>
           {breadcrumbs.map((b) => (
             <span key={b.id} className="inline-flex items-center gap-1">
               <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-              <button className="rounded px-2 py-1 hover:bg-muted" onClick={() => setFolderId(b.id)}>
+              <button className="rounded px-2 py-1 hover:bg-muted" onClick={() => setFolderId(b.id)} disabled={allFolders}>
                 {b.name || "Bez názvu"}
               </button>
             </span>
           ))}
         </nav>
 
-        <Card className="grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-5">
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Název (fulltext)</Label>
             <Input
@@ -198,6 +206,12 @@ const Library = () => {
               </Select>
             </div>
           ))}
+          <div className="flex items-end">
+            <label className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted">
+              <Checkbox checked={allFolders} onCheckedChange={(v) => setAllFolders(Boolean(v))} />
+              Filtrovat ve všech složkách
+            </label>
+          </div>
         </Card>
 
         {error && (
@@ -212,7 +226,7 @@ const Library = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            {folders.length > 0 && (
+            {!allFolders && folders.length > 0 && (
               <section className="space-y-2">
                 <h2 className="text-sm font-medium text-muted-foreground">Složky</h2>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
