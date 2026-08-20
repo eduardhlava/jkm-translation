@@ -36,9 +36,20 @@ function titleOf(page: any): string {
 }
 
 function selectOf(page: any, name: string): string {
-  const p = page.properties?.[name];
-  return p?.type === "select" ? (p.select?.name ?? "") : "";
+  const props = page.properties ?? {};
+  const key = Object.keys(props).find(
+    (k) => k.toLowerCase().replace(/[_\s]/g, "") === name.toLowerCase().replace(/[_\s]/g, ""),
+  );
+  const p = key ? props[key] : undefined;
+  if (!p) return "";
+  if (p.type === "select") return p.select?.name ?? "";
+  if (p.type === "status") return p.status?.name ?? "";
+  if (p.type === "multi_select") return (p.multi_select ?? []).map((s: any) => s.name).join(", ");
+  if (p.type === "rich_text") return (p.rich_text ?? []).map((t: any) => t.plain_text ?? "").join("");
+  if (p.type === "formula") return p.formula?.string ?? "";
+  return "";
 }
+
 
 function relationIds(page: any, name: string): string[] {
   const p = page.properties?.[name];
