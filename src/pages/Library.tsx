@@ -9,6 +9,13 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -26,6 +33,17 @@ import {
   RefreshCw,
 } from "lucide-react";
 import jkLogo from "@/assets/jk-machinery-logo.png";
+
+const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp"]);
+
+const isImageUrl = (url: string) => {
+  try {
+    const pathname = new URL(url).pathname.toLowerCase();
+    return IMAGE_EXTENSIONS.has(pathname.slice(pathname.lastIndexOf(".")));
+  } catch {
+    return false;
+  }
+};
 
 type FolderItem = { id: string; name: string; parentId: string | null; url: string };
 type FileItem = {
@@ -58,6 +76,7 @@ const Library = () => {
   const [view, setView] = useState<"gallery" | "list">("list");
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [allFolders, setAllFolders] = useState(false);
+  const [detail, setDetail] = useState<FileItem | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(search.trim()), 300);
@@ -140,16 +159,18 @@ const Library = () => {
           <div className="ml-auto flex items-center gap-2">
             <div className="flex rounded-md border p-0.5">
               <Button
-                variant={view === "gallery" ? "secondary" : "ghost"}
+                variant={view === "gallery" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setView("gallery")}
+                className={cn(view === "gallery" && "ring-2 ring-ring ring-offset-1")}
               >
                 <LayoutGrid className="mr-1 h-4 w-4" /> Galerie
               </Button>
               <Button
-                variant={view === "list" ? "secondary" : "ghost"}
+                variant={view === "list" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setView("list")}
+                className={cn(view === "list" && "ring-2 ring-ring ring-offset-1")}
               >
                 <ListIcon className="mr-1 h-4 w-4" /> Seznam
               </Button>
@@ -250,57 +271,75 @@ const Library = () => {
                 <p className="text-sm text-muted-foreground">Nic nenalezeno.</p>
               ) : view === "gallery" ? (
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                  {shown.map((it) => (
-                    <Card key={it.id} className="overflow-hidden">
-                      <div className="flex h-32 items-center justify-center bg-muted">
-                        {it.image ? (
-                          <img
-                            src={it.image}
-                            alt={it.title}
-                            loading="lazy"
-                            className="h-full w-full object-contain"
-                          />
-                        ) : (
-                          <FileIcon className="h-8 w-8 text-muted-foreground" />
-                        )}
-                      </div>
-                      <div className="space-y-1 p-3">
-                        <div className="truncate text-sm font-medium">{it.title || "Bez názvu"}</div>
-                        {meta(it)}
-                      </div>
-                    </Card>
-                  ))}
+                  {shown.map((it) => {
+                    const clickable = Boolean(it.image && isImageUrl(it.image));
+                    return (
+                      <Card key={it.id} className="overflow-hidden">
+                        <div
+                          className={cn(
+                            "flex h-32 items-center justify-center bg-muted",
+                            clickable && "cursor-pointer hover:bg-muted/80",
+                          )}
+                          onClick={() => clickable && setDetail(it)}
+                        >
+                          {it.image ? (
+                            <img
+                              src={it.image}
+                              alt={it.title}
+                              loading="lazy"
+                              className="h-full w-full object-contain"
+                            />
+                          ) : (
+                            <FileIcon className="h-8 w-8 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="space-y-1 p-3">
+                          <div className="truncate text-sm font-medium">{it.title || "Bez názvu"}</div>
+                          {meta(it)}
+                        </div>
+                      </Card>
+                    );
+                  })}
                 </div>
               ) : (
                 <Card className="divide-y">
-                  {shown.map((it) => (
-                    <div key={it.id} className="flex items-center gap-3 p-2">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded border bg-muted">
-                        {it.image ? (
-                          <img
-                            src={it.image}
-                            alt={it.title}
-                            loading="lazy"
-                            className="h-full w-full rounded object-cover"
-                          />
-                        ) : (
-                          <FileIcon className="h-5 w-5 text-muted-foreground" />
-                        )}
+                  {shown.map((it) => {
+                    const clickable = Boolean(it.image && isImageUrl(it.image));
+                    return (
+                      <div key={it.id} className="flex items-center gap-3 p-2">
+                        <div
+                          className={cn(
+                            "flex h-12 w-12 shrink-0 items-center justify-center rounded border bg-muted",
+                            clickable && "cursor-pointer hover:bg-muted/80",
+                          )}
+                          onClick={() => clickable && setDetail(it)}
+                        >
+                          {it.image ? (
+                            <img
+                              src={it.image}
+                              alt={it.title}
+                              loading="lazy"
+                              className="h-full w-full rounded object-cover"
+                            />
+                          ) : (
+                            <FileIcon className="h-5 w-5 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1 truncate text-sm font-medium">
+                          {it.title || "Bez názvu"}
+                        </div>
+                        <div className="hidden w-32 shrink-0 truncate text-xs text-muted-foreground sm:block">
+                          {it.typ || "—"}
+                        </div>
+                        <div className="hidden w-24 shrink-0 truncate text-xs text-muted-foreground sm:block">
+                          {it.stroj || "—"}
+                        </div>
+                        <div className="hidden w-24 shrink-0 truncate text-xs text-muted-foreground sm:block">
+                          {it.stav || "—"}
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1 truncate text-sm font-medium">
-                        {it.title || "Bez názvu"}
-                      </div>
-                      <div className="hidden w-32 shrink-0 truncate text-xs text-muted-foreground sm:block">
-                        {it.typ || "—"}
-                      </div>
-                      <div className="hidden w-24 shrink-0 truncate text-xs text-muted-foreground sm:block">
-                        {it.stroj || "—"}
-                      </div>
-                      <div className="hidden w-24 shrink-0 truncate text-xs text-muted-foreground sm:block">
-                        {it.stav || "—"}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </Card>
               )}
 
@@ -314,6 +353,30 @@ const Library = () => {
             </section>
           </div>
         )}
+
+        <Dialog open={!!detail} onOpenChange={(open) => !open && setDetail(null)}>
+          {detail && (
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>{detail.title || "Bez názvu"}</DialogTitle>
+                <DialogDescription>
+                  Typ: {detail.typ || "—"} · Stroj: {detail.stroj || "—"} · Stav: {detail.stav || "—"}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex max-h-[70vh] items-center justify-center rounded-md border bg-muted p-2">
+                {detail.image ? (
+                  <img
+                    src={detail.image}
+                    alt={detail.title}
+                    className="max-h-full max-w-full object-contain"
+                  />
+                ) : (
+                  <FileIcon className="h-16 w-16 text-muted-foreground" />
+                )}
+              </div>
+            </DialogContent>
+          )}
+        </Dialog>
       </main>
     </div>
   );
