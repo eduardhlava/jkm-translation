@@ -103,6 +103,7 @@ Deno.serve(async (req) => {
     };
     if (typ) properties["typ"] = { select: { name: typ } };
     if (stroj) properties["stroj"] = { select: { name: stroj } };
+    if (folderId) properties["slozka"] = { relation: [{ id: folderId }] };
 
     const pageBody = {
       parent: { database_id: databaseId || DEFAULT_DB_ID },
