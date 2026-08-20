@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import SectionSwitcher from "@/components/SectionSwitcher";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,9 @@ import {
   LayoutGrid,
   List as ListIcon,
   Loader2,
+  LogOut,
   RefreshCw,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import jkLogo from "@/assets/jk-machinery-logo.png";
 
