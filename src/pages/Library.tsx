@@ -65,6 +65,8 @@ const ALL = "__all__";
 const PAGE_SIZE = 20;
 
 const Library = () => {
+  const { profile, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [folderId, setFolderId] = useState<string | null>(null);
   const [folders, setFolders] = useState<FolderItem[]>([]);
   const [files, setFiles] = useState<FileItem[]>([]);
