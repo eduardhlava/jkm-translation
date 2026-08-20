@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import SectionSwitcher from "@/components/SectionSwitcher";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,9 @@ import {
   LayoutGrid,
   List as ListIcon,
   Loader2,
+  LogOut,
   RefreshCw,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import jkLogo from "@/assets/jk-machinery-logo.png";
 
@@ -62,6 +65,8 @@ const ALL = "__all__";
 const PAGE_SIZE = 20;
 
 const Library = () => {
+  const { profile, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [folderId, setFolderId] = useState<string | null>(null);
   const [folders, setFolders] = useState<FolderItem[]>([]);
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -141,13 +146,44 @@ const Library = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
         <div className="container mx-auto flex flex-wrap items-center gap-4 px-4 py-3">
-          <Link to="/">
-            <img src={jkLogo} alt="JK Machinery" className="h-8 w-auto" />
-          </Link>
-          <div className="ml-auto flex items-center gap-2">
-            <SectionSwitcher showCreator />
-            <Button variant="outline" size="icon" onClick={() => void load()} disabled={loading}>
-              <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+          <div className="flex items-center gap-3">
+            <Link to="/">
+              <img src={jkLogo} alt="JK Machinery" className="h-8 w-auto" />
+            </Link>
+            <div className="h-8 w-px bg-border" />
+            <div>
+              <h1 className="font-semibold leading-tight">JKM Content Translator</h1>
+              <p className="text-xs text-muted-foreground">Aplikace pro překládání obsahu JK Machinery</p>
+            </div>
+            <div className="hidden md:block ml-2">
+              <SectionSwitcher showCreator={isAdmin} />
+            </div>
+          </div>
+          <div className="ml-auto flex items-center gap-3">
+            {(profile?.full_name?.trim() || profile?.email) && (
+              <div className="text-sm text-right leading-tight hidden sm:block">
+                {profile?.full_name?.trim() && (
+                  <div className="font-medium">{profile.full_name}</div>
+                )}
+                <div className="text-xs text-muted-foreground">{profile?.email}</div>
+              </div>
+            )}
+            {isAdmin && (
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/settings">
+                  <SettingsIcon className="w-4 h-4 mr-1" /> Nastavení
+                </Link>
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                navigate("/auth", { replace: true });
+              }}
+            >
+              <LogOut className="w-4 h-4 mr-1" /> Odhlásit
             </Button>
           </div>
         </div>
@@ -157,6 +193,9 @@ const Library = () => {
         <div className="flex flex-wrap items-center gap-4">
           <h1 className="text-xl font-semibold">Obrázky / Dokumenty</h1>
           <div className="ml-auto flex items-center gap-2">
+            <Button variant="outline" size="icon" onClick={() => void load()} disabled={loading}>
+              <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+            </Button>
             <div className="flex rounded-md border p-0.5">
               <Button
                 variant={view === "gallery" ? "default" : "ghost"}
