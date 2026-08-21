@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -84,6 +84,7 @@ const Index = () => {
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [pendingCount, setPendingCount] = useState<number | null>(null);
   const [countBump, setCountBump] = useState(0);
+  const [countLoading, setCountLoading] = useState(false);
   const [confirmPulse, setConfirmPulse] = useState<Record<string, number>>({});
   const [successFlash, setSuccessFlash] = useState(0);
   const [machineFilter, setMachineFilter] = useState<string>("__any__");
@@ -118,20 +119,38 @@ const Index = () => {
   const helperExProp = helperCtxLang !== "__none__" ? propExample(helperCtxLang) : null;
   const stProp = propStatus(targetLang);
 
+  const countRunRef = useRef(0);
+
   const loadCount = async () => {
+    const runId = ++countRunRef.current;
+    setCountLoading(true);
+    let total = 0;
+    let cursor: string | null = null;
     try {
-      const { data, error } = await supabase.functions.invoke("notion-count", {
-        body: { statusProperty: stProp, statusValue: settings.statusNew },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      setPendingCount((prev) => {
-        if (prev !== data.count) setCountBump((b) => b + 1);
-        return data.count as number;
-      });
+      do {
+        const { data, error } = await supabase.functions.invoke("notion-count", {
+          body: {
+            statusProperty: stProp,
+            statusValue: settings.statusNew,
+            startCursor: cursor,
+            maxPages: 10,
+          },
+        });
+        if (runId !== countRunRef.current) return; // superseded
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        total += (data.count as number) ?? 0;
+        cursor = (data.nextCursor as string | null) ?? null;
+        setPendingCount((prev) => {
+          if (prev !== total) setCountBump((b) => b + 1);
+          return total;
+        });
+      } while (cursor);
     } catch (err) {
       console.error("count failed", err);
-      setPendingCount(null);
+      if (runId === countRunRef.current) setPendingCount(null);
+    } finally {
+      if (runId === countRunRef.current) setCountLoading(false);
     }
   };
 
@@ -140,6 +159,7 @@ const Index = () => {
     loadCount();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetLang, settings.statusNew]);
+
 
   // Compute a snapshot of settings that affect what's loaded
   const currentSnapshot = JSON.stringify({
@@ -409,10 +429,14 @@ const Index = () => {
             {pendingCount !== null && (
               <div
                 key={countBump}
-                className="animate-count-bump text-sm self-end"
+                className="animate-count-bump text-sm self-end flex items-center gap-1.5"
               >
                 <span className="text-muted-foreground">{t(ui, "remainingToTranslate")}: </span>
-                <span className="font-semibold text-primary tabular-nums">{pendingCount}</span>
+                <span className="font-semibold text-primary tabular-nums">
+                  {pendingCount}
+                  {countLoading ? "+" : ""}
+                </span>
+                {countLoading && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
               </div>
             )}
             <div className="flex items-center gap-2">
