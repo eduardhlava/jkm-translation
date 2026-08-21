@@ -71,7 +71,7 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
-export default function NotionImageUploadDialog({ open, onOpenChange, onInsert }: Props) {
+export default function NotionImageUploadDialog({ open, onOpenChange, onInsert, initialFolderId }: Props) {
   const [files, setFiles] = useState<PendingFile[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [folders, setFolders] = useState<NotionFolder[]>([]);
@@ -126,11 +126,13 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert }
   const addFiles = useCallback((list: FileList | File[]) => {
     const first = Array.from(list).find((f) => f.type.startsWith("image/"));
     if (!first) return;
-    let last = "";
-    try {
-      last = localStorage.getItem(LAST_FOLDER_KEY) ?? "";
-    } catch {
-      last = "";
+    let last = initialFolderId ?? "";
+    if (!last) {
+      try {
+        last = localStorage.getItem(LAST_FOLDER_KEY) ?? "";
+      } catch {
+        last = "";
+      }
     }
     setFiles([
       {
@@ -143,7 +145,7 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert }
         folderId: last,
       },
     ]);
-  }, []);
+  }, [initialFolderId]);
 
 
   const updateOne = (id: string, patch: Partial<PendingFile>) =>
