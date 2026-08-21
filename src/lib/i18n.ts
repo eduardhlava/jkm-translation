@@ -92,7 +92,7 @@ export type TKey =
 type Dict = Record<TKey, string>;
 
 const cz: Dict = {
-  appName: "Content Translator",
+  appName: "Překlady slovníku",
   appTagline: "Správa hesel slovníku",
   fullName: "Jméno a příjmení",
   settings: "Nastavení",
