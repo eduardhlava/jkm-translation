@@ -304,7 +304,18 @@ const DocumentCreator = () => {
         savedSettings.metadata
           ? savedSettings.metadata
           : (parsedHtml.documentMetadata ?? {});
-      const mergedMeta = mergeMetadata({ ...metaSource, docName: (metaSource as any).docName ?? initialTitle });
+      // Notion "název" (title) = Označení dokumentu; "název_souboru" = Název dokumentu
+      const fileNameKey = Object.keys(item.properties ?? {}).find(
+        (k) => k.trim().toLowerCase().replace(/[\s_]+/g, "_") === "název_souboru" ||
+               k.trim().toLowerCase().replace(/[\s_]+/g, "_") === "nazev_souboru",
+      );
+      const notionFileName = fileNameKey ? item.properties[fileNameKey] : "";
+      const mergedMeta = mergeMetadata({
+        ...metaSource,
+        docCode: initialTitle,
+        docName: notionFileName || (metaSource as any).docName || "",
+      });
+
       setMetadata(mergedMeta);
       setLastExportAt((blocksRes.data as any)?.notion_exported_at ?? null);
 
