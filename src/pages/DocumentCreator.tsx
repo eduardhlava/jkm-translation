@@ -766,7 +766,17 @@ const DocumentCreator = () => {
                 }}>
                   ← Zpět na seznam
                 </Button>
-                <FileText className="w-4 h-4 text-primary flex-shrink-0" />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <FileText
+                      className="w-4 h-4 text-primary flex-shrink-0 cursor-help"
+                      title={`Název souboru: ${metadata.docName || "—"}`}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Název souboru: {metadata.docName || "—"}</p>
+                  </TooltipContent>
+                </Tooltip>
                 <div className="flex flex-col gap-0.5 min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <Label className="text-xs text-muted-foreground whitespace-nowrap">Označení dokumentu:</Label>
@@ -779,9 +789,6 @@ const DocumentCreator = () => {
                       className="h-8 max-w-md font-medium"
                       placeholder="Označení dokumentu"
                     />
-                  </div>
-                  <div className="text-xs text-muted-foreground truncate">
-                    Název souboru: {metadata.docName || "—"}
                   </div>
                 </div>
                 <Button type="button" variant="outline" size="sm" onClick={() => setMetadataOpen(true)}>
