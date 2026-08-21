@@ -725,7 +725,7 @@ const DocumentCreator = () => {
                             return (
                               <TableCell key={h} className="font-medium">
                                 <div>{value}</div>
-                                {fileName && <div className="text-xs text-muted-foreground">{fileName}</div>}
+                                {fileName && <div className="text-xs text-muted-foreground">({fileName})</div>}
                               </TableCell>
                             );
                           }
