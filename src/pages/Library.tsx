@@ -286,21 +286,6 @@ const Library = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            {!allFolders && folders.length > 0 && (
-              <section className="space-y-2">
-                <h2 className="text-sm font-medium text-muted-foreground">Složky</h2>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                  {folders.map((f) => (
-                    <button key={f.id} onClick={() => setFolderId(f.id)} className="text-left">
-                      <Card className="flex items-center gap-2 p-3 transition-colors hover:bg-muted">
-                        <Folder className="h-5 w-5 shrink-0 text-primary" />
-                        <span className="truncate text-sm font-medium">{f.name || "Bez názvu"}</span>
-                      </Card>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            )}
 
             <section className="space-y-2">
               <h2 className="text-sm font-medium text-muted-foreground">
