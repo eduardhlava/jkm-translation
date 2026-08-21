@@ -79,6 +79,8 @@ import PdfCanvasPreview from "@/components/PdfCanvasPreview";
 import { Blocks, PencilLine, Upload, FileDown, MoreHorizontal, Check, FileCog } from "lucide-react";
 import { useRef } from "react";
 import DocumentMetadataDialog from "@/components/DocumentMetadata/DocumentMetadataDialog";
+import NewDocumentDialog, { type CreatedDocument } from "@/components/NewDocumentDialog";
+import { ChevronDown, Plus } from "lucide-react";
 import { DEFAULT_DOCUMENT_METADATA, mergeMetadata, type DocumentMetadata } from "@/components/DocumentMetadata/types";
 
 type EditorMode = "blocks" | "wysiwyg";
@@ -94,7 +96,7 @@ interface PropMeta {
   options?: string[];
 }
 
-const FILTER_PROPS = ["jazyk", "typ", "stav", "section", "subsection"] as const;
+const FILTER_PROPS = ["jazyk", "typ", "stav"] as const;
 
 const DocumentCreator = () => {
   const { profile, isAdmin } = useAuth();
@@ -138,6 +140,49 @@ const DocumentCreator = () => {
   const [baselineSnapshot, setBaselineSnapshot] = useState<string>("");
   const [backDialogOpen, setBackDialogOpen] = useState(false);
   const [exportMap, setExportMap] = useState<Record<string, string | null>>({});
+  const [newDocOpen, setNewDocOpen] = useState(false);
+
+  const handleDocumentCreated = async (
+    doc: CreatedDocument,
+    meta: { docName: string; docCode: string; language: string },
+  ) => {
+    const mergedMeta = mergeMetadata({
+      docName: meta.docName,
+      docCode: meta.docCode,
+      language: meta.language,
+    });
+    try {
+      await supabase.from("document_blocks").upsert(
+        {
+          page_id: doc.id,
+          blocks: [] as any,
+          settings: { numberHeadings: false, collapsedBlocks: {}, metadata: mergedMeta } as any,
+        },
+        { onConflict: "page_id" },
+      );
+    } catch {
+      /* non-fatal — the document exists in Notion regardless */
+    }
+    setItems((prev) => [doc, ...prev.filter((i) => i.id !== doc.id)]);
+    setBlocks([]);
+    setMode("blocks");
+    setActivePage(doc);
+    setDocTitle(meta.docName);
+    setOriginalTitle(meta.docName);
+    setNumberHeadings(false);
+    setCollapsedBlocks({});
+    setMetadata(mergedMeta);
+    setLastExportAt(null);
+    setBaselineSnapshot(
+      JSON.stringify({
+        blocks: [],
+        numberHeadings: false,
+        collapsedBlocks: {},
+        metadata: mergedMeta,
+        docTitle: meta.docName,
+      }),
+    );
+  };
 
   const currentSnapshot = useMemo(
     () => JSON.stringify({ blocks, numberHeadings, collapsedBlocks, metadata, docTitle }),
@@ -611,6 +656,24 @@ const DocumentCreator = () => {
                 {loading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1" />}
                 Načíst seznam
               </Button>
+
+              <div className="ml-auto flex items-stretch">
+                <Button className="rounded-r-none" onClick={() => setNewDocOpen(true)}>
+                  <Plus className="w-4 h-4 mr-1" /> Nový dokument
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button className="rounded-l-none border-l border-primary-foreground/25 px-2" aria-label="Rozšířené volby">
+                      <ChevronDown className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-60">
+                    <DropdownMenuItem disabled onSelect={(e) => e.preventDefault()}>
+                      Nový soubor ze šablony (todo)
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </Card>
         )}
@@ -890,6 +953,13 @@ const DocumentCreator = () => {
         onOpenChange={setMetadataOpen}
         value={metadata}
         onChange={setMetadata}
+      />
+
+      <NewDocumentDialog
+        open={newDocOpen}
+        onOpenChange={setNewDocOpen}
+        schema={schema}
+        onCreated={handleDocumentCreated}
       />
 
       <AlertDialog open={backDialogOpen} onOpenChange={setBackDialogOpen}>

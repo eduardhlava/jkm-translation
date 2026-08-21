@@ -907,6 +907,27 @@ Deno.serve(async (req) => {
       const db = await dbRes.json();
       const titleName = Object.entries<any>(db.properties ?? {}).find(([, p]) => (p as any).type === "title")?.[0];
       if (!titleName) throw new Error("Title property not found");
+      const propMeta = db.properties ?? {};
+      const props: Record<string, any> = {
+        [titleName]: { title: [{ type: "text", text: { content: title } }] },
+      };
+      // Optional extra properties: { "<notion property name>": "<value>" }
+      const extra: Record<string, string> = body.properties ?? {};
+      for (const [name, rawValue] of Object.entries(extra)) {
+        const value = (rawValue ?? "").toString().trim();
+        if (!value) continue;
+        const meta = propMeta[name];
+        if (!meta || name === titleName) continue;
+        if (meta.type === "select") props[name] = { select: { name: value } };
+        else if (meta.type === "status") props[name] = { status: { name: value } };
+        else if (meta.type === "multi_select") props[name] = { multi_select: [{ name: value }] };
+        else if (meta.type === "rich_text") props[name] = { rich_text: [{ type: "text", text: { content: value } }] };
+        else if (meta.type === "url") props[name] = { url: value };
+        else if (meta.type === "number") {
+          const n = Number(value);
+          if (!Number.isNaN(n)) props[name] = { number: n };
+        }
+      }
       const createRes = await notionWrite(`https://api.notion.com/v1/pages`, {
         method: "POST",
         headers: {
@@ -916,11 +937,15 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify({
           parent: { database_id: CONTENT_DB_ID },
-          properties: { [titleName]: { title: [{ type: "text", text: { content: title } }] } },
+          properties: props,
         }),
       }, "create page");
       const created = await createRes.json();
-      return new Response(JSON.stringify({ id: created.id, url: created.url }), {
+      const outProps: Record<string, string> = {};
+      for (const [name] of Object.entries(propMeta)) {
+        outProps[name] = readPropText(created.properties?.[name]);
+      }
+      return new Response(JSON.stringify({ id: created.id, url: created.url, properties: outProps }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
