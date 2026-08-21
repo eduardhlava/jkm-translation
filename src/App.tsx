@@ -54,6 +54,14 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/library/folders"
+            element={
+              <ProtectedRoute requireAdmin>
+                <FolderManager />
+              </ProtectedRoute>
+            }
+          />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
