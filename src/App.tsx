@@ -9,6 +9,7 @@ import Auth from "./pages/Auth.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import DocumentCreator from "./pages/DocumentCreator.tsx";
 import Library from "./pages/Library.tsx";
+import FolderManager from "./pages/FolderManager.tsx";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,14 @@ const App = () => (
             element={
               <ProtectedRoute requireAdmin>
                 <Library />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/library/folders"
+            element={
+              <ProtectedRoute requireAdmin>
+                <FolderManager />
               </ProtectedRoute>
             }
           />
