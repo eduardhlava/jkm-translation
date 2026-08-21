@@ -44,6 +44,7 @@ const norm = (id: string | null | undefined) => (id ? id.replace(/-/g, "") : nul
 const FolderManager = () => {
   const { profile, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const sectionAccent = useSectionAccent();
   const [folders, setFolders] = useState<FolderItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);

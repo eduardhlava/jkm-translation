@@ -99,6 +99,7 @@ const FILTER_PROPS = ["jazyk", "typ", "stav", "section", "subsection"] as const;
 const DocumentCreator = () => {
   const { profile, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const sectionAccent = useSectionAccent();
   const [schema, setSchema] = useState<Record<string, PropMeta>>({});
   const [titleProp, setTitleProp] = useState<string>("název");
   const [titleQuery, setTitleQuery] = useState("");
