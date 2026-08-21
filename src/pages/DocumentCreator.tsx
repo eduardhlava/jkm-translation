@@ -553,7 +553,7 @@ const DocumentCreator = () => {
             <img src={jkLogo} alt="JK Machinery" className="h-9 w-auto" loading="lazy" />
             <div className="h-8 w-px bg-border" />
             <div>
-              <h1 className="font-semibold leading-tight">Tvorba dokumentů</h1>
+              <h1 className="font-semibold leading-tight">Content system</h1>
             </div>
             <div className="hidden md:flex self-stretch items-end ml-2">
               <SectionSwitcher showCreator={isAdmin} />

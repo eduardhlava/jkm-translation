@@ -297,7 +297,7 @@ const Index = () => {
             />
             <div className="h-8 w-px bg-border" />
             <div>
-              <h1 className="font-semibold leading-tight">{t(ui, "appName")}</h1>
+              <h1 className="font-semibold leading-tight">Content system</h1>
             </div>
             <div className="hidden md:flex self-stretch items-end ml-2">
               <SectionSwitcher showCreator={isAdmin} />
