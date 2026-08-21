@@ -46,6 +46,7 @@ export type Database = {
           can_dictionary: boolean
           can_documents: boolean
           can_files: boolean
+          can_folders: boolean
           created_at: string
           email: string
           full_name: string
@@ -60,6 +61,7 @@ export type Database = {
           can_dictionary?: boolean
           can_documents?: boolean
           can_files?: boolean
+          can_folders?: boolean
           created_at?: string
           email: string
           full_name?: string
@@ -74,6 +76,7 @@ export type Database = {
           can_dictionary?: boolean
           can_documents?: boolean
           can_files?: boolean
+          can_folders?: boolean
           created_at?: string
           email?: string
           full_name?: string

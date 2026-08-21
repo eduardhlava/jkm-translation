@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
     if (action === "list") {
       const { data: profiles, error: pErr } = await admin
         .from("profiles")
-        .select("user_id, email, full_name, is_active, target_languages, ui_lang, can_dictionary, can_documents, can_files, created_at")
+        .select("user_id, email, full_name, is_active, target_languages, ui_lang, can_dictionary, can_documents, can_files, can_folders, created_at")
         .order("email");
       if (pErr) throw pErr;
       const { data: rolesAll, error: rErr } = await admin
@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "create") {
-      const { email, password, is_admin, is_active, target_languages, ui_lang, full_name, can_dictionary, can_documents, can_files } = body;
+      const { email, password, is_admin, is_active, target_languages, ui_lang, full_name, can_dictionary, can_documents, can_files, can_folders } = body;
       if (!email || !password) return json({ error: "email a heslo jsou povinné" }, 400);
       const { data: created, error: cErr } = await admin.auth.admin.createUser({
         email,
@@ -119,6 +119,7 @@ Deno.serve(async (req) => {
           can_dictionary: can_dictionary ?? true,
           can_documents: can_documents ?? true,
           can_files: can_files ?? true,
+          can_folders: can_folders ?? true,
         },
         { onConflict: "user_id" },
       );
@@ -132,7 +133,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "update") {
-      const { user_id, email, password, is_admin, is_active, target_languages, ui_lang, full_name, can_dictionary, can_documents, can_files } = body;
+      const { user_id, email, password, is_admin, is_active, target_languages, ui_lang, full_name, can_dictionary, can_documents, can_files, can_folders } = body;
       if (!user_id) return json({ error: "user_id required" }, 400);
 
       const { data: existing } = await admin
@@ -152,6 +153,7 @@ Deno.serve(async (req) => {
       if (typeof can_dictionary === "boolean") profilePatch.can_dictionary = can_dictionary;
       if (typeof can_documents === "boolean") profilePatch.can_documents = can_documents;
       if (typeof can_files === "boolean") profilePatch.can_files = can_files;
+      if (typeof can_folders === "boolean") profilePatch.can_folders = can_folders;
       if (Object.keys(profilePatch).length > 0) {
         const { error } = await admin
           .from("profiles")

@@ -57,7 +57,8 @@ const App = () => (
           <Route
             path="/library/folders"
             element={
-              <ProtectedRoute requireSection="files">
+              <ProtectedRoute requireSection="folders">
+
                 <FolderManager />
               </ProtectedRoute>
             }

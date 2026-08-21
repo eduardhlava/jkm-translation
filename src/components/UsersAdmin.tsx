@@ -37,6 +37,7 @@ interface UserRow {
   can_dictionary: boolean;
   can_documents: boolean;
   can_files: boolean;
+  can_folders: boolean;
 }
 
 interface FormState {
@@ -52,6 +53,7 @@ interface FormState {
   can_dictionary: boolean;
   can_documents: boolean;
   can_files: boolean;
+  can_folders: boolean;
 }
 
 const empty: FormState = {
@@ -66,6 +68,7 @@ const empty: FormState = {
   can_dictionary: true,
   can_documents: true,
   can_files: true,
+  can_folders: true,
 };
 
 export default function UsersAdmin({ ui }: { ui: UiLang }) {
@@ -114,6 +117,7 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
       can_dictionary: u.can_dictionary ?? true,
       can_documents: u.can_documents ?? true,
       can_files: u.can_files ?? true,
+      can_folders: u.can_folders ?? true,
     });
     setOpen(true);
   };
@@ -133,6 +137,7 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
         can_dictionary: form.can_dictionary,
         can_documents: form.can_documents,
         can_files: form.can_files,
+        can_folders: form.can_folders,
       };
       if (form.user_id) body.user_id = form.user_id;
       if (form.password) body.password = form.password;
@@ -303,6 +308,7 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
                   ["can_dictionary", "secDict"],
                   ["can_documents", "secDocs"],
                   ["can_files", "secFiles"],
+                  ["can_folders", "secFolders"],
                 ] as const).map(([key, label]) => (
                   <label key={key} className="flex items-center gap-2 text-sm cursor-pointer">
                     <Checkbox

@@ -2,7 +2,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 
-export type Section = "dictionary" | "documents" | "files";
+export type Section = "dictionary" | "documents" | "files" | "folders";
 
 interface Props {
   children: React.ReactNode;
@@ -11,14 +11,16 @@ interface Props {
 }
 
 export const sectionAllowed = (
-  profile: { can_dictionary?: boolean; can_documents?: boolean; can_files?: boolean } | null,
+  profile: { can_dictionary?: boolean; can_documents?: boolean; can_files?: boolean; can_folders?: boolean } | null,
   section: Section,
 ) => {
   if (!profile) return false;
   if (section === "dictionary") return profile.can_dictionary !== false;
   if (section === "documents") return profile.can_documents !== false;
+  if (section === "folders") return profile.can_folders !== false;
   return profile.can_files !== false;
 };
+
 
 const firstAllowed = (profile: Parameters<typeof sectionAllowed>[0]) => {
   if (sectionAllowed(profile, "dictionary")) return "/";

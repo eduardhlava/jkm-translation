@@ -341,9 +341,12 @@ const Library = () => {
                 ))}
               </nav>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/library/folders">Správa složek</Link>
-                </Button>
+                {profile?.can_folders !== false && (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/library/folders">Správa složek</Link>
+                  </Button>
+                )}
+
                 <Button variant="outline" size="icon" onClick={() => void load()} disabled={loading}>
                   <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
                 </Button>
