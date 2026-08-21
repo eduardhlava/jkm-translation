@@ -36,7 +36,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import jkLogo from "@/assets/jk-machinery-logo.png";
-import SectionSwitcher from "@/components/SectionSwitcher";
+import SectionSwitcher, { useSectionAccent } from "@/components/SectionSwitcher";
 import {
   CheckCircle2,
   Check,
@@ -285,7 +285,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-[var(--gradient-subtle)]">
-      <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-10">
+      <header className="border-b-[3px] bg-background/80 backdrop-blur-sm sticky top-0 z-10" style={{ borderBottomColor: sectionAccent }}>
         <div className="container max-w-[105rem] py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img

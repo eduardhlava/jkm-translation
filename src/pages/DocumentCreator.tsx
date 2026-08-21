@@ -69,7 +69,7 @@ import {
   X,
 } from "lucide-react";
 import jkLogo from "@/assets/jk-machinery-logo.png";
-import SectionSwitcher from "@/components/SectionSwitcher";
+import SectionSwitcher, { useSectionAccent } from "@/components/SectionSwitcher";
 import EditorToolbar from "@/components/EditorToolbar";
 import BlockEditor from "@/components/BlockEditor";
 import type { Block } from "@/components/BlockEditor/types";
@@ -546,7 +546,7 @@ const DocumentCreator = () => {
 
   return (
     <div className="min-h-screen bg-[var(--gradient-subtle)]">
-      <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-30">
+      <header className="border-b-[3px] bg-background/80 backdrop-blur-sm sticky top-0 z-30" style={{ borderBottomColor: sectionAccent }}>
         <div className="container max-w-[105rem] py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={jkLogo} alt="JK Machinery" className="h-9 w-auto" loading="lazy" />

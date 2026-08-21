@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import SectionSwitcher from "@/components/SectionSwitcher";
+import SectionSwitcher, { useSectionAccent } from "@/components/SectionSwitcher";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -144,7 +144,7 @@ const Library = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
+      <header className="border-b-[3px] bg-card" style={{ borderBottomColor: sectionAccent }}>
         <div className="container mx-auto flex flex-wrap items-center gap-4 px-4 py-3">
           <div className="flex items-center gap-3">
             <Link to="/">

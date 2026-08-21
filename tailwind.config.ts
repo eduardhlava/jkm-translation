@@ -39,6 +39,12 @@ export default {
           DEFAULT: "hsl(var(--warning))",
           foreground: "hsl(var(--warning-foreground))",
         },
+        section: {
+          dict: "hsl(var(--section-dict))",
+          docs: "hsl(var(--section-docs))",
+          files: "hsl(var(--section-files))",
+          foreground: "hsl(var(--section-foreground))",
+        },
         brand: {
           DEFAULT: "hsl(var(--brand))",
           foreground: "hsl(var(--brand-foreground))",
