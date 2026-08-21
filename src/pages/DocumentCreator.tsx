@@ -714,11 +714,27 @@ const DocumentCreator = () => {
                     const exportedAt = exportMap[it.id] ?? null;
                     return (
                       <TableRow key={it.id} className={isActive ? "bg-primary/5" : undefined}>
-                        {tableHeaders.map((h) => (
-                          <TableCell key={h} className={h === titleProp ? "font-medium" : "text-muted-foreground"}>
-                            {it.properties[h] || "—"}
-                          </TableCell>
-                        ))}
+                        {tableHeaders.map((h) => {
+                          const value = it.properties[h] || "—";
+                          if (h === titleProp) {
+                            const fileNameKey = Object.keys(it.properties ?? {}).find(
+                              (k) => k.trim().toLowerCase().replace(/[\s_]+/g, "_") === "název_souboru" ||
+                                     k.trim().toLowerCase().replace(/[\s_]+/g, "_") === "nazev_souboru",
+                            );
+                            const fileName = fileNameKey ? it.properties[fileNameKey] : "";
+                            return (
+                              <TableCell key={h} className="font-medium">
+                                <div>{value}</div>
+                                {fileName && <div className="text-xs text-muted-foreground">{fileName}</div>}
+                              </TableCell>
+                            );
+                          }
+                          return (
+                            <TableCell key={h} className="text-muted-foreground">
+                              {value}
+                            </TableCell>
+                          );
+                        })}
                         <TableCell className="text-center">
                           <Tooltip>
                             <TooltipTrigger asChild>
