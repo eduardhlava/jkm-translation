@@ -140,6 +140,49 @@ const DocumentCreator = () => {
   const [baselineSnapshot, setBaselineSnapshot] = useState<string>("");
   const [backDialogOpen, setBackDialogOpen] = useState(false);
   const [exportMap, setExportMap] = useState<Record<string, string | null>>({});
+  const [newDocOpen, setNewDocOpen] = useState(false);
+
+  const handleDocumentCreated = async (
+    doc: CreatedDocument,
+    meta: { docName: string; docCode: string; language: string },
+  ) => {
+    const mergedMeta = mergeMetadata({
+      docName: meta.docName,
+      docCode: meta.docCode,
+      language: meta.language,
+    });
+    try {
+      await supabase.from("document_blocks").upsert(
+        {
+          page_id: doc.id,
+          blocks: [] as any,
+          settings: { numberHeadings: false, collapsedBlocks: {}, metadata: mergedMeta } as any,
+        },
+        { onConflict: "page_id" },
+      );
+    } catch {
+      /* non-fatal — the document exists in Notion regardless */
+    }
+    setItems((prev) => [doc, ...prev.filter((i) => i.id !== doc.id)]);
+    setBlocks([]);
+    setMode("blocks");
+    setActivePage(doc);
+    setDocTitle(meta.docName);
+    setOriginalTitle(meta.docName);
+    setNumberHeadings(false);
+    setCollapsedBlocks({});
+    setMetadata(mergedMeta);
+    setLastExportAt(null);
+    setBaselineSnapshot(
+      JSON.stringify({
+        blocks: [],
+        numberHeadings: false,
+        collapsedBlocks: {},
+        metadata: mergedMeta,
+        docTitle: meta.docName,
+      }),
+    );
+  };
 
   const currentSnapshot = useMemo(
     () => JSON.stringify({ blocks, numberHeadings, collapsedBlocks, metadata, docTitle }),
