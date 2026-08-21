@@ -180,9 +180,20 @@ export default function DocumentMetadataDialog({ open, onOpenChange, value, onCh
           </div>
 
           <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Údaje o výrobci</Label>
+            <Textarea
+              value={draft.manufacturerInfo}
+              onChange={(e) => update({ manufacturerInfo: e.target.value })}
+              rows={5}
+              placeholder={"Údaje o výrobci:\nJK Machinery a.s."}
+            />
+          </div>
+
+          <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Copyright</Label>
             <Input value={draft.copyright} onChange={(e) => update({ copyright: e.target.value })} />
           </div>
+
 
           <label className="flex items-center justify-between gap-3 rounded-md border p-3">
             <div>

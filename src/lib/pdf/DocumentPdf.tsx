@@ -629,12 +629,14 @@ function CoverPage({ metadata, logoDataUrl, footerVersion }: { metadata: Documen
       })()}
       <View style={styles.coverManufacturer} fixed>
         <View style={styles.coverColLeft}>
-          <Text>Údaje o výrobci:</Text>
-          <Text>JK Machinery a.s.</Text>
-          <Text>Politických vězňů 912/10</Text>
-          <Text>CZ 110 00 Praha 1</Text>
-          <Text>Česká republika</Text>
+          {(metadata.manufacturerInfo || "")
+            .split(/\r?\n/)
+            .filter((l) => l.trim().length > 0)
+            .map((l, i) => (
+              <Text key={i}>{l}</Text>
+            ))}
         </View>
+
         <View style={styles.coverColMid}>
           <Text>Tel. +420 222 362 620</Text>
         </View>
