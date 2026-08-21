@@ -84,6 +84,7 @@ const Index = () => {
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [pendingCount, setPendingCount] = useState<number | null>(null);
   const [countBump, setCountBump] = useState(0);
+  const [countLoading, setCountLoading] = useState(false);
   const [confirmPulse, setConfirmPulse] = useState<Record<string, number>>({});
   const [successFlash, setSuccessFlash] = useState(0);
   const [machineFilter, setMachineFilter] = useState<string>("__any__");
