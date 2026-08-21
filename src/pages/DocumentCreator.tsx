@@ -952,8 +952,12 @@ const DocumentCreator = () => {
         open={metadataOpen}
         onOpenChange={setMetadataOpen}
         value={metadata}
-        onChange={setMetadata}
+        onChange={(next) => {
+          setMetadata(next);
+          if (next.docCode !== metadata.docCode) setDocTitle(next.docCode);
+        }}
       />
+
 
       <NewDocumentDialog
         open={newDocOpen}
