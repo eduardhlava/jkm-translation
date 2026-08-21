@@ -13,6 +13,7 @@ export interface DocumentMetadata {
   disclaimerWarning: DocumentDisclaimer;
   disclaimerNotice: DocumentDisclaimer;
   disclaimerConfidential: DocumentDisclaimer;
+  manufacturerInfo: string;
   revision: string;
   copyright: string;
   footerVersion: string;
@@ -58,6 +59,8 @@ export const DEFAULT_DOCUMENT_METADATA: DocumentMetadata = {
     text:
       "Společnosti JK Machinery a.s., Česká republika. Tato informace se zapůjčuje uživateli k důvěrnému použití, na požádání se musí vrátit a zainteresované strany jsou navzájem srozuměny s tím, že nebude použita žádným způsobem, který by byl na újmu zájmům společnosti JK Machinery a.s. a/nebo jejím partnerům.",
   },
+  manufacturerInfo:
+    "Údaje o výrobci:\nJK Machinery a.s.\nPolitických vězňů 912/10\nCZ 110 00 Praha 1\nČeská republika",
   revision: "",
   copyright: "© JK Machinery a.s., Czech Republic, all rights reserved",
   footerVersion: "",
