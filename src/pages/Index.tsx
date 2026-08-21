@@ -118,20 +118,38 @@ const Index = () => {
   const helperExProp = helperCtxLang !== "__none__" ? propExample(helperCtxLang) : null;
   const stProp = propStatus(targetLang);
 
+  const countRunRef = useRef(0);
+
   const loadCount = async () => {
+    const runId = ++countRunRef.current;
+    setCountLoading(true);
+    let total = 0;
+    let cursor: string | null = null;
     try {
-      const { data, error } = await supabase.functions.invoke("notion-count", {
-        body: { statusProperty: stProp, statusValue: settings.statusNew },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      setPendingCount((prev) => {
-        if (prev !== data.count) setCountBump((b) => b + 1);
-        return data.count as number;
-      });
+      do {
+        const { data, error } = await supabase.functions.invoke("notion-count", {
+          body: {
+            statusProperty: stProp,
+            statusValue: settings.statusNew,
+            startCursor: cursor,
+            maxPages: 10,
+          },
+        });
+        if (runId !== countRunRef.current) return; // superseded
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        total += (data.count as number) ?? 0;
+        cursor = (data.nextCursor as string | null) ?? null;
+        setPendingCount((prev) => {
+          if (prev !== total) setCountBump((b) => b + 1);
+          return total;
+        });
+      } while (cursor);
     } catch (err) {
       console.error("count failed", err);
-      setPendingCount(null);
+      if (runId === countRunRef.current) setPendingCount(null);
+    } finally {
+      if (runId === countRunRef.current) setCountLoading(false);
     }
   };
 
@@ -140,6 +158,7 @@ const Index = () => {
     loadCount();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetLang, settings.statusNew]);
+
 
   // Compute a snapshot of settings that affect what's loaded
   const currentSnapshot = JSON.stringify({
