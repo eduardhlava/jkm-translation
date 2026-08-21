@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import SectionSwitcher from "@/components/SectionSwitcher";
+import SectionSwitcher, { useSectionAccent } from "@/components/SectionSwitcher";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,6 +67,7 @@ const PAGE_SIZE = 20;
 const Library = () => {
   const { profile, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const sectionAccent = useSectionAccent();
   const [folderId, setFolderId] = useState<string | null>(null);
   const [folders, setFolders] = useState<FolderItem[]>([]);
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -144,8 +145,8 @@ const Library = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto flex flex-wrap items-center gap-4 px-4 py-3">
+      <header className="border-b-[3px] bg-card" style={{ borderBottomColor: sectionAccent }}>
+        <div className="container mx-auto flex flex-wrap items-center gap-4 px-4 py-4">
           <div className="flex items-center gap-3">
             <Link to="/">
               <img src={jkLogo} alt="JK Machinery" className="h-8 w-auto" />
@@ -154,7 +155,7 @@ const Library = () => {
             <div>
               <h1 className="font-semibold leading-tight">Překlady slovníku</h1>
             </div>
-            <div className="hidden md:block ml-2">
+            <div className="hidden md:flex self-stretch items-end ml-2">
               <SectionSwitcher showCreator={isAdmin} />
             </div>
           </div>

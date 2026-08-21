@@ -36,7 +36,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import jkLogo from "@/assets/jk-machinery-logo.png";
-import SectionSwitcher from "@/components/SectionSwitcher";
+import SectionSwitcher, { useSectionAccent } from "@/components/SectionSwitcher";
 import {
   CheckCircle2,
   Check,
@@ -70,6 +70,7 @@ type LocalStatus = "new" | "translated";
 const Index = () => {
   const { profile, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const sectionAccent = useSectionAccent();
   const [settings, setSettings] = useState<AppSettings>(loadSettings());
   const [sourceLang, setSourceLang] = useState<string>("cz");
   const [targetLang, setTargetLang] = useState<string>("en");
@@ -285,7 +286,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-[var(--gradient-subtle)]">
-      <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-10">
+      <header className="border-b-[3px] bg-background/80 backdrop-blur-sm sticky top-0 z-10" style={{ borderBottomColor: sectionAccent }}>
         <div className="container max-w-[105rem] py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img
@@ -298,7 +299,7 @@ const Index = () => {
             <div>
               <h1 className="font-semibold leading-tight">{t(ui, "appName")}</h1>
             </div>
-            <div className="hidden md:block ml-2">
+            <div className="hidden md:flex self-stretch items-end ml-2">
               <SectionSwitcher showCreator={isAdmin} />
             </div>
           </div>
