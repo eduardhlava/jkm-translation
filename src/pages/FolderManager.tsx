@@ -207,7 +207,7 @@ const FolderManager = () => {
               <h1 className="font-semibold leading-tight">Content system</h1>
             </div>
           </div>
-          <div className="hidden md:flex items-end justify-center">
+          <div className="hidden md:flex items-end justify-center self-stretch">
             <SectionSwitcher showCreator={isAdmin} />
           </div>
           <div className="flex items-center gap-3 justify-end flex-1">
