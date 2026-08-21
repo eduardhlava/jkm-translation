@@ -92,8 +92,8 @@ export type TKey =
 type Dict = Record<TKey, string>;
 
 const cz: Dict = {
-  appName: "JKM Content Translator",
-  appTagline: "Aplikace pro překládání obsahu JK Machinery",
+  appName: "Content Translator",
+  appTagline: "Správa hesel slovníku",
   fullName: "Jméno a příjmení",
   settings: "Nastavení",
   back: "Zpět",
@@ -132,7 +132,7 @@ const cz: Dict = {
   loadedN: "Načteno {n} položek",
   noNewItems: "Žádné položky se stavem „nový“",
   sameLangError: "Zdrojový a cílový jazyk musí být různé",
-  pageTitle: "JKM Content Translator – překlady přímo z databáze",
+  pageTitle: "Content Translator – překlady přímo z databáze",
   toTranslate: "K překladu",
   remainingToTranslate: "Zbývá k překladu",
   machineCol: "Stroj",
@@ -176,8 +176,8 @@ const cz: Dict = {
 };
 
 const en: Dict = {
-  appName: "JKM Content Translator",
-  appTagline: "App for translating JK Machinery content",
+  appName: "Content Translator",
+  appTagline: "Dictionary term management",
   fullName: "Full name",
   settings: "Settings",
   back: "Back",
@@ -216,7 +216,7 @@ const en: Dict = {
   loadedN: "Loaded {n} items",
   noNewItems: "No items with status “new”",
   sameLangError: "Source and target language must differ",
-  pageTitle: "JKM Content Translator – translate straight from your database",
+  pageTitle: "Content Translator – translate straight from your database",
   toTranslate: "To translate",
   remainingToTranslate: "Remaining to translate",
   machineCol: "Machine",
@@ -260,8 +260,8 @@ const en: Dict = {
 };
 
 const ru: Dict = {
-  appName: "JKM Content Translator",
-  appTagline: "Приложение для перевода контента JK Machinery",
+  appName: "Content Translator",
+  appTagline: "Управление терминами словаря",
   fullName: "Имя и фамилия",
   settings: "Настройки",
   back: "Назад",
@@ -300,7 +300,7 @@ const ru: Dict = {
   loadedN: "Загружено {n} записей",
   noNewItems: "Нет записей со статусом «новый»",
   sameLangError: "Исходный и целевой язык должны отличаться",
-  pageTitle: "JKM Content Translator — переводы прямо из базы",
+  pageTitle: "Content Translator — переводы прямо из базы",
   toTranslate: "К переводу",
   remainingToTranslate: "Осталось перевести",
   machineCol: "Станок",
@@ -344,8 +344,8 @@ const ru: Dict = {
 };
 
 const pl: Dict = {
-  appName: "JKM Content Translator",
-  appTagline: "Aplikacja do tłumaczenia treści JK Machinery",
+  appName: "Content Translator",
+  appTagline: "Zarządzanie terminami słownika",
   fullName: "Imię i nazwisko",
   settings: "Ustawienia",
   back: "Wstecz",
@@ -384,7 +384,7 @@ const pl: Dict = {
   loadedN: "Wczytano {n} elementów",
   noNewItems: "Brak elementów ze statusem „nowy”",
   sameLangError: "Język źródłowy i docelowy muszą się różnić",
-  pageTitle: "JKM Content Translator – tłumaczenia prosto z bazy",
+  pageTitle: "Content Translator – tłumaczenia prosto z bazy",
   toTranslate: "Do tłumaczenia",
   remainingToTranslate: "Pozostało do przetłumaczenia",
   machineCol: "Maszyna",
