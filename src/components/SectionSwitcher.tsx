@@ -18,7 +18,7 @@ const SectionSwitcher = ({ showCreator }: Props) => {
       label: "Translator",
       icon: Languages,
       active: pathname === "/",
-      color: "primary",
+      activeClass: "bg-primary text-primary-foreground border-transparent",
       iconClass: "text-primary",
     },
     {
@@ -26,7 +26,7 @@ const SectionSwitcher = ({ showCreator }: Props) => {
       label: "Document Creator",
       icon: FileText,
       active: pathname.startsWith("/document-creator"),
-      color: "warning",
+      activeClass: "bg-warning text-warning-foreground border-transparent",
       iconClass: "text-warning",
     },
     {
@@ -34,7 +34,7 @@ const SectionSwitcher = ({ showCreator }: Props) => {
       label: "Soubory",
       icon: FolderOpen,
       active: pathname.startsWith("/library"),
-      color: "success",
+      activeClass: "bg-success text-success-foreground border-transparent",
       iconClass: "text-success",
     },
   ];
@@ -51,12 +51,7 @@ const SectionSwitcher = ({ showCreator }: Props) => {
             className={cn(
               base,
               tab.active
-                ? cn(
-                    `bg-${tab.color} text-${tab.color}-foreground border-transparent`,
-                    tab.color === "primary" && "bg-primary text-primary-foreground",
-                    tab.color === "warning" && "bg-warning text-warning-foreground",
-                    tab.color === "success" && "bg-success text-success-foreground",
-                  )
+                ? tab.activeClass
                 : "bg-background text-muted-foreground hover:bg-muted border-border hover:text-foreground",
             )}
           >
