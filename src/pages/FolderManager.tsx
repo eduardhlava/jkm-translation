@@ -197,14 +197,14 @@ const FolderManager = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b-[3px] bg-card" style={{ borderBottomColor: sectionAccent }}>
-        <div className="container mx-auto flex flex-wrap items-center gap-4 px-4 py-4">
+        <div className="container max-w-[105rem] flex flex-wrap items-center gap-4 py-4">
           <div className="flex items-center gap-3">
             <Link to="/">
-              <img src={jkLogo} alt="JK Machinery" className="h-8 w-auto" />
+              <img src={jkLogo} alt="JK Machinery" className="h-9 w-auto" />
             </Link>
             <div className="h-8 w-px bg-border" />
             <div>
-              <h1 className="font-semibold leading-tight">Překlady slovníku</h1>
+              <h1 className="font-semibold leading-tight">Content system</h1>
             </div>
             <div className="hidden md:flex self-stretch items-end ml-2">
               <SectionSwitcher showCreator={isAdmin} />
@@ -239,7 +239,7 @@ const FolderManager = () => {
         </div>
       </header>
 
-      <main className="container mx-auto max-w-3xl space-y-4 px-4 py-6">
+      <main className="container max-w-[105rem] space-y-4 py-6">
         <div className="flex flex-wrap items-center gap-3">
           <Button variant="ghost" size="sm" asChild>
             <Link to="/library">

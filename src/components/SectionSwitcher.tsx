@@ -47,7 +47,7 @@ const SectionSwitcher = ({ showCreator }: Props) => {
   ];
 
   return (
-    <nav className="inline-flex items-end gap-1 self-end ml-5 -mb-4 translate-y-[2px]">
+    <nav className="inline-flex items-end gap-1 self-end ml-5 -mb-4">
       {tabs.map((tab) => {
         if (tab.to !== "/" && !showCreator) return null;
         const Icon = tab.icon;
