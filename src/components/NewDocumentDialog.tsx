@@ -52,15 +52,18 @@ export default function NewDocumentDialog({ open, onOpenChange, schema, onCreate
   const strojProp = findProp(schema, ["stroj"]);
   const typProp = findProp(schema, ["typ"]);
   const jazykProp = findProp(schema, ["jazyk"]);
-  const codeProp = findProp(schema, ["označení", "oznaceni", "kód", "kod", "označení dokumentu"]);
+  const fileNameProp = Object.keys(schema).find((name) => {
+    const n = name.trim().toLowerCase().replace(/[\s_]+/g, "_");
+    return n === "název_souboru" || n === "nazev_souboru";
+  });
 
   const strojOptions = strojProp ? schema[strojProp]?.options ?? [] : [];
   const typOptions = typProp ? schema[typProp]?.options ?? [] : [];
 
   const save = async () => {
-    const title = docName.trim();
+    const title = docCode.trim();
     if (!title) {
-      toast.error("Vyplňte název dokumentu");
+      toast.error("Vyplňte označení dokumentu");
       return;
     }
     setSaving(true);
@@ -69,7 +72,7 @@ export default function NewDocumentDialog({ open, onOpenChange, schema, onCreate
       if (strojProp && stroj) properties[strojProp] = stroj;
       if (typProp && typ) properties[typProp] = typ;
       if (jazykProp && language) properties[jazykProp] = language;
-      if (codeProp && docCode.trim()) properties[codeProp] = docCode.trim();
+      if (fileNameProp && docName.trim()) properties[fileNameProp] = docName.trim();
 
       const { data, error } = await supabase.functions.invoke("notion-content", {
         body: { action: "createPage", title, properties },
@@ -84,7 +87,7 @@ export default function NewDocumentDialog({ open, onOpenChange, schema, onCreate
       };
       toast.success("Dokument vytvořen v Notion");
       onOpenChange(false);
-      onCreated(created, { docName: title, docCode: docCode.trim(), language });
+      onCreated(created, { docName: docName.trim(), docCode: title, language });
     } catch (e) {
       toast.error("Vytvoření dokumentu selhalo", { description: e instanceof Error ? e.message : "" });
     } finally {
@@ -101,12 +104,12 @@ export default function NewDocumentDialog({ open, onOpenChange, schema, onCreate
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Název dokumentu</Label>
-            <Input value={docName} onChange={(e) => setDocName(e.target.value)} placeholder="např. Návod k obsluze" />
-          </div>
-          <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Označení dokumentu</Label>
             <Input value={docCode} onChange={(e) => setDocCode(e.target.value)} placeholder="např. JHI 05_CZ" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Název dokumentu</Label>
+            <Input value={docName} onChange={(e) => setDocName(e.target.value)} placeholder="např. Návod k obsluze" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Jazyk dokumentu</Label>
