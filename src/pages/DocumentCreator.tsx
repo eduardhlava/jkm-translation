@@ -169,8 +169,8 @@ const DocumentCreator = () => {
     setBlocks([]);
     setMode("blocks");
     setActivePage(doc);
-    setDocTitle(meta.docName);
-    setOriginalTitle(meta.docName);
+    setDocTitle(meta.docCode);
+    setOriginalTitle(meta.docCode);
     setNumberHeadings(false);
     setCollapsedBlocks({});
     setMetadata(mergedMeta);
@@ -181,7 +181,7 @@ const DocumentCreator = () => {
         numberHeadings: false,
         collapsedBlocks: {},
         metadata: mergedMeta,
-        docTitle: meta.docName,
+        docTitle: meta.docCode,
       }),
     );
   };
