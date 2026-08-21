@@ -86,12 +86,22 @@ export type TKey =
   | "reloadPromptTitle"
   | "reloadPromptDesc"
   | "reloadConfirm"
+  | "sectionAccess"
+  | "sectionAccessHint"
+  | "secDict"
+  | "secDocs"
+  | "secFiles"
   | "allMachinesTitle"
   | "cancel";
 
 type Dict = Record<TKey, string>;
 
 const cz: Dict = {
+  sectionAccess: "Přístup do sekcí",
+  sectionAccessHint: "Vyberte sekce, do kterých má uživatel přístup.",
+  secDict: "Překlady slovníku",
+  secDocs: "Tvorba dokumentů",
+  secFiles: "Soubory",
   appName: "Překlady slovníku",
   appTagline: "Správa hesel slovníku",
   fullName: "Jméno a příjmení",
@@ -176,6 +186,11 @@ const cz: Dict = {
 };
 
 const en: Dict = {
+  sectionAccess: "Section access",
+  sectionAccessHint: "Choose the sections this user can access.",
+  secDict: "Dictionary translations",
+  secDocs: "Document creation",
+  secFiles: "Files",
   appName: "Dictionary translations",
   appTagline: "Dictionary term management",
   fullName: "Full name",
@@ -260,6 +275,11 @@ const en: Dict = {
 };
 
 const ru: Dict = {
+  sectionAccess: "Доступ к разделам",
+  sectionAccessHint: "Выберите разделы, доступные пользователю.",
+  secDict: "Переводы словаря",
+  secDocs: "Создание документов",
+  secFiles: "Файлы",
   appName: "Переводы словаря",
   appTagline: "Управление терминами словаря",
   fullName: "Имя и фамилия",
@@ -344,6 +364,11 @@ const ru: Dict = {
 };
 
 const pl: Dict = {
+  sectionAccess: "Dostęp do sekcji",
+  sectionAccessHint: "Wybierz sekcje dostępne dla użytkownika.",
+  secDict: "Tłumaczenia słownika",
+  secDocs: "Tworzenie dokumentów",
+  secFiles: "Pliki",
   appName: "Tłumaczenia słownika",
   appTagline: "Zarządzanie terminami słownika",
   fullName: "Imię i nazwisko",
