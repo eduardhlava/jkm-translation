@@ -7,7 +7,14 @@ interface Props {
 }
 
 const base =
-  "inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg border transition-colors relative top-px";
+  "inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg border border-b-0 transition-colors";
+
+export const useSectionAccent = () => {
+  const { pathname } = useLocation();
+  if (pathname.startsWith("/document-creator")) return "hsl(var(--section-docs))";
+  if (pathname.startsWith("/library")) return "hsl(var(--section-files))";
+  return "hsl(var(--section-dict))";
+};
 
 const SectionSwitcher = ({ showCreator }: Props) => {
   const { pathname } = useLocation();
@@ -18,32 +25,29 @@ const SectionSwitcher = ({ showCreator }: Props) => {
       label: "Překlady slovníku",
       icon: Languages,
       active: pathname === "/",
-      activeClass:
-        "bg-primary text-primary-foreground border-border border-b-background",
-      iconClass: "text-primary",
+      activeClass: "bg-section-dict text-section-foreground border-section-dict",
+      iconClass: "text-section-dict",
     },
     {
       to: "/document-creator",
       label: "Tvorba dokumentů",
       icon: FileText,
       active: pathname.startsWith("/document-creator"),
-      activeClass:
-        "bg-warning text-warning-foreground border-border border-b-background",
-      iconClass: "text-warning",
+      activeClass: "bg-section-docs text-section-foreground border-section-docs",
+      iconClass: "text-section-docs",
     },
     {
       to: "/library",
       label: "Soubory",
       icon: FolderOpen,
       active: pathname.startsWith("/library"),
-      activeClass:
-        "bg-success text-success-foreground border-border border-b-background",
-      iconClass: "text-success",
+      activeClass: "bg-section-files text-section-foreground border-section-files",
+      iconClass: "text-section-files",
     },
   ];
 
   return (
-    <nav className="inline-flex items-end gap-1 border-b">
+    <nav className="inline-flex items-end gap-1 self-end ml-5 -mb-4">
       {tabs.map((tab) => {
         if (tab.to !== "/" && !showCreator) return null;
         const Icon = tab.icon;
