@@ -218,9 +218,10 @@ const FolderManager = () => {
               </div>
             )}
             {isAdmin && (
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/settings">
-                  <SettingsIcon className="w-4 h-4 mr-1" /> Nastavení
+              <Button variant="outline" size="icon" className="h-8 w-8" asChild>
+                <Link to="/settings" aria-label="Nastavení">
+                  <SettingsIcon className="w-4 h-4" />
+                  <span className="sr-only">Nastavení</span>
                 </Link>
               </Button>
             )}
