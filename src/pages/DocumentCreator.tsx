@@ -698,7 +698,9 @@ const DocumentCreator = () => {
               <table className="w-full caption-bottom text-sm bg-card">
                 <TableHeader className="bg-muted/70 [&_tr]:border-b-0 [&>tr>th]:sticky [&>tr>th]:top-0 [&>tr>th]:z-20 [&>tr>th]:bg-muted">
                   <TableRow>
-                    {tableHeaders.map((h) => <TableHead key={h}>{h}</TableHead>)}
+                    {tableHeaders.map((h) => (
+                      <TableHead key={h}>{h === titleProp ? "Označení dokumentu (jméno souboru)" : h}</TableHead>
+                    ))}
                     <TableHead className="w-16 text-center">Notion</TableHead>
                     <TableHead className="text-right">Akce</TableHead>
                   </TableRow>
@@ -712,11 +714,27 @@ const DocumentCreator = () => {
                     const exportedAt = exportMap[it.id] ?? null;
                     return (
                       <TableRow key={it.id} className={isActive ? "bg-primary/5" : undefined}>
-                        {tableHeaders.map((h) => (
-                          <TableCell key={h} className={h === titleProp ? "font-medium" : "text-muted-foreground"}>
-                            {it.properties[h] || "—"}
-                          </TableCell>
-                        ))}
+                        {tableHeaders.map((h) => {
+                          const value = it.properties[h] || "—";
+                          if (h === titleProp) {
+                            const fileNameKey = Object.keys(it.properties ?? {}).find(
+                              (k) => k.trim().toLowerCase().replace(/[\s_]+/g, "_") === "název_souboru" ||
+                                     k.trim().toLowerCase().replace(/[\s_]+/g, "_") === "nazev_souboru",
+                            );
+                            const fileName = fileNameKey ? it.properties[fileNameKey] : "";
+                            return (
+                              <TableCell key={h} className="font-medium">
+                                <div>{value}</div>
+                                {fileName && <div className="text-xs text-muted-foreground">{fileName}</div>}
+                              </TableCell>
+                            );
+                          }
+                          return (
+                            <TableCell key={h} className="text-muted-foreground">
+                              {value}
+                            </TableCell>
+                          );
+                        })}
                         <TableCell className="text-center">
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -766,7 +784,16 @@ const DocumentCreator = () => {
                 }}>
                   ← Zpět na seznam
                 </Button>
-                <FileText className="w-4 h-4 text-primary flex-shrink-0" />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex cursor-help" title={`Název souboru: ${metadata.docName || "—"}`}>
+                      <FileText className="w-4 h-4 text-primary flex-shrink-0" />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Název souboru: {metadata.docName || "—"}</p>
+                  </TooltipContent>
+                </Tooltip>
                 <div className="flex flex-col gap-0.5 min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <Label className="text-xs text-muted-foreground whitespace-nowrap">Označení dokumentu:</Label>
@@ -779,9 +806,6 @@ const DocumentCreator = () => {
                       className="h-8 max-w-md font-medium"
                       placeholder="Označení dokumentu"
                     />
-                  </div>
-                  <div className="text-xs text-muted-foreground truncate">
-                    Název souboru: {metadata.docName || "—"}
                   </div>
                 </div>
                 <Button type="button" variant="outline" size="sm" onClick={() => setMetadataOpen(true)}>
