@@ -193,6 +193,12 @@ const Library = () => {
       <main className="container max-w-[105rem] space-y-4 py-6">
         <div className="flex flex-wrap items-center gap-4">
           <h1 className="text-xl font-semibold">Soubory</h1>
+          <Link
+            to="/library/folders"
+            className="text-sm font-medium text-primary hover:underline"
+          >
+            Správa složek
+          </Link>
           <div className="ml-auto flex items-center gap-2">
             <Button variant="outline" size="icon" onClick={() => void load()} disabled={loading}>
               <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
@@ -218,90 +224,88 @@ const Library = () => {
           </div>
         </div>
 
-        <nav className={cn("flex flex-wrap items-center gap-1 text-sm", allFolders && "opacity-50 pointer-events-none")}>
-          <button
-            className="inline-flex items-center gap-1 rounded px-2 py-1 hover:bg-muted"
-            onClick={() => setFolderId(null)}
-            disabled={allFolders}
-          >
-            <Home className="h-3.5 w-3.5" /> Kořen
-          </button>
-          {breadcrumbs.map((b) => (
-            <span key={b.id} className="inline-flex items-center gap-1">
-              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-              <button className="rounded px-2 py-1 hover:bg-muted" onClick={() => setFolderId(b.id)} disabled={allFolders}>
-                {b.name || "Bez názvu"}
-              </button>
-            </span>
-          ))}
-        </nav>
-
-        {!allFolders && (
-          <section className="space-y-2">
-            <div className="flex items-center gap-3">
-              <h2 className="text-sm font-medium text-muted-foreground">Složky</h2>
-              <Link
-                to="/library/folders"
-                className="text-sm font-medium text-primary hover:underline"
-              >
-                Správa složek
-              </Link>
-            </div>
-            {folders.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                {folders.map((f) => (
-                  <button key={f.id} onClick={() => setFolderId(f.id)} className="text-left">
-                    <Card className="flex items-center gap-2 p-3 transition-colors hover:bg-muted">
-                      <Folder className="h-5 w-5 shrink-0 text-primary" />
-                      <span className="truncate text-sm font-medium">{f.name || "Bez názvu"}</span>
-                    </Card>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Žádné podsložky.</p>
-            )}
-          </section>
-        )}
-
-        <Card className="grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-5">
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Název (fulltext)</Label>
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Hledat…"
+        <div className="grid gap-4 lg:grid-cols-[18rem_1fr]">
+          <Card className={cn("h-fit p-2", allFolders && "opacity-50 pointer-events-none")}>
+            <button
+              className={cn(
+                "flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-sm hover:bg-muted",
+                folderId === null && "bg-muted font-medium",
+              )}
+              onClick={() => setFolderId(null)}
+            >
+              <Home className="h-4 w-4 text-primary" /> Kořen
+            </button>
+            <FolderTree
+              folders={allFolderList}
+              parentId={null}
+              depth={1}
+              expanded={expanded}
+              toggle={toggle}
+              current={folderId}
+              onSelect={setFolderId}
             />
+          </Card>
+
+          <div className="space-y-4">
+            <nav className={cn("flex flex-wrap items-center gap-1 text-sm", allFolders && "opacity-50 pointer-events-none")}>
+              <button
+                className="inline-flex items-center gap-1 rounded px-2 py-1 hover:bg-muted"
+                onClick={() => setFolderId(null)}
+                disabled={allFolders}
+              >
+                <Home className="h-3.5 w-3.5" /> Kořen
+              </button>
+              {breadcrumbs.map((b) => (
+                <span key={b.id} className="inline-flex items-center gap-1">
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                  <button className="rounded px-2 py-1 hover:bg-muted" onClick={() => setFolderId(b.id)} disabled={allFolders}>
+                    {b.name || "Bez názvu"}
+                  </button>
+                </span>
+              ))}
+            </nav>
+
+            <Card className="grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Název (fulltext)</Label>
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Hledat…"
+                />
+              </div>
+              {[
+                { label: "Typ", value: typ, set: setTyp, opts: typOptions },
+                { label: "Stroj", value: stroj, set: setStroj, opts: strojOptions },
+                { label: "Stav", value: stav, set: setStav, opts: stavOptions },
+              ].map((f) => (
+                <div key={f.label} className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">{f.label}</Label>
+                  <Select value={f.value} onValueChange={f.set}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={ALL}>Vše</SelectItem>
+                      {f.opts.map((o) => (
+                        <SelectItem key={o} value={o}>
+                          {o}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
+              <div className="flex items-end">
+                <label className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted">
+                  <Checkbox checked={allFolders} onCheckedChange={(v) => setAllFolders(Boolean(v))} />
+                  Filtrovat ve všech složkách
+                </label>
+              </div>
+            </Card>
           </div>
-          {[
-            { label: "Typ", value: typ, set: setTyp, opts: typOptions },
-            { label: "Stroj", value: stroj, set: setStroj, opts: strojOptions },
-            { label: "Stav", value: stav, set: setStav, opts: stavOptions },
-          ].map((f) => (
-            <div key={f.label} className="space-y-1">
-              <Label className="text-xs text-muted-foreground">{f.label}</Label>
-              <Select value={f.value} onValueChange={f.set}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL}>Vše</SelectItem>
-                  {f.opts.map((o) => (
-                    <SelectItem key={o} value={o}>
-                      {o}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          ))}
-          <div className="flex items-end">
-            <label className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted">
-              <Checkbox checked={allFolders} onCheckedChange={(v) => setAllFolders(Boolean(v))} />
-              Filtrovat ve všech složkách
-            </label>
-          </div>
-        </Card>
+        </div>
+
 
         {error && (
           <div className="rounded border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
