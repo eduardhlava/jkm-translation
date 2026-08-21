@@ -656,6 +656,24 @@ const DocumentCreator = () => {
                 {loading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1" />}
                 Načíst seznam
               </Button>
+
+              <div className="ml-auto flex items-stretch">
+                <Button className="rounded-r-none" onClick={() => setNewDocOpen(true)}>
+                  <Plus className="w-4 h-4 mr-1" /> Nový dokument
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button className="rounded-l-none border-l border-primary-foreground/25 px-2" aria-label="Rozšířené volby">
+                      <ChevronDown className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-60">
+                    <DropdownMenuItem disabled onSelect={(e) => e.preventDefault()}>
+                      Nový soubor ze šablony (todo)
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </Card>
         )}
