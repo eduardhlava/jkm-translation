@@ -79,20 +79,23 @@ Deno.serve(async (req) => {
       throw new Error("statusProperty and statusValue are required");
     }
 
+    const startCursor = body.startCursor ?? undefined;
+    const maxPages = Math.min(Math.max(body.maxPages ?? 10, 1), 50);
+
     // Try status filter first; if Notion rejects, retry as select.
     const statusFilter = {
       property: body.statusProperty,
       status: { equals: body.statusValue },
     };
 
-    let result = await queryCount(databaseId, NOTION_API_KEY, statusFilter);
+    let result = await queryCount(databaseId, NOTION_API_KEY, statusFilter, startCursor, maxPages);
 
     if (!result.ok && result.status === 400) {
       const selectFilter = {
         property: body.statusProperty,
         select: { equals: body.statusValue },
       };
-      result = await queryCount(databaseId, NOTION_API_KEY, selectFilter);
+      result = await queryCount(databaseId, NOTION_API_KEY, selectFilter, startCursor, maxPages);
     }
 
     if (!result.ok) {
@@ -100,9 +103,14 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ count: result.count }),
+      JSON.stringify({
+        count: result.count,
+        nextCursor: result.nextCursor,
+        hasMore: result.hasMore,
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
+
   } catch (error: unknown) {
     console.error("notion-count error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
