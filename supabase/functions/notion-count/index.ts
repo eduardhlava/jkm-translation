@@ -15,16 +15,23 @@ interface CountRequest {
   statusValue: string;
   databaseId?: string;
   propertyType?: "status" | "select";
+  startCursor?: string | null;
+  maxPages?: number;
 }
 
 async function queryCount(
   databaseId: string,
   apiKey: string,
   filter: any,
-): Promise<{ ok: true; count: number } | { ok: false; status: number; text: string }> {
+  startCursor: string | undefined,
+  maxPages: number,
+): Promise<
+  | { ok: true; count: number; nextCursor: string | null; hasMore: boolean }
+  | { ok: false; status: number; text: string }
+> {
   let count = 0;
-  let cursor: string | undefined = undefined;
-  for (let i = 0; i < 20; i++) {
+  let cursor: string | undefined = startCursor;
+  for (let i = 0; i < maxPages; i++) {
     const res: Response = await fetch(
       `https://api.notion.com/v1/databases/${databaseId}/query`,
       {
@@ -47,11 +54,15 @@ async function queryCount(
     }
     const data: any = await res.json();
     count += (data.results ?? []).length;
-    if (data.has_more && data.next_cursor) cursor = data.next_cursor;
-    else break;
+    if (data.has_more && data.next_cursor) {
+      cursor = data.next_cursor;
+    } else {
+      return { ok: true, count, nextCursor: null, hasMore: false };
+    }
   }
-  return { ok: true, count };
+  return { ok: true, count, nextCursor: cursor ?? null, hasMore: true };
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
