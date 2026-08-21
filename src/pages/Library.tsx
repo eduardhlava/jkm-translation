@@ -235,6 +235,34 @@ const Library = () => {
           ))}
         </nav>
 
+        {!allFolders && (
+          <section className="space-y-2">
+            <div className="flex items-center gap-3">
+              <h2 className="text-sm font-medium text-muted-foreground">Složky</h2>
+              <Link
+                to="/library/folders"
+                className="text-sm font-medium text-primary hover:underline"
+              >
+                Správa složek
+              </Link>
+            </div>
+            {folders.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                {folders.map((f) => (
+                  <button key={f.id} onClick={() => setFolderId(f.id)} className="text-left">
+                    <Card className="flex items-center gap-2 p-3 transition-colors hover:bg-muted">
+                      <Folder className="h-5 w-5 shrink-0 text-primary" />
+                      <span className="truncate text-sm font-medium">{f.name || "Bez názvu"}</span>
+                    </Card>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Žádné podsložky.</p>
+            )}
+          </section>
+        )}
+
         <Card className="grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-5">
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Název (fulltext)</Label>
