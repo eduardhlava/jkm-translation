@@ -146,7 +146,7 @@ const Library = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b-[3px] bg-card" style={{ borderBottomColor: sectionAccent }}>
-        <div className="container mx-auto flex flex-wrap items-center gap-4 px-4 py-3">
+        <div className="container mx-auto flex flex-wrap items-center gap-4 px-4 py-4">
           <div className="flex items-center gap-3">
             <Link to="/">
               <img src={jkLogo} alt="JK Machinery" className="h-8 w-auto" />
@@ -155,7 +155,7 @@ const Library = () => {
             <div>
               <h1 className="font-semibold leading-tight">Překlady slovníku</h1>
             </div>
-            <div className="hidden md:block ml-2">
+            <div className="hidden md:flex self-stretch items-end ml-2">
               <SectionSwitcher showCreator={isAdmin} />
             </div>
           </div>
