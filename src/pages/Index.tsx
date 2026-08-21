@@ -429,10 +429,14 @@ const Index = () => {
             {pendingCount !== null && (
               <div
                 key={countBump}
-                className="animate-count-bump text-sm self-end"
+                className="animate-count-bump text-sm self-end flex items-center gap-1.5"
               >
                 <span className="text-muted-foreground">{t(ui, "remainingToTranslate")}: </span>
-                <span className="font-semibold text-primary tabular-nums">{pendingCount}</span>
+                <span className="font-semibold text-primary tabular-nums">
+                  {pendingCount}
+                  {countLoading ? "+" : ""}
+                </span>
+                {countLoading && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
               </div>
             )}
             <div className="flex items-center gap-2">
