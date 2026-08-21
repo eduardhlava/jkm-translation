@@ -955,6 +955,13 @@ const DocumentCreator = () => {
         onChange={setMetadata}
       />
 
+      <NewDocumentDialog
+        open={newDocOpen}
+        onOpenChange={setNewDocOpen}
+        schema={schema}
+        onCreated={handleDocumentCreated}
+      />
+
       <AlertDialog open={backDialogOpen} onOpenChange={setBackDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
