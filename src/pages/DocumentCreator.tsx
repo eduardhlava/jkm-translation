@@ -100,6 +100,12 @@ interface PropMeta {
 
 const FILTER_PROPS = ["jazyk", "typ", "stav"] as const;
 
+const capitalizeHeader = (s: string) =>
+  s
+    .split(" ")
+    .map((w) => w.charAt(0).toLocaleUpperCase("cs") + w.slice(1))
+    .join(" ");
+
 const DocumentCreator = () => {
   const { profile, isAdmin } = useAuth();
   const navigate = useNavigate();
