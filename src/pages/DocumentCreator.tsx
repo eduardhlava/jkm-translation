@@ -707,7 +707,7 @@ const DocumentCreator = () => {
                     {tableHeaders.map((h) => (
                       <TableHead key={h}>{h === titleProp ? "Označení dokumentu (jméno souboru)" : capitalizeHeader(h)}</TableHead>
                     ))}
-                    <TableHead className="w-16 text-center">Uloženo do Notion</TableHead>
+                    <TableHead className="w-16 text-center">Notion</TableHead>
                     <TableHead className="text-right">Akce</TableHead>
                   </TableRow>
                 </TableHeader>
