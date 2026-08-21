@@ -287,8 +287,8 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-[var(--gradient-subtle)]">
       <header className="border-b-[3px] bg-background/80 backdrop-blur-sm sticky top-0 z-10" style={{ borderBottomColor: sectionAccent }}>
-        <div className="container max-w-[105rem] py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="container max-w-[105rem] py-4 flex items-center gap-4">
+          <div className="flex items-center gap-3 flex-1">
             <img
               src={jkLogo}
               alt="JK Machinery"
@@ -299,11 +299,11 @@ const Index = () => {
             <div>
               <h1 className="font-semibold leading-tight">Content system</h1>
             </div>
-            <div className="hidden md:flex self-stretch items-end ml-2">
-              <SectionSwitcher showCreator={isAdmin} />
-            </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="hidden md:flex items-end justify-center">
+            <SectionSwitcher showCreator={isAdmin} />
+          </div>
+          <div className="flex items-center gap-3 justify-end flex-1">
             {(profile?.full_name?.trim() || profile?.email) && (
               <div className="text-sm text-right leading-tight hidden sm:block">
                 {profile?.full_name?.trim() && (
