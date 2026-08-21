@@ -754,15 +754,27 @@ const DocumentCreator = () => {
                   ← Zpět na seznam
                 </Button>
                 <FileText className="w-4 h-4 text-primary flex-shrink-0" />
-                <Input
-                  value={docTitle}
-                  onChange={(e) => setDocTitle(e.target.value)}
-                  className="h-8 max-w-md font-medium"
-                  placeholder="Název dokumentu"
-                />
+                <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-xs text-muted-foreground whitespace-nowrap">Označení dokumentu:</Label>
+                    <Input
+                      value={docTitle}
+                      onChange={(e) => {
+                        setDocTitle(e.target.value);
+                        setMetadata((m) => ({ ...m, docCode: e.target.value }));
+                      }}
+                      className="h-8 max-w-md font-medium"
+                      placeholder="Označení dokumentu"
+                    />
+                  </div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    Název souboru: {metadata.docName || "—"}
+                  </div>
+                </div>
                 <Button type="button" variant="outline" size="sm" onClick={() => setMetadataOpen(true)}>
                   <FileCog className="w-4 h-4 mr-1" /> Nastavení dokumentu
                 </Button>
+
               </div>
               <div className="flex items-center gap-2">
                 <DropdownMenu>
