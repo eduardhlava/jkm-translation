@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS can_folders boolean NOT NULL DEFAULT true;
