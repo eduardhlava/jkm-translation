@@ -1,9 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { FileText, FolderOpen, Languages } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { sectionAllowed, type Section } from "@/components/ProtectedRoute";
 
 interface Props {
-  showCreator: boolean;
+  showCreator?: boolean;
 }
 
 const base =
@@ -16,12 +18,14 @@ export const useSectionAccent = () => {
   return "hsl(var(--section-dict))";
 };
 
-const SectionSwitcher = ({ showCreator }: Props) => {
+const SectionSwitcher = (_props: Props) => {
   const { pathname } = useLocation();
+  const { profile } = useAuth();
 
   const tabs = [
     {
       to: "/",
+      section: "dictionary" as Section,
       label: "Překlady slovníku",
       icon: Languages,
       active: pathname === "/",
@@ -30,6 +34,7 @@ const SectionSwitcher = ({ showCreator }: Props) => {
     },
     {
       to: "/document-creator",
+      section: "documents" as Section,
       label: "Tvorba dokumentů",
       icon: FileText,
       active: pathname.startsWith("/document-creator"),
@@ -38,6 +43,7 @@ const SectionSwitcher = ({ showCreator }: Props) => {
     },
     {
       to: "/library",
+      section: "files" as Section,
       label: "Soubory",
       icon: FolderOpen,
       active: pathname.startsWith("/library"),
@@ -49,7 +55,7 @@ const SectionSwitcher = ({ showCreator }: Props) => {
   return (
     <nav className="inline-flex items-end gap-1 self-end ml-5 -mb-4">
       {tabs.map((tab) => {
-        if (tab.to !== "/" && !showCreator) return null;
+        if (!sectionAllowed(profile, tab.section)) return null;
         const Icon = tab.icon;
         return (
           <Link

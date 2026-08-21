@@ -25,7 +25,7 @@ const App = () => (
           <Route
             path="/"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requireSection="dictionary">
                 <Index />
               </ProtectedRoute>
             }
@@ -41,7 +41,7 @@ const App = () => (
           <Route
             path="/document-creator"
             element={
-              <ProtectedRoute requireAdmin>
+              <ProtectedRoute requireSection="documents">
                 <DocumentCreator />
               </ProtectedRoute>
             }
@@ -49,7 +49,7 @@ const App = () => (
           <Route
             path="/library"
             element={
-              <ProtectedRoute requireAdmin>
+              <ProtectedRoute requireSection="files">
                 <Library />
               </ProtectedRoute>
             }
@@ -57,7 +57,7 @@ const App = () => (
           <Route
             path="/library/folders"
             element={
-              <ProtectedRoute requireAdmin>
+              <ProtectedRoute requireSection="files">
                 <FolderManager />
               </ProtectedRoute>
             }

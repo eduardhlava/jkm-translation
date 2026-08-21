@@ -34,6 +34,9 @@ interface UserRow {
   is_super_admin: boolean;
   target_languages: string[];
   ui_lang: string;
+  can_dictionary: boolean;
+  can_documents: boolean;
+  can_files: boolean;
 }
 
 interface FormState {
@@ -46,6 +49,9 @@ interface FormState {
   is_super_admin: boolean;
   target_languages: string[];
   ui_lang: string;
+  can_dictionary: boolean;
+  can_documents: boolean;
+  can_files: boolean;
 }
 
 const empty: FormState = {
@@ -57,6 +63,9 @@ const empty: FormState = {
   is_super_admin: false,
   target_languages: [],
   ui_lang: "cz",
+  can_dictionary: true,
+  can_documents: true,
+  can_files: true,
 };
 
 export default function UsersAdmin({ ui }: { ui: UiLang }) {
@@ -102,6 +111,9 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
       is_super_admin: u.is_super_admin,
       target_languages: u.target_languages ?? [],
       ui_lang: u.ui_lang ?? "cz",
+      can_dictionary: u.can_dictionary ?? true,
+      can_documents: u.can_documents ?? true,
+      can_files: u.can_files ?? true,
     });
     setOpen(true);
   };
@@ -118,6 +130,9 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
         is_admin: form.is_admin,
         target_languages: form.target_languages,
         ui_lang: form.ui_lang,
+        can_dictionary: form.can_dictionary,
+        can_documents: form.can_documents,
+        can_files: form.can_files,
       };
       if (form.user_id) body.user_id = form.user_id;
       if (form.password) body.password = form.password;
@@ -280,6 +295,28 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
                 {t(ui, "isAdmin")}
               </Label>
             </div>
+            <div className="space-y-1.5">
+              <Label>{t(ui, "sectionAccess")}</Label>
+              <p className="text-xs text-muted-foreground">{t(ui, "sectionAccessHint")}</p>
+              <div className="grid grid-cols-1 gap-2 pt-1">
+                {([
+                  ["can_dictionary", "secDict"],
+                  ["can_documents", "secDocs"],
+                  ["can_files", "secFiles"],
+                ] as const).map(([key, label]) => (
+                  <label key={key} className="flex items-center gap-2 text-sm cursor-pointer">
+                    <Checkbox
+                      checked={form[key]}
+                      onCheckedChange={(v) =>
+                        setForm((f) => ({ ...f, [key]: Boolean(v) }))
+                      }
+                    />
+                    {t(ui, label)}
+                  </label>
+                ))}
+              </div>
+            </div>
+
             <div className="space-y-1.5">
               <Label>{t(ui, "targetLangs")}</Label>
               <p className="text-xs text-muted-foreground">{t(ui, "targetLangsHint")}</p>
