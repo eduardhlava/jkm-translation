@@ -94,7 +94,7 @@ interface PropMeta {
   options?: string[];
 }
 
-const FILTER_PROPS = ["jazyk", "typ", "stav", "section", "subsection"] as const;
+const FILTER_PROPS = ["jazyk", "typ", "stav"] as const;
 
 const DocumentCreator = () => {
   const { profile, isAdmin } = useAuth();
