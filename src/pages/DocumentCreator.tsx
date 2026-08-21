@@ -79,6 +79,8 @@ import PdfCanvasPreview from "@/components/PdfCanvasPreview";
 import { Blocks, PencilLine, Upload, FileDown, MoreHorizontal, Check, FileCog } from "lucide-react";
 import { useRef } from "react";
 import DocumentMetadataDialog from "@/components/DocumentMetadata/DocumentMetadataDialog";
+import NewDocumentDialog, { type CreatedDocument } from "@/components/NewDocumentDialog";
+import { ChevronDown, Plus } from "lucide-react";
 import { DEFAULT_DOCUMENT_METADATA, mergeMetadata, type DocumentMetadata } from "@/components/DocumentMetadata/types";
 
 type EditorMode = "blocks" | "wysiwyg";
