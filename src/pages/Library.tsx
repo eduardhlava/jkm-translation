@@ -64,6 +64,77 @@ type FileItem = {
 const ALL = "__all__";
 const PAGE_SIZE = 20;
 
+const normId = (id: string | null | undefined) => (id ? id.replace(/-/g, "") : null);
+
+const FolderTree = ({
+  folders,
+  parentId,
+  depth,
+  expanded,
+  toggle,
+  current,
+  onSelect,
+}: {
+  folders: FolderItem[];
+  parentId: string | null;
+  depth: number;
+  expanded: Set<string>;
+  toggle: (id: string) => void;
+  current: string | null;
+  onSelect: (id: string) => void;
+}) => {
+  const items = folders.filter((f) => normId(f.parentId) === normId(parentId));
+  if (items.length === 0) return null;
+  return (
+    <ul>
+      {items.map((f) => {
+        const hasChildren = folders.some((c) => normId(c.parentId) === normId(f.id));
+        const isOpen = expanded.has(f.id);
+        return (
+          <li key={f.id}>
+            <div
+              className={cn(
+                "flex items-center gap-1 rounded px-1 py-1 text-sm hover:bg-muted",
+                normId(current) === normId(f.id) && "bg-muted font-medium",
+              )}
+              style={{ paddingLeft: depth * 12 }}
+            >
+              <button
+                className="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground"
+                onClick={() => hasChildren && toggle(f.id)}
+                aria-label={isOpen ? "Sbalit" : "Rozbalit"}
+              >
+                {hasChildren && (
+                  <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", isOpen && "rotate-90")} />
+                )}
+              </button>
+              <button
+                className="flex min-w-0 flex-1 items-center gap-1.5 text-left"
+                onClick={() => onSelect(f.id)}
+              >
+                <Folder className="h-4 w-4 shrink-0 text-primary" />
+                <span className="truncate">{f.name || "Bez názvu"}</span>
+              </button>
+            </div>
+            {isOpen && (
+              <FolderTree
+                folders={folders}
+                parentId={f.id}
+                depth={depth + 1}
+                expanded={expanded}
+                toggle={toggle}
+                current={current}
+                onSelect={onSelect}
+              />
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+};
+
+
 const Library = () => {
   const { profile, isAdmin } = useAuth();
   const navigate = useNavigate();
