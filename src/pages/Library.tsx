@@ -154,6 +154,17 @@ const Library = () => {
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [allFolders, setAllFolders] = useState(false);
   const [detail, setDetail] = useState<FileItem | null>(null);
+  const [allFolderList, setAllFolderList] = useState<FolderItem[]>([]);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const toggle = useCallback((id: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(search.trim()), 300);
@@ -170,11 +181,21 @@ const Library = () => {
       setError(error.message);
     } else {
       setFolders((data?.folders ?? []) as FolderItem[]);
+      setAllFolderList((data?.allFolders ?? []) as FolderItem[]);
       setFiles((data?.files ?? []) as FileItem[]);
-      setBreadcrumbs((data?.breadcrumbs ?? []) as { id: string; name: string }[]);
+      const crumbs = (data?.breadcrumbs ?? []) as { id: string; name: string }[];
+      setBreadcrumbs(crumbs);
+      if (crumbs.length) {
+        setExpanded((prev) => {
+          const next = new Set(prev);
+          crumbs.forEach((c) => next.add(c.id));
+          return next;
+        });
+      }
     }
     setLoading(false);
   }, [folderId, allFolders]);
+
 
   useEffect(() => {
     void load();
