@@ -152,8 +152,8 @@ const Library = () => {
             </Link>
             <div className="h-8 w-px bg-border" />
             <div>
-              <h1 className="font-semibold leading-tight">JKM Content Translator</h1>
-              <p className="text-xs text-muted-foreground">Aplikace pro překládání obsahu JK Machinery</p>
+              <h1 className="font-semibold leading-tight">Content Translator</h1>
+              <p className="text-xs text-muted-foreground">Správa hesel slovníku</p>
             </div>
             <div className="hidden md:block ml-2">
               <SectionSwitcher showCreator={isAdmin} />
@@ -192,7 +192,7 @@ const Library = () => {
 
       <main className="container mx-auto space-y-4 px-4 py-6">
         <div className="flex flex-wrap items-center gap-4">
-          <h1 className="text-xl font-semibold">Obrázky / Dokumenty</h1>
+          <h1 className="text-xl font-semibold">Soubory</h1>
           <div className="ml-auto flex items-center gap-2">
             <Button variant="outline" size="icon" onClick={() => void load()} disabled={loading}>
               <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
