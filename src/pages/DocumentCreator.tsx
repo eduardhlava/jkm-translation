@@ -552,8 +552,7 @@ const DocumentCreator = () => {
             <img src={jkLogo} alt="JK Machinery" className="h-9 w-auto" loading="lazy" />
             <div className="h-8 w-px bg-border" />
             <div>
-              <h1 className="font-semibold leading-tight">Document Creator</h1>
-              <p className="text-xs text-muted-foreground">Editor manuálů a dokumentů</p>
+              <h1 className="font-semibold leading-tight">Tvorba dokumentů</h1>
             </div>
             <div className="hidden md:block ml-2">
               <SectionSwitcher showCreator={isAdmin} />

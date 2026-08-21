@@ -203,8 +203,7 @@ const FolderManager = () => {
             </Link>
             <div className="h-8 w-px bg-border" />
             <div>
-              <h1 className="font-semibold leading-tight">Content Translator</h1>
-              <p className="text-xs text-muted-foreground">Správa hesel slovníku</p>
+              <h1 className="font-semibold leading-tight">Překlady slovníku</h1>
             </div>
             <div className="hidden md:block ml-2">
               <SectionSwitcher showCreator={isAdmin} />

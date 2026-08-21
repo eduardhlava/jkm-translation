@@ -7,7 +7,7 @@ interface Props {
 }
 
 const base =
-  "inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg border-t border-x transition-colors relative top-px";
+  "inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg border transition-colors relative top-px";
 
 const SectionSwitcher = ({ showCreator }: Props) => {
   const { pathname } = useLocation();
@@ -15,18 +15,20 @@ const SectionSwitcher = ({ showCreator }: Props) => {
   const tabs = [
     {
       to: "/",
-      label: "Translator",
+      label: "Překlady slovníku",
       icon: Languages,
       active: pathname === "/",
-      activeClass: "bg-primary text-primary-foreground border-transparent",
+      activeClass:
+        "bg-primary text-primary-foreground border-border border-b-background",
       iconClass: "text-primary",
     },
     {
       to: "/document-creator",
-      label: "Document Creator",
+      label: "Tvorba dokumentů",
       icon: FileText,
       active: pathname.startsWith("/document-creator"),
-      activeClass: "bg-warning text-warning-foreground border-transparent",
+      activeClass:
+        "bg-warning text-warning-foreground border-border border-b-background",
       iconClass: "text-warning",
     },
     {
@@ -34,7 +36,8 @@ const SectionSwitcher = ({ showCreator }: Props) => {
       label: "Soubory",
       icon: FolderOpen,
       active: pathname.startsWith("/library"),
-      activeClass: "bg-success text-success-foreground border-transparent",
+      activeClass:
+        "bg-success text-success-foreground border-border border-b-background",
       iconClass: "text-success",
     },
   ];

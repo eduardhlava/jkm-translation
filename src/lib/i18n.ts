@@ -92,7 +92,7 @@ export type TKey =
 type Dict = Record<TKey, string>;
 
 const cz: Dict = {
-  appName: "Content Translator",
+  appName: "Překlady slovníku",
   appTagline: "Správa hesel slovníku",
   fullName: "Jméno a příjmení",
   settings: "Nastavení",
@@ -132,7 +132,7 @@ const cz: Dict = {
   loadedN: "Načteno {n} položek",
   noNewItems: "Žádné položky se stavem „nový“",
   sameLangError: "Zdrojový a cílový jazyk musí být různé",
-  pageTitle: "Content Translator – překlady přímo z databáze",
+  pageTitle: "Překlady slovníku – překlady přímo z databáze",
   toTranslate: "K překladu",
   remainingToTranslate: "Zbývá k překladu",
   machineCol: "Stroj",
@@ -176,7 +176,7 @@ const cz: Dict = {
 };
 
 const en: Dict = {
-  appName: "Content Translator",
+  appName: "Dictionary translations",
   appTagline: "Dictionary term management",
   fullName: "Full name",
   settings: "Settings",
@@ -216,7 +216,7 @@ const en: Dict = {
   loadedN: "Loaded {n} items",
   noNewItems: "No items with status “new”",
   sameLangError: "Source and target language must differ",
-  pageTitle: "Content Translator – translate straight from your database",
+  pageTitle: "Dictionary translations – translate straight from your database",
   toTranslate: "To translate",
   remainingToTranslate: "Remaining to translate",
   machineCol: "Machine",
@@ -260,7 +260,7 @@ const en: Dict = {
 };
 
 const ru: Dict = {
-  appName: "Content Translator",
+  appName: "Переводы словаря",
   appTagline: "Управление терминами словаря",
   fullName: "Имя и фамилия",
   settings: "Настройки",
@@ -300,7 +300,7 @@ const ru: Dict = {
   loadedN: "Загружено {n} записей",
   noNewItems: "Нет записей со статусом «новый»",
   sameLangError: "Исходный и целевой язык должны отличаться",
-  pageTitle: "Content Translator — переводы прямо из базы",
+  pageTitle: "Переводы словаря — переводы прямо из базы",
   toTranslate: "К переводу",
   remainingToTranslate: "Осталось перевести",
   machineCol: "Станок",
@@ -344,7 +344,7 @@ const ru: Dict = {
 };
 
 const pl: Dict = {
-  appName: "Content Translator",
+  appName: "Tłumaczenia słownika",
   appTagline: "Zarządzanie terminami słownika",
   fullName: "Imię i nazwisko",
   settings: "Ustawienia",
@@ -384,7 +384,7 @@ const pl: Dict = {
   loadedN: "Wczytano {n} elementów",
   noNewItems: "Brak elementów ze statusem „nowy”",
   sameLangError: "Język źródłowy i docelowy muszą się różnić",
-  pageTitle: "Content Translator – tłumaczenia prosto z bazy",
+  pageTitle: "Tłumaczenia słownika – tłumaczenia prosto z bazy",
   toTranslate: "Do tłumaczenia",
   remainingToTranslate: "Pozostało do przetłumaczenia",
   machineCol: "Maszyna",
