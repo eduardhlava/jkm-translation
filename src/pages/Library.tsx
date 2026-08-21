@@ -34,7 +34,9 @@ import {
   LogOut,
   RefreshCw,
   Settings as SettingsIcon,
+  Upload,
 } from "lucide-react";
+import NotionImageUploadDialog from "@/components/NotionImageUploadDialog";
 import jkLogo from "@/assets/jk-machinery-logo.png";
 
 const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp"]);
@@ -156,6 +158,7 @@ const Library = () => {
   const [detail, setDetail] = useState<FileItem | null>(null);
   const [allFolderList, setAllFolderList] = useState<FolderItem[]>([]);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const toggle = useCallback((id: string) => {
     setExpanded((prev) => {
@@ -237,6 +240,12 @@ const Library = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <NotionImageUploadDialog
+        open={uploadOpen}
+        onOpenChange={setUploadOpen}
+        initialFolderId={allFolders ? null : folderId}
+        onInsert={() => void load()}
+      />
       <header className="border-b-[3px] bg-card" style={{ borderBottomColor: sectionAccent }}>
         <div className="container max-w-[105rem] flex flex-wrap items-center gap-4 py-4">
           <div className="flex items-center gap-3 flex-1">
@@ -285,12 +294,9 @@ const Library = () => {
       <main className="container max-w-[105rem] space-y-4 py-6">
         <div className="flex flex-wrap items-center gap-4">
           <h1 className="text-xl font-semibold">Soubory</h1>
-          <Link
-            to="/library/folders"
-            className="text-sm font-medium text-primary hover:underline"
-          >
-            Správa složek
-          </Link>
+          <Button size="sm" onClick={() => setUploadOpen(true)}>
+            <Upload className="mr-1 h-4 w-4" /> Nahrát soubor
+          </Button>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-[18rem_1fr] lg:items-start">
@@ -335,6 +341,9 @@ const Library = () => {
                 ))}
               </nav>
               <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/library/folders">Správa složek</Link>
+                </Button>
                 <Button variant="outline" size="icon" onClick={() => void load()} disabled={loading}>
                   <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
                 </Button>
