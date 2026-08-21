@@ -50,6 +50,7 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onInsert: (item: UploadedNotionImage) => void;
+  initialFolderId?: string | null;
 }
 
 function stripExt(name: string): string {
