@@ -43,6 +43,9 @@ export type Database = {
       }
       profiles: {
         Row: {
+          can_dictionary: boolean
+          can_documents: boolean
+          can_files: boolean
           created_at: string
           email: string
           full_name: string
@@ -54,6 +57,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          can_dictionary?: boolean
+          can_documents?: boolean
+          can_files?: boolean
           created_at?: string
           email: string
           full_name?: string
@@ -65,6 +71,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          can_dictionary?: boolean
+          can_documents?: boolean
+          can_files?: boolean
           created_at?: string
           email?: string
           full_name?: string
