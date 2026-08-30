@@ -50,6 +50,7 @@ import {
   Settings as SettingsIcon,
   Hourglass,
   Ban,
+  Pencil,
   X,
 } from "lucide-react";
 import {
@@ -81,6 +82,8 @@ const Index = () => {
   const [saving, setSaving] = useState(false);
   const [statusOverrides, setStatusOverrides] = useState<Record<string, LocalStatus>>({});
   const [translations, setTranslations] = useState<Record<string, string>>({});
+  const [contexts, setContexts] = useState<Record<string, string>>({});
+  const [editingContext, setEditingContext] = useState<Record<string, boolean>>({});
   const [pendingCount, setPendingCount] = useState<number | null>(null);
   const [countBump, setCountBump] = useState(0);
   const [countLoading, setCountLoading] = useState(false);
@@ -187,6 +190,8 @@ const Index = () => {
     setLoading(true);
     setStatusOverrides({});
     setTranslations({});
+    setContexts({});
+    setEditingContext({});
     try {
       const { data, error } = await supabase.functions.invoke("notion-fetch", {
         body: {
@@ -300,11 +305,15 @@ const Index = () => {
     try {
       const updates = toUpdate.map((it) => {
         const st = localStatus(it.id);
+        const originalCtx = it.properties[ctxProp] ?? "";
+        const currentCtx = contexts[it.id];
+        const ctxChanged = currentCtx !== undefined && currentCtx !== originalCtx;
         return {
           pageId: it.id,
           updates: {
             [stProp]: st === "rejected" ? settings.statusRejected : settings.statusReview,
             [targetProp]: translations[it.id] ?? "",
+            ...(ctxChanged ? { [ctxProp]: currentCtx } : {}),
           },
         };
       });
