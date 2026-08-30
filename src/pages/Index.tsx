@@ -223,6 +223,13 @@ const Index = () => {
 
   const localStatus = (id: string): LocalStatus => statusOverrides[id] ?? "new";
 
+  const showStatusHint = (id: string) => {
+    setStatusHint({ id, visible: true });
+    setTimeout(() => {
+      setStatusHint((current) => (current?.id === id ? { ...current, visible: false } : current));
+    }, 1000);
+  };
+
   const confirmItem = (id: string) => {
     if (!canEditTarget) return;
     setStatusOverrides((m) => ({
@@ -231,6 +238,7 @@ const Index = () => {
     }));
     // Trigger pop animation by bumping a counter for this row
     setConfirmPulse((m) => ({ ...m, [id]: (m[id] ?? 0) + 1 }));
+    showStatusHint(id);
   };
 
   const rejectItem = (id: string) => {
@@ -240,6 +248,7 @@ const Index = () => {
       [id]: m[id] === "rejected" ? "new" : "rejected",
     }));
     setConfirmPulse((m) => ({ ...m, [id]: (m[id] ?? 0) + 1 }));
+    showStatusHint(id);
   };
 
   const toUpdate = useMemo(
