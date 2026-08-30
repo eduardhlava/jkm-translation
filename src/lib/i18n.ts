@@ -22,6 +22,8 @@ export type TKey =
   | "statusNewHint"
   | "statusReviewLabel"
   | "statusReviewHint"
+  | "statusRejectedLabel"
+  | "statusRejectedHint"
   | "pageSizeLabel"
   | "saveSettings"
   | "sourceLang"
@@ -93,6 +95,8 @@ export type TKey =
   | "secFiles"
   | "secFolders"
   | "allMachinesTitle"
+  | "confirmTranslation"
+  | "rejectWord"
   | "cancel";
 
 type Dict = Record<TKey, string>;
