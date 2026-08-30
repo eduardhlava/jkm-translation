@@ -50,6 +50,7 @@ import {
   Settings as SettingsIcon,
   Hourglass,
   Ban,
+  Pencil,
   X,
 } from "lucide-react";
 import {
@@ -81,6 +82,8 @@ const Index = () => {
   const [saving, setSaving] = useState(false);
   const [statusOverrides, setStatusOverrides] = useState<Record<string, LocalStatus>>({});
   const [translations, setTranslations] = useState<Record<string, string>>({});
+  const [contexts, setContexts] = useState<Record<string, string>>({});
+  const [editingContext, setEditingContext] = useState<Record<string, boolean>>({});
   const [pendingCount, setPendingCount] = useState<number | null>(null);
   const [countBump, setCountBump] = useState(0);
   const [countLoading, setCountLoading] = useState(false);
@@ -187,6 +190,8 @@ const Index = () => {
     setLoading(true);
     setStatusOverrides({});
     setTranslations({});
+    setContexts({});
+    setEditingContext({});
     try {
       const { data, error } = await supabase.functions.invoke("notion-fetch", {
         body: {
@@ -300,11 +305,15 @@ const Index = () => {
     try {
       const updates = toUpdate.map((it) => {
         const st = localStatus(it.id);
+        const originalCtx = it.properties[ctxProp] ?? "";
+        const currentCtx = contexts[it.id];
+        const ctxChanged = currentCtx !== undefined && currentCtx !== originalCtx;
         return {
           pageId: it.id,
           updates: {
             [stProp]: st === "rejected" ? settings.statusRejected : settings.statusReview,
             [targetProp]: translations[it.id] ?? "",
+            ...(ctxChanged ? { [ctxProp]: currentCtx } : {}),
           },
         };
       });
@@ -596,8 +605,41 @@ const Index = () => {
                           </div>
                         </TableCell>
                         <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground bg-primary/5">
-                          {it.properties[ctxProp] || "—"}
+                          {(() => {
+                            const original = it.properties[ctxProp] ?? "";
+                            const current = contexts[it.id] ?? original;
+                            const changed = current !== original;
+                            const editing = !!editingContext[it.id];
+                            if (editing) {
+                              return (
+                                <Textarea
+                                  autoFocus
+                                  value={current}
+                                  onChange={(e) => setContexts((m) => ({ ...m, [it.id]: e.target.value }))}
+                                  onBlur={() => setEditingContext((m) => ({ ...m, [it.id]: false }))}
+                                  className={`min-h-[64px] text-xs ${changed ? "border-2 border-success" : ""}`}
+                                />
+                              );
+                            }
+                            return (
+                              <div
+                                className={`flex items-start gap-1.5 rounded-md p-1 ${changed ? "border-2 border-success" : "border-2 border-transparent"}`}
+                              >
+                                <span className="flex-1">{current || "—"}</span>
+                                <button
+                                  type="button"
+                                  aria-label={t(ui, "editContext")}
+                                  title={t(ui, "editContext")}
+                                  onClick={() => setEditingContext((m) => ({ ...m, [it.id]: true }))}
+                                  className="text-muted-foreground hover:text-primary shrink-0"
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            );
+                          })()}
                         </TableCell>
+
                         <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground bg-primary/5">
                           {it.properties[exProp] || "—"}
                         </TableCell>
