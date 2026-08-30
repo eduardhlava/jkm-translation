@@ -556,20 +556,32 @@ const Index = () => {
                           />
                         </TableCell>
                         <TableCell className="w-[1%] whitespace-nowrap px-2 py-3 align-top text-center">
-                          <Button
-                            key={`btn-${it.id}-${confirmPulse[it.id] ?? 0}`}
-                            variant={st === "translated" ? "default" : "outline"}
-                            size="icon"
-                            onClick={() => toggleStatus(it.id)}
-                            disabled={!canEditTarget}
-                            className={`h-8 w-8 p-0 transition-colors ${confirmPulse[it.id] ? "animate-confirm-pop" : ""} ${st === "translated" ? "bg-success text-success-foreground hover:bg-success/90" : ""}`}
-                          >
-                            {st === "translated" ? (
-                              <CheckCircle2 className="w-4 h-4" />
-                            ) : (
-                              <ArrowRight className="w-4 h-4" />
-                            )}
-                          </Button>
+                          <div className="flex flex-col items-center gap-1.5">
+                            <Button
+                              key={`confirm-${it.id}-${confirmPulse[it.id] ?? 0}`}
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => confirmItem(it.id)}
+                              disabled={!canEditTarget}
+                              aria-label={t(ui, "confirmTranslation")}
+                              title={t(ui, "confirmTranslation")}
+                              className={`h-7 w-7 p-0 transition-colors ${confirmPulse[it.id] ? "animate-confirm-pop" : ""} ${st === "translated" ? "text-success hover:text-success hover:bg-success/10" : "text-muted-foreground hover:text-success hover:bg-success/10"}`}
+                            >
+                              <Check className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              key={`reject-${it.id}-${confirmPulse[it.id] ?? 0}`}
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => rejectItem(it.id)}
+                              disabled={!canEditTarget}
+                              aria-label={t(ui, "rejectWord")}
+                              title={t(ui, "rejectWord")}
+                              className={`h-7 w-7 p-0 transition-colors ${st === "rejected" ? "text-destructive hover:text-destructive hover:bg-destructive/10" : "text-muted-foreground hover:text-destructive hover:bg-destructive/10"}`}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                         <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground bg-primary/5">
                           {it.properties[ctxProp] || "—"}
