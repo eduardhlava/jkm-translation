@@ -86,7 +86,7 @@ const Index = () => {
   const [countLoading, setCountLoading] = useState(false);
   const [confirmPulse, setConfirmPulse] = useState<Record<string, number>>({});
   const [successFlash, setSuccessFlash] = useState(0);
-  const [statusHint, setStatusHint] = useState<{ id: string; visible: boolean } | null>(null);
+  const [statusHint, setStatusHint] = useState<{ id: string; type: "confirm" | "reject"; visible: boolean } | null>(null);
   const [machineFilter, setMachineFilter] = useState<string>("__any__");
   const [loadedSnapshot, setLoadedSnapshot] = useState<string | null>(null);
   const [showReloadDialog, setShowReloadDialog] = useState(false);
@@ -223,8 +223,8 @@ const Index = () => {
 
   const localStatus = (id: string): LocalStatus => statusOverrides[id] ?? "new";
 
-  const showStatusHint = (id: string) => {
-    setStatusHint({ id, visible: true });
+  const showStatusHint = (id: string, type: "confirm" | "reject") => {
+    setStatusHint({ id, type, visible: true });
     setTimeout(() => {
       setStatusHint((current) => (current?.id === id ? { ...current, visible: false } : current));
     }, 1000);
@@ -238,7 +238,7 @@ const Index = () => {
     }));
     // Trigger pop animation by bumping a counter for this row
     setConfirmPulse((m) => ({ ...m, [id]: (m[id] ?? 0) + 1 }));
-    showStatusHint(id);
+    showStatusHint(id, "confirm");
   };
 
   const rejectItem = (id: string) => {
@@ -248,7 +248,7 @@ const Index = () => {
       [id]: m[id] === "rejected" ? "new" : "rejected",
     }));
     setConfirmPulse((m) => ({ ...m, [id]: (m[id] ?? 0) + 1 }));
-    showStatusHint(id);
+    showStatusHint(id, "reject");
   };
 
   const toUpdate = useMemo(
@@ -590,9 +590,9 @@ const Index = () => {
                               <X className="w-4 h-4" />
                             </Button>
                             {statusHint?.id === it.id && (
-                              <div className={`absolute left-full top-1/2 -translate-y-1/2 ml-2 z-30 whitespace-nowrap px-2.5 py-1.5 rounded-md bg-foreground text-background text-xs shadow-md transition-opacity duration-300 pointer-events-none ${statusHint.visible ? "opacity-100" : "opacity-0"}`}>
+                              <div className={`absolute left-full top-1/2 -translate-y-1/2 ml-2 z-30 whitespace-nowrap px-2.5 py-1.5 rounded-md text-xs shadow-md transition-opacity duration-300 pointer-events-none border ${statusHint.type === "confirm" ? "bg-success text-white border-success" : "bg-destructive text-white border-destructive"} ${statusHint.visible ? "opacity-100" : "opacity-0"}`}>
                                 Nezapomeň potvrdit tlačítkem Aktualizovat
-                                <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-foreground rotate-45" />
+                                <div className={`absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 rotate-45 ${statusHint.type === "confirm" ? "bg-success" : "bg-destructive"}`} />
                               </div>
                             )}
                           </div>
