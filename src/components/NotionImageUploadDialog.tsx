@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Upload, X, Check, Folder, ChevronRight, ChevronDown, Home } from "lucide-react";
+import { Loader2, Upload, X, Check, Folder, ChevronRight, ChevronDown, Home, FileCode2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -44,6 +44,11 @@ interface PendingFile {
   done?: boolean;
   result?: UploadedNotionImage;
   error?: string;
+  isCad: boolean;
+  converting?: boolean;
+  convertedPreview?: string;
+  convertedFileBase64?: string;
+  convertError?: string;
 }
 
 interface Props {
@@ -51,6 +56,10 @@ interface Props {
   onOpenChange: (v: boolean) => void;
   onInsert: (item: UploadedNotionImage) => void;
   initialFolderId?: string | null;
+}
+
+function isCadFile(name: string): boolean {
+  return /\.(dwg|dxf)$/i.test(name);
 }
 
 function stripExt(name: string): string {
@@ -124,7 +133,9 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert, 
   const reset = () => setFiles([]);
 
   const addFiles = useCallback((list: FileList | File[]) => {
-    const first = Array.from(list).find((f) => f.type.startsWith("image/"));
+    const first = Array.from(list).find(
+      (f) => f.type.startsWith("image/") || isCadFile(f.name),
+    );
     if (!first) return;
     let last = initialFolderId ?? "";
     if (!last) {
@@ -138,7 +149,8 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert, 
       {
         localId: crypto.randomUUID(),
         file: first,
-        preview: URL.createObjectURL(first),
+        preview: isCadFile(first.name) ? "" : URL.createObjectURL(first),
+        isCad: isCadFile(first.name),
         title: stripExt(first.name),
         typ: "",
         stroj: "",
@@ -154,6 +166,29 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert, 
   const removeOne = (id: string) =>
     setFiles((prev) => prev.filter((f) => f.localId !== id));
 
+  const handleConvert = async (item: PendingFile) => {
+    updateOne(item.localId, { converting: true, convertError: undefined });
+    try {
+      const fileBase64 = await fileToBase64(item.file);
+      const { data, error } = await supabase.functions.invoke("convert-cad-to-png", {
+        body: { fileBase64, fileName: item.file.name },
+      });
+      if (error) throw error;
+      const imageBase64 = (data as any)?.imageBase64 as string | undefined;
+      if (!imageBase64) throw new Error((data as any)?.error || "Konverze se nezdařila");
+      updateOne(item.localId, {
+        converting: false,
+        convertedFileBase64: imageBase64,
+        convertedPreview: `data:image/png;base64,${imageBase64}`,
+      });
+      toast.success("Výkres převeden do PNG");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Konverze selhala";
+      updateOne(item.localId, { converting: false, convertError: msg });
+      toast.error("Konverze selhala", { description: msg });
+    }
+  };
+
   const handleInsert = async (item: PendingFile) => {
     if (!item.title.trim()) {
       toast.error("Zadejte název obrázku");
@@ -161,12 +196,23 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert, 
     }
     updateOne(item.localId, { uploading: true, error: undefined });
     try {
-      const fileBase64 = await fileToBase64(item.file);
+      const originalBase64 = await fileToBase64(item.file);
+      const isCad = item.isCad;
+      const mainBase64 = isCad ? (item.convertedFileBase64 as string) : originalBase64;
+      const mainName = isCad ? `${stripExt(item.file.name)}.png` : item.file.name;
+      const mainType = isCad ? "image/png" : item.file.type;
       const { data, error } = await supabase.functions.invoke("notion-image-upload", {
         body: {
-          fileBase64,
-          fileName: item.file.name,
-          contentType: item.file.type,
+          fileBase64: mainBase64,
+          fileName: mainName,
+          contentType: mainType,
+          extraFile: isCad
+            ? {
+                fileBase64: originalBase64,
+                fileName: item.file.name,
+                contentType: "application/octet-stream",
+              }
+            : undefined,
           title: item.title.trim(),
           typ: item.typ || undefined,
           stroj: item.stroj || undefined,
@@ -225,11 +271,11 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert, 
             }`}
           >
             <Upload className="h-6 w-6" />
-            <div>Přetáhněte obrázek sem nebo kliknutím vyberte z disku</div>
+            <div>Přetáhněte obrázek nebo CAD výkres (DWG/DXF) sem nebo kliknutím vyberte z disku</div>
             <input
               ref={inputRef}
               type="file"
-              accept="image/*"
+              accept="image/*,.dwg,.dxf"
               
               className="hidden"
               onChange={(e) => {
@@ -243,11 +289,20 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert, 
             <div className="max-h-[55vh] overflow-auto rounded border divide-y">
               {files.map((f) => (
                 <div key={f.localId} className="flex gap-3 p-3">
-                  <img
-                    src={f.preview}
-                    alt={f.title}
-                    className="h-24 w-24 shrink-0 rounded border object-cover bg-muted"
-                  />
+                  {f.isCad && !f.convertedPreview ? (
+                    <div className="flex h-24 w-24 shrink-0 flex-col items-center justify-center gap-1 rounded border bg-muted text-muted-foreground">
+                      <FileCode2 className="h-8 w-8" />
+                      <span className="text-[10px] uppercase">
+                        {f.file.name.split(".").pop()}
+                      </span>
+                    </div>
+                  ) : (
+                    <img
+                      src={f.convertedPreview || f.preview}
+                      alt={f.title}
+                      className="h-24 w-24 shrink-0 rounded border object-contain bg-muted"
+                    />
+                  )}
                   <div className="flex-1 min-w-0 space-y-2">
                     <div className="space-y-1">
                       <Label className="text-xs text-muted-foreground">Název</Label>
@@ -298,6 +353,31 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert, 
                       />
                     </div>
 
+                    {f.isCad && (
+                      <div className="space-y-1 rounded border border-amber-300 bg-amber-50 p-2">
+                        <div className="text-xs text-amber-800">
+                          Tento soubor je CAD výkres (DWG/DXF) — pro vložení do dokumentu je
+                          potřeba ho převést na PNG.
+                        </div>
+                        {f.convertError && (
+                          <div className="text-xs text-destructive">{f.convertError}</div>
+                        )}
+                        {!f.done && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleConvert(f)}
+                            disabled={f.converting || f.uploading}
+                          >
+                            {f.converting ? (
+                              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            ) : null}
+                            {f.convertedPreview ? "Převést znovu" : "Převést do PNG"}
+                          </Button>
+                        )}
+                      </div>
+                    )}
+
                     {f.error && <div className="text-xs text-destructive">{f.error}</div>}
                   </div>
                   <div className="flex flex-col gap-2 shrink-0 justify-center">
@@ -309,7 +389,7 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert, 
                       <Button
                         size="sm"
                         onClick={() => handleInsert(f)}
-                        disabled={f.uploading}
+                        disabled={f.uploading || f.converting || (f.isCad && !f.convertedPreview)}
                       >
                         {f.uploading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : null}
                         Vložit
