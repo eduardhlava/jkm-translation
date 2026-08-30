@@ -1,4 +1,4 @@
-import { type Block, type BlockType, emptyContent } from "./types";
+import { type Block, type BlockType, emptyContent, cellFromExportText } from "./types";
 import { type DocumentMetadata, mergeMetadata } from "@/components/DocumentMetadata/types";
 import { META_BLOCK_PREFIX, META_DOC_PREFIX } from "./serialize";
 
@@ -223,7 +223,7 @@ export function parseDocumentHtml(html: string): ParsedDocument {
     const rows: string[][] = [];
     el.querySelectorAll("tr").forEach((tr) => {
       const cells: string[] = [];
-      tr.querySelectorAll("th,td").forEach((c) => cells.push(c.textContent ?? ""));
+      tr.querySelectorAll("th,td").forEach((c) => cells.push(cellFromExportText(c.textContent ?? "")));
       rows.push(cells);
     });
     const headerRow = !!el.querySelector("thead th") || !!el.querySelector("tr > th");
