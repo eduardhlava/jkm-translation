@@ -730,7 +730,7 @@ const DocumentCreator = () => {
                             const fileName = fileNameKey ? it.properties[fileNameKey] : "";
                             return (
                               <TableCell key={h} className="font-medium">
-                                <div>{value}</div>
+                                <div className="font-bold">{value}</div>
                                 {fileName && <div className="text-xs text-muted-foreground">({fileName})</div>}
                               </TableCell>
                             );
