@@ -13,7 +13,7 @@ const CC_API = "https://api.cloudconvert.com/v2";
 // A4 width 595.28 pt − 2×50 pt padding = 495.28 pt content, ImageBlock renders
 // at 90 % => 445.75 pt = 6.19 in. 2400 px / 6.19 in ≈ 388 DPI (safely > 300).
 const PDF_CONTENT_WIDTH_PT = 595.28 - 2 * 50;
-const IMAGE_WIDTH_RATIO = 0.9;
+const IMAGE_WIDTH_RATIO = 0.98;
 const TARGET_DPI = 390;
 const TARGET_WIDTH = Math.round((PDF_CONTENT_WIDTH_PT * IMAGE_WIDTH_RATIO / 72) * TARGET_DPI);
 
