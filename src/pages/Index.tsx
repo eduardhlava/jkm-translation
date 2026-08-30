@@ -573,7 +573,7 @@ const Index = () => {
                               disabled={!canEditTarget}
                               aria-label={t(ui, "confirmTranslation")}
                               title={t(ui, "confirmTranslation")}
-                              className={`h-7 w-7 p-0 transition-colors border ${confirmPulse[it.id] ? "animate-confirm-pop" : ""} ${st === "translated" ? "text-success border-success bg-success/10 hover:bg-success/20" : "text-muted-foreground border-border/60 hover:text-success hover:border-success/60 hover:bg-success/10"}`}
+                              className={`h-7 w-7 p-0 transition-colors border ${confirmPulse[it.id] ? "animate-confirm-pop" : ""} ${st === "translated" ? "text-white border-success bg-success hover:bg-success/90" : "text-muted-foreground border-border bg-muted hover:text-success hover:border-success/60 hover:bg-success/10"}`}
                             >
                               <Check className="w-4 h-4" />
                             </Button>
@@ -585,7 +585,7 @@ const Index = () => {
                               disabled={!canEditTarget}
                               aria-label={t(ui, "rejectWord")}
                               title={t(ui, "rejectWord")}
-                              className={`h-7 w-7 p-0 transition-colors border ${st === "rejected" ? "text-destructive border-destructive bg-destructive/10 hover:bg-destructive/20" : "text-muted-foreground border-border/60 hover:text-destructive hover:border-destructive/60 hover:bg-destructive/10"}`}
+                              className={`h-7 w-7 p-0 transition-colors border ${st === "rejected" ? "text-white border-destructive bg-destructive hover:bg-destructive/90" : "text-muted-foreground border-border bg-muted hover:text-destructive hover:border-destructive/60 hover:bg-destructive/10"}`}
                             >
                               <X className="w-4 h-4" />
                             </Button>
