@@ -1,5 +1,5 @@
 import { Document, Page, Text, View, Image, Link, StyleSheet, Font, Svg, Polygon, Path, Circle } from "@react-pdf/renderer";
-import type { Block, Pictogram } from "@/components/BlockEditor/types";
+import { parseCellPictogram, type Block, type Pictogram } from "@/components/BlockEditor/types";
 import notoRegular from "@/assets/fonts/NotoSans-Regular.ttf?url";
 import notoBold from "@/assets/fonts/NotoSans-Bold.ttf?url";
 import notoItalic from "@/assets/fonts/NotoSans-Italic.ttf?url";
@@ -496,12 +496,23 @@ function TableBlock({ block }: { block: Block }) {
                 ? { width: `${colWidths![ci]}%`, flexGrow: 0, flexShrink: 0, flexBasis: `${colWidths![ci]}%` }
                 : { flex: 1 };
               const isHeader = headerRow && ri === 0 && !rowBg;
+              const { pictogram: cellPic, text: cellText } = parseCellPictogram(cell ?? "");
+              const cellStyle = [styles.td, wStyle, isHeader ? styles.th : {}, headerRow && ri === 0 ? { fontFamily: "NotoSans", fontWeight: "bold" } : {}] as any;
+              if (cellPic !== "none") {
+                return (
+                  <View key={ci} style={[cellStyle, { flexDirection: "row", alignItems: "center", gap: 4 }] as any}>
+                    <PictogramSvg kind={cellPic} size={16} />
+                    {cellText ? <Text>{cellText}</Text> : null}
+                  </View>
+                );
+              }
               return (
-                <Text key={ci} style={[styles.td, wStyle, isHeader ? styles.th : {}, headerRow && ri === 0 ? { fontFamily: "NotoSans", fontWeight: "bold" } : {}] as any}>
-                  {cell}
+                <Text key={ci} style={cellStyle}>
+                  {cellText}
                 </Text>
               );
             })}
+
           </View>
         );
       })}

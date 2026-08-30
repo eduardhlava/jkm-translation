@@ -22,7 +22,15 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BLOCK_TYPE_LABELS, type Block, type Pictogram } from "./types";
+import { BLOCK_TYPE_LABELS, buildCellValue, parseCellPictogram, type Block, type Pictogram } from "./types";
+
+const PICTOGRAM_LABELS: Record<string, string> = {
+  alert: "Výstraha",
+  "alert-electric": "Výstraha – elektrické nebezpečí",
+  info: "Informace",
+  recycling: "Recyklace",
+};
+
 import { supabase } from "@/integrations/supabase/client";
 import NotionImagePicker from "@/components/NotionImagePicker";
 import NotionImageUploadDialog from "@/components/NotionImageUploadDialog";
@@ -992,18 +1000,65 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                           : isHeaderCell
                             ? "bg-muted/40"
                             : "bg-background";
+                        const parsed = parseCellPictogram(cell);
                         return (
-                          <td key={ci} className="border border-muted-foreground/50 p-0 relative">
-                            <Input
-                              value={cell}
-                              onChange={(e) => updateCell(ri, ci, e.target.value)}
-                              className={`h-8 rounded-none border-0 shadow-none focus-visible:ring-1 ${bgCls} ${
-                                isHeaderCell ? "font-semibold" : ""
-                              } ${narrowFirstCol && ci === 0 ? "text-center" : ""}`}
-                            />
+                          <td key={ci} className="border border-muted-foreground/50 p-0 relative group/cell">
+                            <div className="flex items-center">
+                              {parsed.pictogram !== "none" && (
+                                <span className="pl-1 shrink-0">
+                                  <PictogramIcon kind={parsed.pictogram} size={20} />
+                                </span>
+                              )}
+                              <Input
+                                value={parsed.text}
+                                onChange={(e) => updateCell(ri, ci, buildCellValue(parsed.pictogram, e.target.value))}
+                                className={`h-8 rounded-none border-0 shadow-none focus-visible:ring-1 ${bgCls} ${
+                                  isHeaderCell ? "font-semibold" : ""
+                                } ${narrowFirstCol && ci === 0 ? "text-center" : ""}`}
+                              />
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <button
+                                    type="button"
+                                    title="Piktogram v buňce"
+                                    aria-label="Piktogram v buňce"
+                                    className="shrink-0 mr-1 rounded p-0.5 text-muted-foreground opacity-0 group-hover/cell:opacity-100 focus:opacity-100 data-[state=open]:opacity-100 hover:bg-muted"
+                                  >
+                                    <ImageIcon className="w-3.5 h-3.5" />
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-2" align="end">
+                                  <div className="flex items-center gap-1">
+                                    {(["alert", "alert-electric", "info", "recycling"] as Pictogram[]).map((p) => (
+                                      <button
+                                        key={p}
+                                        type="button"
+                                        onClick={() => updateCell(ri, ci, buildCellValue(p, parsed.text))}
+                                        title={PICTOGRAM_LABELS[p]}
+                                        aria-label={PICTOGRAM_LABELS[p]}
+                                        className={`rounded p-1 hover:bg-muted ${parsed.pictogram === p ? "bg-muted ring-1 ring-ring" : ""}`}
+                                      >
+                                        <PictogramIcon kind={p} size={22} />
+                                      </button>
+                                    ))}
+                                    <div className="w-px h-6 bg-border mx-1" />
+                                    <button
+                                      type="button"
+                                      onClick={() => updateCell(ri, ci, parsed.text)}
+                                      title="Bez piktogramu"
+                                      aria-label="Bez piktogramu"
+                                      className="rounded border border-foreground/30 px-1.5 text-xs leading-5 hover:bg-muted"
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            </div>
                           </td>
                         );
                       })}
+
                     </tr>
                   );
                 })}

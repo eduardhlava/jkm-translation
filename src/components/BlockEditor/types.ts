@@ -16,6 +16,24 @@ export type TextAlign = "left" | "center" | "right";
 export type TextSize = "small" | "normal" | "large";
 export type Pictogram = "none" | "alert" | "alert-electric" | "info" | "recycling";
 
+/**
+ * Piktogram v buňce tabulky je uložen jako neviditelný textový token
+ * na začátku obsahu buňky: `[[pic:alert]] text`.
+ * Díky tomu je plně kompatibilní s uložením do Notion (buňka = prostý text).
+ */
+export const CELL_PICTOGRAM_RE = /^\s*\[\[pic:(alert-electric|alert|info|recycling)\]\]\s*/;
+
+export function parseCellPictogram(cell: string): { pictogram: Pictogram; text: string } {
+  const m = CELL_PICTOGRAM_RE.exec(cell ?? "");
+  if (!m) return { pictogram: "none", text: cell ?? "" };
+  return { pictogram: m[1] as Pictogram, text: (cell ?? "").replace(CELL_PICTOGRAM_RE, "") };
+}
+
+export function buildCellValue(pictogram: Pictogram, text: string): string {
+  return !pictogram || pictogram === "none" ? text : `[[pic:${pictogram}]]${text ? ` ${text}` : ""}`;
+}
+
+
 export interface HeadingContent { text: string }
 export interface TextContent { html: string; align?: TextAlign; size?: TextSize; pictogram?: Pictogram }
 export interface TableContent {
