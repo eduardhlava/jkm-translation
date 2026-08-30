@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
 
     // Poll until finished / error (timeout ~60 s)
     let job: any = null;
-    const deadline = Date.now() + 60_000;
+    const deadline = Date.now() + 110_000;
     while (Date.now() < deadline) {
       await new Promise((r) => setTimeout(r, 2000));
       const r = await fetch(`${CC_API}/jobs/${jobId}`, {
