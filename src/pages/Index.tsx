@@ -66,7 +66,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
-type LocalStatus = "new" | "translated";
+type LocalStatus = "new" | "translated" | "rejected";
 
 const Index = () => {
   const { profile, isAdmin } = useAuth();
