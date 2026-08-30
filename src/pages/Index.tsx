@@ -232,23 +232,21 @@ const Index = () => {
 
   const confirmItem = (id: string) => {
     if (!canEditTarget) return;
-    setStatusOverrides((m) => ({
-      ...m,
-      [id]: m[id] === "translated" ? "new" : "translated",
-    }));
+    const current = statusOverrides[id] ?? "new";
+    const next = current === "translated" ? "new" : "translated";
+    setStatusOverrides((m) => ({ ...m, [id]: next }));
     // Trigger pop animation by bumping a counter for this row
     setConfirmPulse((m) => ({ ...m, [id]: (m[id] ?? 0) + 1 }));
-    showStatusHint(id, "confirm");
+    if (next !== "new") showStatusHint(id, "confirm");
   };
 
   const rejectItem = (id: string) => {
     if (!canEditTarget) return;
-    setStatusOverrides((m) => ({
-      ...m,
-      [id]: m[id] === "rejected" ? "new" : "rejected",
-    }));
+    const current = statusOverrides[id] ?? "new";
+    const next = current === "rejected" ? "new" : "rejected";
+    setStatusOverrides((m) => ({ ...m, [id]: next }));
     setConfirmPulse((m) => ({ ...m, [id]: (m[id] ?? 0) + 1 }));
-    showStatusHint(id, "reject");
+    if (next !== "new") showStatusHint(id, "reject");
   };
 
   const toUpdate = useMemo(
