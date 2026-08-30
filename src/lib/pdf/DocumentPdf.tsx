@@ -1,5 +1,5 @@
 import { Document, Page, Text, View, Image, Link, StyleSheet, Font, Svg, Polygon, Path, Circle } from "@react-pdf/renderer";
-import type { Block, Pictogram } from "@/components/BlockEditor/types";
+import { parseCellPictogram, type Block, type Pictogram } from "@/components/BlockEditor/types";
 import notoRegular from "@/assets/fonts/NotoSans-Regular.ttf?url";
 import notoBold from "@/assets/fonts/NotoSans-Bold.ttf?url";
 import notoItalic from "@/assets/fonts/NotoSans-Italic.ttf?url";
