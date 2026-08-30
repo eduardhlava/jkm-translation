@@ -8,9 +8,15 @@ const corsHeaders = {
 };
 
 const CC_API = "https://api.cloudconvert.com/v2";
-// Target raster width — CAD drawings need enough resolution so dimensions
-// and thin lines stay readable. Can be tuned later.
-const TARGET_WIDTH = 2000;
+
+// Target raster width derived from how the image is printed in the PDF:
+// A4 width 595.28 pt − 2×50 pt padding = 495.28 pt content, ImageBlock renders
+// at 90 % => 445.75 pt = 6.19 in. 2400 px / 6.19 in ≈ 388 DPI (safely > 300).
+const PDF_CONTENT_WIDTH_PT = 595.28 - 2 * 50;
+const IMAGE_WIDTH_RATIO = 0.9;
+const TARGET_DPI = 390;
+const TARGET_WIDTH = Math.round((PDF_CONTENT_WIDTH_PT * IMAGE_WIDTH_RATIO / 72) * TARGET_DPI);
+
 
 function bytesToBase64(bytes: Uint8Array): string {
   let bin = "";
@@ -57,18 +63,32 @@ Deno.serve(async (req) => {
             file: fileBase64,
             filename: fileName,
           },
+          // Step 1: CAD -> PDF (vector, keeps full drawing extents).
+          // Direct cad -> png with `width` is supported by the cadconverter
+          // engine, but it keeps the default 600 px height, which distorts the
+          // drawing (verified empirically: 2400x600). Going through PDF and
+          // rasterizing with pdfium respects the aspect ratio.
           "convert-1": {
             operation: "convert",
             input: "import-1",
             input_format: ext,
+            output_format: "pdf",
+            auto_zoom: true,
+          },
+          // Step 2: PDF -> PNG at the target raster width (first page only).
+          "convert-2": {
+            operation: "convert",
+            input: "convert-1",
+            input_format: "pdf",
             output_format: "png",
-            // CloudConvert image output supports width/height for cad -> png.
             width: TARGET_WIDTH,
+            pages: "1",
           },
           "export-1": {
             operation: "export/url",
-            input: "convert-1",
+            input: "convert-2",
           },
+
         },
       }),
     });
@@ -83,7 +103,7 @@ Deno.serve(async (req) => {
 
     // Poll until finished / error (timeout ~60 s)
     let job: any = null;
-    const deadline = Date.now() + 60_000;
+    const deadline = Date.now() + 110_000;
     while (Date.now() < deadline) {
       await new Promise((r) => setTimeout(r, 2000));
       const r = await fetch(`${CC_API}/jobs/${jobId}`, {
