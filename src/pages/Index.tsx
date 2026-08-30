@@ -544,9 +544,9 @@ const Index = () => {
                     return (
                       <TableRow key={it.id}>
                         <TableCell className="align-top whitespace-pre-wrap text-sm bg-primary/5">
-                          <div>
+                          <div className="font-bold">
                             {it.properties[sourceProp] || (
-                              <span className="text-muted-foreground italic">—</span>
+                              <span className="text-muted-foreground italic font-normal">—</span>
                             )}
                           </div>
                           <div className="text-[7px] text-muted-foreground/70 mt-1 font-mono">{it.id}</div>
