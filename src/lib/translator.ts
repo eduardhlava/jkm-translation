@@ -27,6 +27,7 @@ export interface AppSettings {
   // Notion property names follow conventions: {lang}, stav_{lang}, kontext_{lang}, příklad_věty_{lang}
   statusNew: string; // value in Notion meaning "new"
   statusReview: string; // value to write when user marks "Přeloženo"
+  statusRejected: string; // value to write when user rejects a word
   pageSize: number;
   uiLang: "cz" | "en" | "ru" | "pl";
 }
@@ -36,6 +37,7 @@ const SETTINGS_KEY = "translator-settings-v2";
 export const defaultSettings: AppSettings = {
   statusNew: "nový",
   statusReview: "ke_kontrole",
+  statusRejected: "zamítnuto",
   pageSize: 20,
   uiLang: "cz",
 };
