@@ -86,6 +86,7 @@ const Index = () => {
   const [countLoading, setCountLoading] = useState(false);
   const [confirmPulse, setConfirmPulse] = useState<Record<string, number>>({});
   const [successFlash, setSuccessFlash] = useState(0);
+  const [statusHint, setStatusHint] = useState<{ id: string; visible: boolean } | null>(null);
   const [machineFilter, setMachineFilter] = useState<string>("__any__");
   const [loadedSnapshot, setLoadedSnapshot] = useState<string | null>(null);
   const [showReloadDialog, setShowReloadDialog] = useState(false);
