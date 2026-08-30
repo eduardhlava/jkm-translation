@@ -502,7 +502,7 @@ function ImageBlock({ block, captionOverride }: { block: Block; captionOverride?
   return (
     <View wrap={false} style={styles.imageBlock}>
       {/* eslint-disable-next-line jsx-a11y/alt-text */}
-      <Image src={url} style={[styles.image, { width: "90%" }] as any} />
+      <Image src={url} style={[styles.image, { width: "98%" }] as any} />
       {caption ? <Text style={styles.caption}>{caption}</Text> : null}
     </View>
   );
