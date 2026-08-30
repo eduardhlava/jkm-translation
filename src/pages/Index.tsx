@@ -52,6 +52,7 @@ import {
   Hourglass,
   Ban,
   ArrowRight,
+  X,
 } from "lucide-react";
 import {
   AlertDialog,
