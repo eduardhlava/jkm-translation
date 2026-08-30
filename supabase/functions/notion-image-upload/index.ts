@@ -54,10 +54,12 @@ Deno.serve(async (req) => {
       stroj,
       folderId,
       databaseId,
+      extraFile,
     }: {
       fileBase64: string;
       fileName: string;
       contentType?: string;
+      extraFile?: { fileBase64: string; fileName: string; contentType?: string };
       title: string;
       typ?: string;
       stroj?: string;
@@ -91,6 +93,23 @@ Deno.serve(async (req) => {
     const { data: pub } = supabase.storage.from("notion-images").getPublicUrl(path);
     const publicUrl = pub.publicUrl;
 
+    // 1b) Optional original (e.g. source DWG/DXF) stored next to the PNG
+    let extraUrl: string | null = null;
+    let extraName = "";
+    if (extraFile?.fileBase64 && extraFile?.fileName) {
+      const extraExt = (extraFile.fileName.split(".").pop() || "bin").toLowerCase();
+      const extraPath = `notion-uploads/${safeTitle}-${crypto.randomUUID().slice(0, 8)}-original.${extraExt}`;
+      const { error: exErr } = await supabase.storage.from("notion-images").upload(
+        extraPath,
+        decodeBase64(extraFile.fileBase64),
+        { contentType: extraFile.contentType || "application/octet-stream", upsert: false },
+      );
+      if (exErr) throw new Error(`Storage upload (original) failed: ${exErr.message}`);
+      const { data: exPub } = supabase.storage.from("notion-images").getPublicUrl(extraPath);
+      extraUrl = exPub.publicUrl;
+      extraName = `${title}.${extraExt}`;
+    }
+
     // 2) Create Notion page (also fill "soubor" files property so the image
     // shows in the database's gallery/table view, not only as page cover).
     const properties: Record<string, unknown> = {
@@ -98,6 +117,9 @@ Deno.serve(async (req) => {
       "soubor": {
         files: [
           { name: `${title}.${ext}`, type: "external", external: { url: publicUrl } },
+          ...(extraUrl
+            ? [{ name: extraName, type: "external", external: { url: extraUrl } }]
+            : []),
         ],
       },
     };
