@@ -549,7 +549,7 @@ const Index = () => {
                               <span className="text-muted-foreground italic">—</span>
                             )}
                           </div>
-                          <div className="text-[10px] text-muted-foreground/70 mt-1 font-mono">{it.id}</div>
+                          <div className="text-[7px] text-muted-foreground/70 mt-1 font-mono">{it.id}</div>
                         </TableCell>
                         <TableCell className="align-top bg-primary/5">
                           <Textarea
