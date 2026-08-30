@@ -63,18 +63,32 @@ Deno.serve(async (req) => {
             file: fileBase64,
             filename: fileName,
           },
+          // Step 1: CAD -> PDF (vector, keeps full drawing extents).
+          // Direct cad -> png with `width` is supported by the cadconverter
+          // engine, but it keeps the default 600 px height, which distorts the
+          // drawing (verified empirically: 2400x600). Going through PDF and
+          // rasterizing with pdfium respects the aspect ratio.
           "convert-1": {
             operation: "convert",
             input: "import-1",
             input_format: ext,
+            output_format: "pdf",
+            auto_zoom: true,
+          },
+          // Step 2: PDF -> PNG at the target raster width (first page only).
+          "convert-2": {
+            operation: "convert",
+            input: "convert-1",
+            input_format: "pdf",
             output_format: "png",
-            // CloudConvert image output supports width/height for cad -> png.
             width: TARGET_WIDTH,
+            pages: "1",
           },
           "export-1": {
             operation: "export/url",
-            input: "convert-1",
+            input: "convert-2",
           },
+
         },
       }),
     });
