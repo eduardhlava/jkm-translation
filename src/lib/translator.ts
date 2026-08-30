@@ -38,7 +38,7 @@ export const defaultSettings: AppSettings = {
   statusNew: "nový",
   statusReview: "ke_kontrole",
   statusRejected: "zamítnuto",
-  pageSize: 20,
+  pageSize: 50,
   uiLang: "cz",
 };
 
