@@ -564,7 +564,7 @@ const Index = () => {
                           />
                         </TableCell>
                         <TableCell className="w-[1%] whitespace-nowrap px-2 py-3 align-top text-center">
-                          <div className="flex flex-col items-center gap-1.5">
+                          <div className="flex flex-col items-center gap-1.5 relative">
                             <Button
                               key={`confirm-${it.id}-${confirmPulse[it.id] ?? 0}`}
                               variant="ghost"
@@ -573,7 +573,7 @@ const Index = () => {
                               disabled={!canEditTarget}
                               aria-label={t(ui, "confirmTranslation")}
                               title={t(ui, "confirmTranslation")}
-                              className={`h-7 w-7 p-0 transition-colors ${confirmPulse[it.id] ? "animate-confirm-pop" : ""} ${st === "translated" ? "text-success hover:text-success hover:bg-success/10" : "text-muted-foreground hover:text-success hover:bg-success/10"}`}
+                              className={`h-7 w-7 p-0 transition-colors border ${confirmPulse[it.id] ? "animate-confirm-pop" : ""} ${st === "translated" ? "text-success border-success bg-success/10 hover:bg-success/20" : "text-muted-foreground border-border/60 hover:text-success hover:border-success/60 hover:bg-success/10"}`}
                             >
                               <Check className="w-4 h-4" />
                             </Button>
@@ -585,10 +585,16 @@ const Index = () => {
                               disabled={!canEditTarget}
                               aria-label={t(ui, "rejectWord")}
                               title={t(ui, "rejectWord")}
-                              className={`h-7 w-7 p-0 transition-colors ${st === "rejected" ? "text-destructive hover:text-destructive hover:bg-destructive/10" : "text-muted-foreground hover:text-destructive hover:bg-destructive/10"}`}
+                              className={`h-7 w-7 p-0 transition-colors border ${st === "rejected" ? "text-destructive border-destructive bg-destructive/10 hover:bg-destructive/20" : "text-muted-foreground border-border/60 hover:text-destructive hover:border-destructive/60 hover:bg-destructive/10"}`}
                             >
                               <X className="w-4 h-4" />
                             </Button>
+                            {statusHint?.id === it.id && (
+                              <div className={`absolute left-full top-1/2 -translate-y-1/2 ml-2 z-30 whitespace-nowrap px-2.5 py-1.5 rounded-md bg-foreground text-background text-xs shadow-md transition-opacity duration-300 pointer-events-none ${statusHint.visible ? "opacity-100" : "opacity-0"}`}>
+                                Nezapomeň potvrdit tlačítkem Aktualizovat
+                                <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-foreground rotate-45" />
+                              </div>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground bg-primary/5">
