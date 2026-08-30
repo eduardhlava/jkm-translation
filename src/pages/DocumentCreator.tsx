@@ -707,13 +707,13 @@ const DocumentCreator = () => {
                     {tableHeaders.map((h) => (
                       <TableHead key={h}>{h === titleProp ? "Označení dokumentu (jméno souboru)" : capitalizeHeader(h)}</TableHead>
                     ))}
-                    <TableHead className="w-16 text-center">Notion</TableHead>
                     <TableHead className="text-right">Akce</TableHead>
+
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {items.length === 0 && (
-                    <TableRow><TableCell colSpan={tableHeaders.length + 2} className="text-center text-muted-foreground py-6">Žádné položky</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={tableHeaders.length + 1} className="text-center text-muted-foreground py-6">Žádné položky</TableCell></TableRow>
                   )}
                   {items.map((it) => {
                     const isActive = activePage?.id === it.id;
@@ -741,27 +741,30 @@ const DocumentCreator = () => {
                             </TableCell>
                           );
                         })}
-                        <TableCell className="text-center">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className={`inline-flex items-center justify-center w-6 h-6 rounded border text-[11px] font-bold ${exportedAt ? "bg-foreground text-background border-foreground" : "bg-muted text-muted-foreground/60 border-muted-foreground/30"}`}>
-                                N
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="text-xs">
-                                {exportedAt
-                                  ? `Poslední export: ${new Date(exportedAt).toLocaleString("cs-CZ")}`
-                                  : "Nebylo exportováno"}
-                              </p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="sm" asChild>
-                              <a href={it.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="w-4 h-4" /></a>
-                            </Button>
+                          <div className="flex justify-end items-center gap-2">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <a
+                                  href={it.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  aria-label="Otevřít v Notion"
+                                  className={`inline-flex items-center justify-center w-6 h-6 rounded border text-[11px] font-bold transition-transform hover:scale-110 ${exportedAt ? "bg-foreground text-background border-foreground" : "bg-muted text-muted-foreground/60 border-muted-foreground/30"}`}
+                                >
+                                  N
+                                </a>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="text-xs">
+                                  {exportedAt
+                                    ? `Poslední export: ${new Date(exportedAt).toLocaleString("cs-CZ")}`
+                                    : "Nebylo exportováno"}
+                                  {" · "}Otevřít v Notion
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+
                             <Button size="sm" onClick={() => loadContent(it)} disabled={loadingContent}>
                               {loadingId === it.id ? (
                                 <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Načítám…</>
