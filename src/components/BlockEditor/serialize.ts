@@ -1,4 +1,4 @@
-import type { Block } from "./types";
+import { cellToExportText, type Block } from "./types";
 import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
 
 // ---------- Round-trip metadata markers ----------
@@ -153,10 +153,10 @@ export function blockToHtml(b: Block): string {
       const cellStyle = `style="border:1px solid #d1d5db;padding:6px 8px;text-align:left;"`;
       const thStyle = `style="border:1px solid #d1d5db;padding:6px 8px;text-align:left;background-color:#f3f4f6;font-weight:600;"`;
       const head = b.content.headerRow && rows[0]
-        ? `<thead><tr>${rows[0].map((c) => `<th ${thStyle}>${escapeHtml(c)}</th>`).join("")}</tr></thead>`
+        ? `<thead><tr>${rows[0].map((c) => `<th ${thStyle}>${escapeHtml(cellToExportText(c))}</th>`).join("")}</tr></thead>`
         : "";
       const bodyRows = b.content.headerRow ? rows.slice(1) : rows;
-      const body = `<tbody>${bodyRows.map((r) => `<tr>${r.map((c) => `<td ${cellStyle}>${escapeHtml(c)}</td>`).join("")}</tr>`).join("")}</tbody>`;
+      const body = `<tbody>${bodyRows.map((r) => `<tr>${r.map((c) => `<td ${cellStyle}>${escapeHtml(cellToExportText(c))}</td>`).join("")}</tr>`).join("")}</tbody>`;
       return `<table style="width:100%;border-collapse:collapse;border:1px solid #d1d5db;">${head}${body}</table>`;
     }
     case "image-table": {

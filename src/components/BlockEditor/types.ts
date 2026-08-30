@@ -33,6 +33,37 @@ export function buildCellValue(pictogram: Pictogram, text: string): string {
   return !pictogram || pictogram === "none" ? text : `[[pic:${pictogram}]]${text ? ` ${text}` : ""}`;
 }
 
+/**
+ * Pro export (Notion / HTML) se token nahradí viditelným emoji glyfem,
+ * při importu se glyf převede zpět na token.
+ */
+export const CELL_PICTOGRAM_GLYPHS: Record<Exclude<Pictogram, "none">, string> = {
+  alert: "⚠️",
+  "alert-electric": "⚡",
+  info: "ℹ️",
+  recycling: "♻️",
+};
+
+export function cellToExportText(cell: string): string {
+  const { pictogram, text } = parseCellPictogram(cell ?? "");
+  if (pictogram === "none") return text;
+  const glyph = CELL_PICTOGRAM_GLYPHS[pictogram as Exclude<Pictogram, "none">];
+  return text ? `${glyph} ${text}` : glyph;
+}
+
+export function cellFromExportText(cell: string): string {
+  const raw = cell ?? "";
+  if (CELL_PICTOGRAM_RE.test(raw)) return raw;
+  for (const [kind, glyph] of Object.entries(CELL_PICTOGRAM_GLYPHS)) {
+    const re = new RegExp(`^\\s*${glyph}\\uFE0F?\\s*`);
+    if (raw.startsWith(glyph) || re.test(raw)) {
+      return buildCellValue(kind as Pictogram, raw.replace(re, "").trim());
+    }
+  }
+  return raw;
+}
+
+
 
 export interface HeadingContent { text: string }
 export interface TextContent { html: string; align?: TextAlign; size?: TextSize; pictogram?: Pictogram }
