@@ -496,12 +496,23 @@ function TableBlock({ block }: { block: Block }) {
                 ? { width: `${colWidths![ci]}%`, flexGrow: 0, flexShrink: 0, flexBasis: `${colWidths![ci]}%` }
                 : { flex: 1 };
               const isHeader = headerRow && ri === 0 && !rowBg;
+              const { pictogram: cellPic, text: cellText } = parseCellPictogram(cell ?? "");
+              const cellStyle = [styles.td, wStyle, isHeader ? styles.th : {}, headerRow && ri === 0 ? { fontFamily: "NotoSans", fontWeight: "bold" } : {}] as any;
+              if (cellPic !== "none") {
+                return (
+                  <View key={ci} style={[cellStyle, { flexDirection: "row", alignItems: "center", gap: 4 }] as any}>
+                    <PictogramSvg kind={cellPic} size={16} />
+                    {cellText ? <Text>{cellText}</Text> : null}
+                  </View>
+                );
+              }
               return (
-                <Text key={ci} style={[styles.td, wStyle, isHeader ? styles.th : {}, headerRow && ri === 0 ? { fontFamily: "NotoSans", fontWeight: "bold" } : {}] as any}>
-                  {cell}
+                <Text key={ci} style={cellStyle}>
+                  {cellText}
                 </Text>
               );
             })}
+
           </View>
         );
       })}
