@@ -40,7 +40,6 @@ import SectionSwitcher, { useSectionAccent } from "@/components/SectionSwitcher"
 import {
   CheckCircle2,
   Check,
-  ExternalLink,
   Info,
   Languages,
   Loader2,
@@ -51,7 +50,6 @@ import {
   Settings as SettingsIcon,
   Hourglass,
   Ban,
-  ArrowRight,
   X,
 } from "lucide-react";
 import {
