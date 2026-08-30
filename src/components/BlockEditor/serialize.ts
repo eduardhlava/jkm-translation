@@ -1,4 +1,4 @@
-import type { Block } from "./types";
+import { cellToExportText, type Block } from "./types";
 import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
 
 // ---------- Round-trip metadata markers ----------
