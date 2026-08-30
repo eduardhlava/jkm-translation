@@ -354,15 +354,28 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert, 
                     </div>
 
                     {f.isCad && (
-                      <div className="space-y-1 rounded border border-amber-300 bg-amber-50 p-2">
-                        <div className="text-xs text-amber-800">
-                          Tento soubor je CAD výkres (DWG/DXF) — pro vložení do dokumentu je
-                          potřeba ho převést na PNG.
-                        </div>
+                      <div
+                        className={`space-y-1 rounded border p-2 ${
+                          f.convertedPreview
+                            ? "border-green-300 bg-green-50"
+                            : "border-amber-300 bg-amber-50"
+                        }`}
+                      >
+                        {f.convertedPreview ? (
+                          <div className="flex items-center gap-1.5 text-xs text-green-800">
+                            <Check className="h-4 w-4 shrink-0" />
+                            <span>Konverze úspěšně dokončena, můžete obrázek vložit do dokumentu.</span>
+                          </div>
+                        ) : (
+                          <div className="text-xs text-amber-800">
+                            Tento soubor je CAD výkres (DWG/DXF) — pro vložení do dokumentu je
+                            potřeba ho převést na PNG.
+                          </div>
+                        )}
                         {f.convertError && (
                           <div className="text-xs text-destructive">{f.convertError}</div>
                         )}
-                        {!f.done && (
+                        {!f.done && !f.convertedPreview && (
                           <Button
                             size="sm"
                             variant="outline"
@@ -372,7 +385,7 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert, 
                             {f.converting ? (
                               <Loader2 className="h-4 w-4 mr-1 animate-spin" />
                             ) : null}
-                            {f.convertedPreview ? "Převést znovu" : "Převést do PNG"}
+                            Převést do PNG
                           </Button>
                         )}
                       </div>
