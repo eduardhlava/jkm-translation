@@ -498,15 +498,11 @@ function ImageBlock({ block, captionOverride }: { block: Block; captionOverride?
   const url = block.content?.url;
   const alt = block.content?.alt;
   if (!url) return null;
-  const requestedWidth = Number(block.content?.width);
-  const width = Number.isFinite(requestedWidth) && requestedWidth > 0
-    ? Math.max(120, Math.min(440, requestedWidth))
-    : 340;
   const caption = captionOverride !== undefined ? captionOverride : alt;
   return (
     <View wrap={false} style={styles.imageBlock}>
       {/* eslint-disable-next-line jsx-a11y/alt-text */}
-      <Image src={url} style={[styles.image, { width }] as any} />
+      <Image src={url} style={[styles.image, { width: "90%" }] as any} />
       {caption ? <Text style={styles.caption}>{caption}</Text> : null}
     </View>
   );
