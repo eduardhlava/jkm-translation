@@ -6,16 +6,51 @@ import notoItalic from "@/assets/fonts/NotoSans-Italic.ttf?url";
 import notoBoldItalic from "@/assets/fonts/NotoSans-BoldItalic.ttf?url";
 import { DOCUMENT_LANGUAGES, mergeMetadata, type DocumentMetadata } from "@/components/DocumentMetadata/types";
 
-Font.register({
-  family: "NotoSans",
-  fonts: [
-    { src: notoRegular, fontWeight: "normal" },
-    { src: notoBold, fontWeight: "bold" },
-    { src: notoItalic, fontStyle: "italic" },
-    { src: notoBoldItalic, fontWeight: "bold", fontStyle: "italic" },
-  ],
-});
+const NOTO_FACES = [
+  { src: notoRegular, fontWeight: "normal" as const },
+  { src: notoBold, fontWeight: "bold" as const },
+  { src: notoItalic, fontStyle: "italic" as const },
+  { src: notoBoldItalic, fontWeight: "bold" as const, fontStyle: "italic" as const },
+];
+
+Font.register({ family: "NotoSans", fonts: NOTO_FACES });
+
+// Safety net: any font-family that can sneak in from pasted HTML (Word, Outlook,
+// Notion) or from embedded SVG artwork (e.g. font-family="Arial, sans-serif")
+// would otherwise crash react-pdf with "Font family not registered".
+// We alias the most common CSS font stacks onto NotoSans.
+const FONT_ALIASES = [
+  "Arial",
+  "Arial, sans-serif",
+  "Arial, Helvetica, sans-serif",
+  "Helvetica",
+  "Helvetica, Arial, sans-serif",
+  "Helvetica Neue",
+  "sans-serif",
+  "serif",
+  "Times New Roman",
+  "Times New Roman, serif",
+  "Georgia",
+  "Verdana",
+  "Tahoma",
+  "Segoe UI",
+  "Calibri",
+  "Roboto",
+  "Inter",
+  "Courier New",
+  "monospace",
+  "inherit",
+  "initial",
+];
+for (const family of FONT_ALIASES) {
+  try {
+    Font.register({ family, fonts: NOTO_FACES });
+  } catch {
+    /* ignore duplicate/invalid registrations */
+  }
+}
 Font.registerHyphenationCallback((word) => [word]);
+
 
 // ---------- Styles ----------
 const styles = StyleSheet.create({
