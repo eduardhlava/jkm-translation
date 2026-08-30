@@ -22,6 +22,8 @@ export type TKey =
   | "statusNewHint"
   | "statusReviewLabel"
   | "statusReviewHint"
+  | "statusRejectedLabel"
+  | "statusRejectedHint"
   | "pageSizeLabel"
   | "saveSettings"
   | "sourceLang"
@@ -93,6 +95,8 @@ export type TKey =
   | "secFiles"
   | "secFolders"
   | "allMachinesTitle"
+  | "confirmTranslation"
+  | "rejectWord"
   | "cancel";
 
 type Dict = Record<TKey, string>;
@@ -120,6 +124,10 @@ const cz: Dict = {
   statusNewHint: "Filtr pro načítání položek.",
   statusReviewLabel: "Hodnota „přeloženo“ v Notion",
   statusReviewHint: "Tato hodnota se zapíše po kliknutí na „Aktualizovat“.",
+  statusRejectedLabel: "Hodnota „zamítnuto“ v Notion",
+  statusRejectedHint: "Tato hodnota se zapíše při zamítnutí slova.",
+  confirmTranslation: "Potvrdit překlad",
+  rejectWord: "Zamítnout toto slovo",
   pageSizeLabel: "Počet položek na dávku",
   saveSettings: "Uložit nastavení",
   sourceLang: "Zdrojový jazyk",
@@ -210,6 +218,10 @@ const en: Dict = {
   statusNewHint: "Filter used when loading items.",
   statusReviewLabel: "Value for “translated” in Notion",
   statusReviewHint: "This value is written when you click “Update”.",
+  statusRejectedLabel: "Value for “rejected” in Notion",
+  statusRejectedHint: "This value is written when a word is rejected.",
+  confirmTranslation: "Confirm translation",
+  rejectWord: "Reject this word",
   pageSizeLabel: "Items per batch",
   saveSettings: "Save settings",
   sourceLang: "Source language",
@@ -300,6 +312,10 @@ const ru: Dict = {
   statusNewHint: "Фильтр загрузки записей.",
   statusReviewLabel: "Значение «переведено» в Notion",
   statusReviewHint: "Записывается при нажатии «Обновить».",
+  statusRejectedLabel: "Значение «отклонено» в Notion",
+  statusRejectedHint: "Записывается при отклонении слова.",
+  confirmTranslation: "Подтвердить перевод",
+  rejectWord: "Отклонить это слово",
   pageSizeLabel: "Записей в партии",
   saveSettings: "Сохранить настройки",
   sourceLang: "Исходный язык",
@@ -388,8 +404,12 @@ const pl: Dict = {
     "Właściwość nazywa się stav_{język} (np. stav_en). Teksty są w kolumnach wg kodu języka (cz, en, …).",
   statusNewLabel: "Wartość „nowy” w Notion",
   statusNewHint: "Filtr wczytywania elementów.",
-  statusReviewLabel: "Wartość „przetłumaczone” w Notion",
-  statusReviewHint: "Zapisywana po kliknięciu „Aktualizuj”.",
+  statusReviewLabel: "Wartość „przetłumaczone“ w Notion",
+  statusReviewHint: "Zapisywana po kliknięciu „Aktualizuj“.",
+  statusRejectedLabel: "Wartość „odrzucone“ w Notion",
+  statusRejectedHint: "Zapisywana przy odrzuceniu słowa.",
+  confirmTranslation: "Potwierdź tłumaczenie",
+  rejectWord: "Odrzuć to słowo",
   pageSizeLabel: "Liczba elementów w partii",
   saveSettings: "Zapisz ustawienia",
   sourceLang: "Język źródłowy",

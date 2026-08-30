@@ -40,7 +40,6 @@ import SectionSwitcher, { useSectionAccent } from "@/components/SectionSwitcher"
 import {
   CheckCircle2,
   Check,
-  ExternalLink,
   Info,
   Languages,
   Loader2,
@@ -51,7 +50,7 @@ import {
   Settings as SettingsIcon,
   Hourglass,
   Ban,
-  ArrowRight,
+  X,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -65,7 +64,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
-type LocalStatus = "new" | "translated";
+type LocalStatus = "new" | "translated" | "rejected";
 
 const Index = () => {
   const { profile, isAdmin } = useAuth();
@@ -223,7 +222,7 @@ const Index = () => {
 
   const localStatus = (id: string): LocalStatus => statusOverrides[id] ?? "new";
 
-  const toggleStatus = (id: string) => {
+  const confirmItem = (id: string) => {
     if (!canEditTarget) return;
     setStatusOverrides((m) => ({
       ...m,
@@ -233,8 +232,20 @@ const Index = () => {
     setConfirmPulse((m) => ({ ...m, [id]: (m[id] ?? 0) + 1 }));
   };
 
+  const rejectItem = (id: string) => {
+    if (!canEditTarget) return;
+    setStatusOverrides((m) => ({
+      ...m,
+      [id]: m[id] === "rejected" ? "new" : "rejected",
+    }));
+    setConfirmPulse((m) => ({ ...m, [id]: (m[id] ?? 0) + 1 }));
+  };
+
   const toUpdate = useMemo(
-    () => (canEditTarget ? items.filter((it) => localStatus(it.id) === "translated") : []),
+    () => (canEditTarget ? items.filter((it) => {
+      const st = localStatus(it.id);
+      return st === "translated" || st === "rejected";
+    }) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [items, statusOverrides, canEditTarget],
   );
@@ -279,13 +290,16 @@ const Index = () => {
     }
     setSaving(true);
     try {
-      const updates = toUpdate.map((it) => ({
-        pageId: it.id,
-        updates: {
-          [stProp]: settings.statusReview,
-          [targetProp]: translations[it.id] ?? "",
-        },
-      }));
+      const updates = toUpdate.map((it) => {
+        const st = localStatus(it.id);
+        return {
+          pageId: it.id,
+          updates: {
+            [stProp]: st === "rejected" ? settings.statusRejected : settings.statusReview,
+            [targetProp]: translations[it.id] ?? "",
+          },
+        };
+      });
       const { data, error } = await supabase.functions.invoke("notion-bulk-update", {
         body: { updates },
       });
@@ -511,7 +525,7 @@ const Index = () => {
                         </Select>
                       </div>
                     </TableHead>
-                    {isAdmin && <TableHead className="w-[6%]" />}
+                    
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -520,9 +534,12 @@ const Index = () => {
                     return (
                       <TableRow key={it.id}>
                         <TableCell className="align-top whitespace-pre-wrap text-sm bg-primary/5">
-                          {it.properties[sourceProp] || (
-                            <span className="text-muted-foreground italic">—</span>
-                          )}
+                          <div>
+                            {it.properties[sourceProp] || (
+                              <span className="text-muted-foreground italic">—</span>
+                            )}
+                          </div>
+                          <div className="text-[10px] text-muted-foreground/70 mt-1 font-mono">{it.id}</div>
                         </TableCell>
                         <TableCell className="align-top bg-primary/5">
                           <Textarea
@@ -537,20 +554,32 @@ const Index = () => {
                           />
                         </TableCell>
                         <TableCell className="w-[1%] whitespace-nowrap px-2 py-3 align-top text-center">
-                          <Button
-                            key={`btn-${it.id}-${confirmPulse[it.id] ?? 0}`}
-                            variant={st === "translated" ? "default" : "outline"}
-                            size="icon"
-                            onClick={() => toggleStatus(it.id)}
-                            disabled={!canEditTarget}
-                            className={`h-8 w-8 p-0 transition-colors ${confirmPulse[it.id] ? "animate-confirm-pop" : ""} ${st === "translated" ? "bg-success text-success-foreground hover:bg-success/90" : ""}`}
-                          >
-                            {st === "translated" ? (
-                              <CheckCircle2 className="w-4 h-4" />
-                            ) : (
-                              <ArrowRight className="w-4 h-4" />
-                            )}
-                          </Button>
+                          <div className="flex flex-col items-center gap-1.5">
+                            <Button
+                              key={`confirm-${it.id}-${confirmPulse[it.id] ?? 0}`}
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => confirmItem(it.id)}
+                              disabled={!canEditTarget}
+                              aria-label={t(ui, "confirmTranslation")}
+                              title={t(ui, "confirmTranslation")}
+                              className={`h-7 w-7 p-0 transition-colors ${confirmPulse[it.id] ? "animate-confirm-pop" : ""} ${st === "translated" ? "text-success hover:text-success hover:bg-success/10" : "text-muted-foreground hover:text-success hover:bg-success/10"}`}
+                            >
+                              <Check className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              key={`reject-${it.id}-${confirmPulse[it.id] ?? 0}`}
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => rejectItem(it.id)}
+                              disabled={!canEditTarget}
+                              aria-label={t(ui, "rejectWord")}
+                              title={t(ui, "rejectWord")}
+                              className={`h-7 w-7 p-0 transition-colors ${st === "rejected" ? "text-destructive hover:text-destructive hover:bg-destructive/10" : "text-muted-foreground hover:text-destructive hover:bg-destructive/10"}`}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                         <TableCell className="align-top whitespace-pre-wrap text-xs text-muted-foreground bg-primary/5">
                           {it.properties[ctxProp] || "—"}
@@ -626,19 +655,6 @@ const Index = () => {
                             );
                           })()}
                         </TableCell>
-                        {isAdmin && (
-                          <TableCell className="align-top">
-                            <a
-                              href={it.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-muted-foreground hover:text-primary inline-flex items-center"
-                              title={t(ui, "openInNotion")}
-                            >
-                              <ExternalLink className="w-4 h-4" />
-                            </a>
-                          </TableCell>
-                        )}
                       </TableRow>
                     );
                   })}
