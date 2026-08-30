@@ -585,7 +585,7 @@ const Index = () => {
                               disabled={!canEditTarget}
                               aria-label={t(ui, "rejectWord")}
                               title={t(ui, "rejectWord")}
-                              className={`h-7 w-7 p-0 transition-colors border ${st === "rejected" ? "text-white border-destructive bg-destructive hover:bg-destructive/90" : "text-muted-foreground border-border bg-muted hover:text-destructive hover:border-destructive/60 hover:bg-destructive/10"}`}
+                              className={`h-7 w-7 p-0 mt-3 transition-colors border ${st === "rejected" ? "text-white border-destructive bg-destructive hover:bg-destructive/90" : "text-muted-foreground border-border bg-muted hover:text-destructive hover:border-destructive/60 hover:bg-destructive/10"}`}
                             >
                               <X className="w-4 h-4" />
                             </Button>
