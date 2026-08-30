@@ -20,9 +20,11 @@ function arrayBufferToBase64(buf: ArrayBuffer): string {
 async function urlToDataUrl(url: string): Promise<string | null> {
   try {
     const res = await fetch(url);
-    if (!res.ok) return null;
+    if (!res.ok || res.status === 204) return null;
     const buf = await res.arrayBuffer();
+    if (buf.byteLength === 0) return null;
     const type = res.headers.get("Content-Type") || "image/png";
+    if (!type.toLowerCase().startsWith("image/")) return null;
     return `data:${type};base64,${arrayBufferToBase64(buf)}`;
   } catch {
     return null;
@@ -32,7 +34,8 @@ async function urlToDataUrl(url: string): Promise<string | null> {
 function isExpiredNotionSignedUrl(url: string): boolean {
   try {
     const u = new URL(url);
-    if (u.hostname !== "prod-files-secure.s3.us-west-2.amazonaws.com") return false;
+    const isAwsSignedUrl = u.hostname.endsWith(".amazonaws.com") && u.searchParams.has("X-Amz-Signature");
+    if (!isAwsSignedUrl) return false;
     const date = u.searchParams.get("X-Amz-Date");
     const expires = Number(u.searchParams.get("X-Amz-Expires") ?? 0);
     if (!date || !Number.isFinite(expires) || expires <= 0) return false;
