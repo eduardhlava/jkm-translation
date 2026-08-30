@@ -590,9 +590,9 @@ const Index = () => {
                               <X className="w-4 h-4" />
                             </Button>
                             {statusHint?.id === it.id && (
-                              <div className={`absolute left-full top-1/2 -translate-y-1/2 ml-2 z-30 whitespace-nowrap px-2.5 py-1.5 rounded-md bg-foreground text-background text-xs shadow-md transition-opacity duration-300 pointer-events-none ${statusHint.visible ? "opacity-100" : "opacity-0"}`}>
+                              <div className={`absolute left-full top-1/2 -translate-y-1/2 ml-2 z-30 whitespace-nowrap px-2.5 py-1.5 rounded-md text-xs shadow-md transition-opacity duration-300 pointer-events-none border ${statusHint.type === "confirm" ? "bg-success text-white border-success" : "bg-destructive text-white border-destructive"} ${statusHint.visible ? "opacity-100" : "opacity-0"}`}>
                                 Nezapomeň potvrdit tlačítkem Aktualizovat
-                                <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-foreground rotate-45" />
+                                <div className={`absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 rotate-45 ${statusHint.type === "confirm" ? "bg-success" : "bg-destructive"}`} />
                               </div>
                             )}
                           </div>
