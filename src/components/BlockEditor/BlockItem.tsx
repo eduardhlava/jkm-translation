@@ -22,7 +22,15 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BLOCK_TYPE_LABELS, type Block, type Pictogram } from "./types";
+import { BLOCK_TYPE_LABELS, buildCellValue, parseCellPictogram, type Block, type Pictogram } from "./types";
+
+const PICTOGRAM_LABELS: Record<string, string> = {
+  alert: "Výstraha",
+  "alert-electric": "Výstraha – elektrické nebezpečí",
+  info: "Informace",
+  recycling: "Recyklace",
+};
+
 import { supabase } from "@/integrations/supabase/client";
 import NotionImagePicker from "@/components/NotionImagePicker";
 import NotionImageUploadDialog from "@/components/NotionImageUploadDialog";
