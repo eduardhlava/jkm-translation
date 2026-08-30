@@ -521,7 +521,7 @@ const Index = () => {
                     {helperExProp && (
                       <TableHead className="w-[12%] text-foreground font-semibold uppercase tracking-wide text-xs py-3">{t(ui, "helperExampleCol")} ({langLabel(helperCtxLang)})</TableHead>
                     )}
-                    <TableHead className="w-[12%] text-foreground font-semibold uppercase tracking-wide text-xs py-3 align-top">
+                    <TableHead className="w-[8%] text-foreground font-semibold uppercase tracking-wide text-xs py-3 align-top">
                       <div className="space-y-1.5">
                         <div>{t(ui, "machineCol")}</div>
                         <Select value={machineFilter} onValueChange={setMachineFilter}>
