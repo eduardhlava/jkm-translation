@@ -713,7 +713,7 @@ const DocumentCreator = () => {
                 </TableHeader>
                 <TableBody>
                   {items.length === 0 && (
-                    <TableRow><TableCell colSpan={tableHeaders.length + 2} className="text-center text-muted-foreground py-6">Žádné položky</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={tableHeaders.length + 1} className="text-center text-muted-foreground py-6">Žádné položky</TableCell></TableRow>
                   )}
                   {items.map((it) => {
                     const isActive = activePage?.id === it.id;
