@@ -271,7 +271,7 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert, 
             }`}
           >
             <Upload className="h-6 w-6" />
-            <div>Přetáhněte obrázek nebo CAD výkres (DWG/DXF) sem nebo kliknutím vyberte z disku</div>
+            <div>Přetáhněte obrázek (PNG, JPG, GIF) nebo CAD výkres (DWG/DXF) sem nebo kliknutím vyberte z disku</div>
             <input
               ref={inputRef}
               type="file"

@@ -4,7 +4,7 @@ import notoRegular from "@/assets/fonts/NotoSans-Regular.ttf?url";
 import notoBold from "@/assets/fonts/NotoSans-Bold.ttf?url";
 import notoItalic from "@/assets/fonts/NotoSans-Italic.ttf?url";
 import notoBoldItalic from "@/assets/fonts/NotoSans-BoldItalic.ttf?url";
-import { DOCUMENT_LANGUAGES, type DocumentMetadata } from "@/components/DocumentMetadata/types";
+import { DOCUMENT_LANGUAGES, mergeMetadata, type DocumentMetadata } from "@/components/DocumentMetadata/types";
 
 Font.register({
   family: "NotoSans",
@@ -700,7 +700,10 @@ export interface DocumentPdfProps {
   logoDataUrl?: string;
 }
 
-export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collector, numberHeadings, metadata, logoDataUrl }: DocumentPdfProps) {
+export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collector, numberHeadings, metadata: metadataProp, logoDataUrl }: DocumentPdfProps) {
+  // Metadata mohou přijít neúplná (starší dokumenty, marker z Notion duplikátu),
+  // proto je vždy sloučíme s výchozími hodnotami – jinak by render spadl.
+  const metadata = metadataProp ? mergeMetadata(metadataProp) : undefined;
   const ordered = [...blocks].sort((a, b) => a.order - b.order);
   const headings = collectHeadings(ordered);
   const tocEntries = headings;
