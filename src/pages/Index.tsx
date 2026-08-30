@@ -292,13 +292,16 @@ const Index = () => {
     }
     setSaving(true);
     try {
-      const updates = toUpdate.map((it) => ({
-        pageId: it.id,
-        updates: {
-          [stProp]: settings.statusReview,
-          [targetProp]: translations[it.id] ?? "",
-        },
-      }));
+      const updates = toUpdate.map((it) => {
+        const st = localStatus(it.id);
+        return {
+          pageId: it.id,
+          updates: {
+            [stProp]: st === "rejected" ? settings.statusRejected : settings.statusReview,
+            [targetProp]: translations[it.id] ?? "",
+          },
+        };
+      });
       const { data, error } = await supabase.functions.invoke("notion-bulk-update", {
         body: { updates },
       });
