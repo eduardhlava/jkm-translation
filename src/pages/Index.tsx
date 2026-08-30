@@ -224,13 +224,22 @@ const Index = () => {
 
   const localStatus = (id: string): LocalStatus => statusOverrides[id] ?? "new";
 
-  const toggleStatus = (id: string) => {
+  const confirmItem = (id: string) => {
     if (!canEditTarget) return;
     setStatusOverrides((m) => ({
       ...m,
       [id]: m[id] === "translated" ? "new" : "translated",
     }));
     // Trigger pop animation by bumping a counter for this row
+    setConfirmPulse((m) => ({ ...m, [id]: (m[id] ?? 0) + 1 }));
+  };
+
+  const rejectItem = (id: string) => {
+    if (!canEditTarget) return;
+    setStatusOverrides((m) => ({
+      ...m,
+      [id]: m[id] === "rejected" ? "new" : "rejected",
+    }));
     setConfirmPulse((m) => ({ ...m, [id]: (m[id] ?? 0) + 1 }));
   };
 
