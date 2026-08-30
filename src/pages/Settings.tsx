@@ -81,6 +81,11 @@ const Settings = () => {
               <p className="text-xs text-muted-foreground">{t(s.uiLang, "statusReviewHint")}</p>
             </div>
             <div className="space-y-2">
+              <Label>{t(s.uiLang, "statusRejectedLabel")}</Label>
+              <Input value={s.statusRejected} onChange={(e) => update({ statusRejected: e.target.value })} placeholder="zamítnuto" />
+              <p className="text-xs text-muted-foreground">{t(s.uiLang, "statusRejectedHint")}</p>
+            </div>
+            <div className="space-y-2">
               <Label>{t(s.uiLang, "pageSizeLabel")}</Label>
               <Input
                 type="number"
