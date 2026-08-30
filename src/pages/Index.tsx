@@ -244,7 +244,10 @@ const Index = () => {
   };
 
   const toUpdate = useMemo(
-    () => (canEditTarget ? items.filter((it) => localStatus(it.id) === "translated") : []),
+    () => (canEditTarget ? items.filter((it) => {
+      const st = localStatus(it.id);
+      return st === "translated" || st === "rejected";
+    }) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [items, statusOverrides, canEditTarget],
   );
