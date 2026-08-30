@@ -536,9 +536,12 @@ const Index = () => {
                     return (
                       <TableRow key={it.id}>
                         <TableCell className="align-top whitespace-pre-wrap text-sm bg-primary/5">
-                          {it.properties[sourceProp] || (
-                            <span className="text-muted-foreground italic">—</span>
-                          )}
+                          <div>
+                            {it.properties[sourceProp] || (
+                              <span className="text-muted-foreground italic">—</span>
+                            )}
+                          </div>
+                          <div className="text-[10px] text-muted-foreground/70 mt-1 font-mono">{it.id}</div>
                         </TableCell>
                         <TableCell className="align-top bg-primary/5">
                           <Textarea
