@@ -527,7 +527,7 @@ const Index = () => {
                         </Select>
                       </div>
                     </TableHead>
-                    {isAdmin && <TableHead className="w-[6%]" />}
+                    
                   </TableRow>
                 </TableHeader>
                 <TableBody>
