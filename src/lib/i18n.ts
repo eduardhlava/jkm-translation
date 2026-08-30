@@ -35,6 +35,7 @@ export type TKey =
   | "sourceCol"
   | "translationCol"
   | "contextCol"
+  | "editContext"
   | "exampleCol"
   | "statusCol"
   | "confirm"
@@ -139,6 +140,7 @@ const cz: Dict = {
   sourceCol: "Zdroj",
   translationCol: "Překlad",
   contextCol: "Kontext",
+  editContext: "Upravit kontext",
   exampleCol: "Příklad věty",
   statusCol: "Stav",
   confirm: "Potvrdit",
@@ -233,6 +235,7 @@ const en: Dict = {
   sourceCol: "Source",
   translationCol: "Translation",
   contextCol: "Context",
+  editContext: "Edit context",
   exampleCol: "Example sentence",
   statusCol: "Status",
   confirm: "Confirm",
@@ -327,6 +330,7 @@ const ru: Dict = {
   sourceCol: "Источник",
   translationCol: "Перевод",
   contextCol: "Контекст",
+  editContext: "Редактировать контекст",
   exampleCol: "Пример предложения",
   statusCol: "Статус",
   confirm: "Подтвердить",
@@ -421,6 +425,7 @@ const pl: Dict = {
   sourceCol: "Źródło",
   translationCol: "Tłumaczenie",
   contextCol: "Kontekst",
+  editContext: "Edytuj kontekst",
   exampleCol: "Przykładowe zdanie",
   statusCol: "Status",
   confirm: "Potwierdź",
