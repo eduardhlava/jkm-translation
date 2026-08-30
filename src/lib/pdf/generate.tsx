@@ -24,7 +24,12 @@ async function urlToDataUrl(url: string): Promise<string | null> {
     const buf = await res.arrayBuffer();
     if (buf.byteLength === 0) return null;
     const type = res.headers.get("Content-Type") || "image/png";
-    if (!type.toLowerCase().startsWith("image/")) return null;
+    const lower = type.toLowerCase();
+    if (!lower.startsWith("image/")) return null;
+    // react-pdf cannot rasterize SVG payloads and chokes on font-family
+    // declarations inside them — skip such assets instead of crashing.
+    if (lower.includes("svg")) return null;
+
     return `data:${type};base64,${arrayBufferToBase64(buf)}`;
   } catch {
     return null;
