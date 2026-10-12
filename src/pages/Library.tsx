@@ -369,7 +369,7 @@ const Library = () => {
             />
           </Card>
 
-          <div className="space-y-4">
+          <div className="min-w-0 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <nav className={cn("flex flex-wrap items-center gap-1 text-sm", allFolders && "opacity-50 pointer-events-none")}>
                 <button
