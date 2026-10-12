@@ -1,4 +1,5 @@
 # Tasks
+- [x] Add inline formatting removal and compact text background selector; verified index toggles, all four colors, saved content read-back and normal text in downloaded PDF in the authenticated preview; restored original document.
 - [x] Increase spacing above PDF headings.
 - [x] Add Horizontální mezera with JSON/Notion marker round-trip support (three tests passed).
 - [x] Constrain pictogram cell text in editor and PDF.

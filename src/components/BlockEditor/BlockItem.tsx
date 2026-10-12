@@ -328,6 +328,35 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
   const ref = useRef<HTMLDivElement>(null);
   const lastHtmlRef = useRef<string>(block.content.html ?? "");
   const selectionRef = useRef<Range | null>(null);
+  const [highlightOpen, setHighlightOpen] = useState(false);
+  const [activeHighlight, setActiveHighlight] = useState<string | null>(null);
+  const [activeIndices, setActiveIndices] = useState({ superscript: false, subscript: false });
+
+  useEffect(() => {
+    const updateFormatting = () => {
+      const selection = window.getSelection();
+      const editor = ref.current;
+      if (!editor || !selection?.anchorNode || !editor.contains(selection.anchorNode)) return;
+      setActiveIndices({
+        superscript: document.queryCommandState("superscript"),
+        subscript: document.queryCommandState("subscript"),
+      });
+      let element = selection.anchorNode instanceof HTMLElement
+        ? selection.anchorNode : selection.anchorNode.parentElement;
+      let color: string | null = null;
+      while (element && element !== editor) {
+        const background = element.style.backgroundColor;
+        if (background && background !== "transparent" && background !== "rgba(0, 0, 0, 0)") {
+          color = background;
+          break;
+        }
+        element = element.parentElement;
+      }
+      setActiveHighlight(color);
+    };
+    document.addEventListener("selectionchange", updateFormatting);
+    return () => document.removeEventListener("selectionchange", updateFormatting);
+  }, []);
 
   const saveSelection = () => {
     const editor = ref.current;
@@ -407,6 +436,17 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
     syncHtml();
   };
 
+  const clearFormatting = () => {
+    restoreSelection();
+    // Native removal splits inline wrappers at the selection boundaries, preserving
+    // surrounding formatting, paragraphs, line breaks and browser undo history.
+    document.execCommand("removeFormat", false);
+    document.execCommand("unlink", false);
+    syncHtml();
+    setActiveHighlight(null);
+    setActiveIndices({ superscript: false, subscript: false });
+  };
+
   const [plainOpen, setPlainOpen] = useState(false);
   const [plainText, setPlainText] = useState("");
   const insertPlain = () => {
@@ -450,6 +490,8 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
     try { document.execCommand("styleWithCSS", false, "true"); } catch {}
     document.execCommand("hiliteColor", false, color ?? "transparent");
     syncHtml();
+    setActiveHighlight(color);
+    setHighlightOpen(false);
   };
 
   const onLink = () => {
@@ -516,8 +558,14 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
       <div className="flex items-center gap-1 flex-wrap">
         <Button type="button" variant="ghost" size="sm" title="Tučně (Ctrl/⌘+B)" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("bold")} className="h-7 px-2 font-bold">B</Button>
         <Button type="button" variant="ghost" size="sm" title="Kurzíva (Ctrl/⌘+I)" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("italic")} className="h-7 px-2 italic">I</Button>
-        <Button type="button" variant="ghost" size="icon" title="Horní index (Ctrl/⌘+.)" aria-label="Horní index" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("superscript")} className="h-7 w-7"><Superscript className="h-4 w-4" /></Button>
-        <Button type="button" variant="ghost" size="icon" title="Dolní index (Ctrl/⌘+,)" aria-label="Dolní index" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("subscript")} className="h-7 w-7"><Subscript className="h-4 w-4" /></Button>
+        <Button type="button" variant="ghost" size="icon" title="Horní index (Ctrl/⌘+.)" aria-label="Horní index" aria-pressed={activeIndices.superscript} onMouseDown={(e) => e.preventDefault()} onClick={() => exec("superscript")} className="h-7 w-7"><Superscript className="h-4 w-4" /></Button>
+        <Button type="button" variant="ghost" size="icon" title="Dolní index (Ctrl/⌘+,)" aria-label="Dolní index" aria-pressed={activeIndices.subscript} onMouseDown={(e) => e.preventDefault()} onClick={() => exec("subscript")} className="h-7 w-7"><Subscript className="h-4 w-4" /></Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button type="button" variant="ghost" size="icon" title="Zrušit formátování" aria-label="Zrušit formátování" onMouseDown={(e) => e.preventDefault()} onClick={clearFormatting} className="h-7 w-7"><RemoveFormatting className="h-4 w-4" /></Button>
+          </TooltipTrigger>
+          <TooltipContent>Zrušit formátování</TooltipContent>
+        </Tooltip>
         <Button type="button" variant="ghost" size="icon" title="Vložit bez formátování" aria-label="Vložit bez formátování" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => setPlainOpen(true)} className="h-7 w-7"><RemoveFormatting className="h-4 w-4" /></Button>
         <Dialog open={plainOpen} onOpenChange={setPlainOpen}>
           <DialogContent>
@@ -548,33 +596,26 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
           </SelectContent>
         </Select>
         <div className="mx-1 h-5 w-px bg-border" />
-        {HIGHLIGHT_COLORS.map((c) => (
-          <Button
-            key={c.key}
-            type="button"
-            variant="ghost"
-            size="icon"
-            title={`Podbarvit – ${c.label}`}
-            aria-label={`Podbarvit ${c.label}`}
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => applyHighlight(c.color)}
-            className="h-7 w-7"
-          >
-            <span className="block h-4 w-4 rounded-sm border border-foreground/30" style={{ backgroundColor: c.color }} />
-          </Button>
-        ))}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          title="Odebrat podbarvení"
-          aria-label="Odebrat podbarvení"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => applyHighlight(null)}
-          className="h-7 w-7 text-xs"
-        >
-          ×
-        </Button>
+        <Popover open={highlightOpen} onOpenChange={setHighlightOpen}>
+          <PopoverTrigger asChild>
+            <Button type="button" variant="ghost" size="sm" title="Barva pozadí" aria-label="Barva pozadí" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} className="h-7 gap-1 px-2">
+              <span className="flex h-4 w-4 items-center justify-center rounded-sm border border-foreground/30 text-xs" style={{ backgroundColor: activeHighlight ?? undefined }}>{activeHighlight ? null : "×"}</span>
+              <ChevronDown className="h-3 w-3" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-40 p-1" align="start" onOpenAutoFocus={(e) => e.preventDefault()} onCloseAutoFocus={(e) => e.preventDefault()}>
+            {HIGHLIGHT_COLORS.map((c) => (
+              <Button key={c.key} type="button" variant="ghost" size="sm" aria-label={`Podbarvit ${c.label}`} onMouseDown={(e) => e.preventDefault()} onClick={() => applyHighlight(c.color)} className="w-full justify-start gap-2 text-xs">
+                <span className="block h-4 w-4 shrink-0 rounded-sm border border-foreground/30" style={{ backgroundColor: c.color }} />
+                {c.label}
+              </Button>
+            ))}
+            <Button type="button" variant="ghost" size="sm" onMouseDown={(e) => e.preventDefault()} onClick={() => applyHighlight(null)} className="w-full justify-start gap-2 text-xs">
+              <span className="flex h-4 w-4 items-center justify-center rounded-sm border border-foreground/30">×</span>
+              Bez barvy
+            </Button>
+          </PopoverContent>
+        </Popover>
         <Select
           value={block.content.pictogram ?? "none"}
           onValueChange={(v) => onChange(block.id, { content: { ...block.content, pictogram: v } })}
@@ -610,7 +651,7 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
             onChange(block.id, { content: { ...block.content, html } });
             saveSelection();
           }}
-          className="ProseMirror min-h-[60px] flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring prose prose-sm max-w-none"
+          className="ProseMirror min-h-[60px] flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring prose prose-sm max-w-none [&_sup]:align-super [&_sup]:static [&_sub]:align-sub [&_sub]:static"
         />
       </div>
     </div>
