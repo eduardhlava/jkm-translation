@@ -63,10 +63,11 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
   docTitle: { fontSize: 20, lineHeight: 1.2, fontFamily: "NotoSans", fontWeight: "bold", marginBottom: 14 },
-  h1Wrap: { width: "100%", marginTop: 18, marginBottom: 8 },
-  h2Wrap: { width: "100%", marginTop: 14, marginBottom: 6 },
-  h3Wrap: { width: "100%", marginTop: 10, marginBottom: 4 },
-  h4Wrap: { width: "100%", marginTop: 8, marginBottom: 3 },
+  h1Wrap: { width: "100%", marginTop: 28, marginBottom: 8 },
+  h2Wrap: { width: "100%", marginTop: 24, marginBottom: 6 },
+  h3Wrap: { width: "100%", marginTop: 20, marginBottom: 4 },
+  h4Wrap: { width: "100%", marginTop: 18, marginBottom: 3 },
+  spacer: { height: 31.5, flexShrink: 0 },
   h1: { fontSize: 16, lineHeight: 1.25, fontFamily: "NotoSans", fontWeight: "bold" },
   h2: { fontSize: 13, lineHeight: 1.25, fontFamily: "NotoSans", fontWeight: "bold" },
   h3: { fontSize: 11.5, lineHeight: 1.25, fontFamily: "NotoSans", fontWeight: "bold" },
@@ -92,7 +93,9 @@ const styles = StyleSheet.create({
   calloutText: { flex: 1 },
   table: { borderWidth: 1, borderColor: "#d1d5db", marginVertical: 6 },
   tr: { flexDirection: "row" },
-  td: { flex: 1, padding: 5, borderRightWidth: 1, borderBottomWidth: 1, borderColor: "#d1d5db", fontSize: 10 },
+  td: { flex: 1, minWidth: 0, padding: 5, borderRightWidth: 1, borderBottomWidth: 1, borderColor: "#d1d5db", fontSize: 10 },
+  cellIcon: { width: 16, height: 16, flexShrink: 0 },
+  cellText: { flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 0 },
   th: { backgroundColor: "#f3f4f6", fontFamily: "NotoSans", fontWeight: "bold" },
   footer: {
     position: "absolute",
@@ -364,13 +367,14 @@ function PictogramSvg({ kind, size = 26 }: { kind: Pictogram; size?: number }) {
   const renderSymbol = () => {
     switch (kind) {
       case "alert":
-      case "alert-electric":
         return (
           <>
             <Path d="M12 9 L12 15" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
             <Circle cx={12} cy={18} r={1.2} fill={color} />
           </>
         );
+      case "alert-electric":
+        return <Path d="M14 8 L9 15 L12 15 L10 20 L16 13 L13 13 L15 8 Z" fill={color} />;
       case "info":
         return (
           <>
@@ -547,8 +551,8 @@ function TableBlock({ block }: { block: Block }) {
         return (
           <View key={ri} style={[styles.tr, rowBg ? { backgroundColor: rowBg } : {}] as any} wrap={false}>
             {row.map((cell, ci) => {
-              const wStyle = hasWidths
-                ? { width: `${colWidths![ci]}%`, flexGrow: 0, flexShrink: 0, flexBasis: `${colWidths![ci]}%` }
+              const wStyle = hasWidths && colWidths
+                ? { width: `${colWidths[ci]}%`, flexGrow: 0, flexShrink: 0, flexBasis: `${colWidths[ci]}%` }
                 : { flex: 1 };
               const isHeader = headerRow && ri === 0 && !rowBg;
               const { pictogram: cellPic, text: cellText } = parseCellPictogram(cell ?? "");
@@ -556,8 +560,8 @@ function TableBlock({ block }: { block: Block }) {
               if (cellPic !== "none") {
                 return (
                   <View key={ci} style={[cellStyle, { flexDirection: "row", alignItems: "center", gap: 4 }] as any}>
-                    <PictogramSvg kind={cellPic} size={16} />
-                    {cellText ? <Text>{cellText}</Text> : null}
+                    <View style={styles.cellIcon}><PictogramSvg kind={cellPic} size={16} /></View>
+                    {cellText ? <Text style={styles.cellText}>{cellText}</Text> : null}
                   </View>
                 );
               }
@@ -623,6 +627,7 @@ function BlockNode({ block, collector, number, imageCaption }: { block: Block; c
     case "info":
     case "warning":  return <CalloutBlock block={block} />;
     case "pagebreak": return <View break />;
+    case "spacer": return <View wrap={false} style={styles.spacer} />;
     default: return null;
 
   }

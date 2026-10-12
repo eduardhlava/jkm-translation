@@ -4,7 +4,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Plus, Heading1, Heading2, Heading3, Heading4, Type, Table as TableIcon, Image as ImageIcon, LayoutPanelTop, AlertTriangle, Info, AlertCircle, SeparatorHorizontal } from "lucide-react";
+import { Plus, Heading1, Heading2, Heading3, Heading4, Type, Table as TableIcon, Image as ImageIcon, LayoutPanelTop, AlertTriangle, Info, AlertCircle, SeparatorHorizontal, Space } from "lucide-react";
 import { BLOCK_TYPE_LABELS, type BlockType } from "./types";
 
 const ICONS: Record<BlockType, React.ComponentType<{ className?: string }>> = {
@@ -20,13 +20,14 @@ const ICONS: Record<BlockType, React.ComponentType<{ className?: string }>> = {
   info: Info,
   warning: AlertCircle,
   pagebreak: SeparatorHorizontal,
+  spacer: Space,
 };
 
 const ORDER: BlockType[] = [
   "heading1", "heading2", "heading3", "heading4",
   "text", "table", "image", "image-table",
   "alert", "info", "warning",
-  "pagebreak",
+  "spacer", "pagebreak",
 ];
 
 interface Props {
@@ -63,8 +64,9 @@ export default function AddBlockMenu({ onAdd, variant = "default", label = "Při
           {ORDER.map((t) => {
             const Icon = ICONS[t];
             return (
-              <button
+              <Button
                 key={t}
+                 variant="ghost"
                 onClick={(e) => {
                   onAdd(t);
                   // Close popover by clicking outside
@@ -72,11 +74,11 @@ export default function AddBlockMenu({ onAdd, variant = "default", label = "Při
                     new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
                   );
                 }}
-                className="flex items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-accent"
+                 className="h-auto justify-start gap-2 whitespace-normal rounded-md px-2 py-2 text-left text-sm"
               >
                 <Icon className="w-4 h-4 text-muted-foreground" />
                 <span>{BLOCK_TYPE_LABELS[t]}</span>
-              </button>
+              </Button>
             );
           })}
         </div>
