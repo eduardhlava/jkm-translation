@@ -19,10 +19,17 @@ function titleOf(page: any): string {
   return "";
 }
 
-function selectOf(page: any, name: string): string {
+function valuesOf(page: any, name: string): string[] {
   const p = page.properties?.[name];
-  if (p?.type === "select") return p.select?.name ?? "";
-  return "";
+  if (p?.type === "select") return p.select?.name ? [p.select.name] : [];
+  if (p?.type === "multi_select") return (p.multi_select ?? []).map((s: any) => s.name).filter(Boolean);
+  return [];
+}
+
+function choiceFilter(db: any, prop: string, value: string) {
+  return db?.properties?.[prop]?.type === "multi_select"
+    ? { property: prop, multi_select: { contains: value } }
+    : { property: prop, select: { equals: value } };
 }
 
 function imageOf(page: any): string {
@@ -92,8 +99,15 @@ Deno.serve(async (req) => {
     }
 
     const filters: any[] = [];
-    if (typ) filters.push({ property: "typ", select: { equals: typ } });
-    if (stroj) filters.push({ property: "stroj", select: { equals: stroj } });
+    if (typ || stroj) {
+      const dbRes = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, {
+        headers: { Authorization: `Bearer ${NOTION_API_KEY}`, "Notion-Version": NOTION_VERSION },
+      });
+      if (!dbRes.ok) throw new Error(`Notion schema failed [${dbRes.status}]: ${await dbRes.text()}`);
+      const db = await dbRes.json();
+      if (typ) filters.push(choiceFilter(db, "typ", typ));
+      if (stroj) filters.push(choiceFilter(db, "stroj", stroj));
+    }
     if (name) {
       const variants = nameVariants(name);
       if (variants.length === 1) {
@@ -111,7 +125,7 @@ Deno.serve(async (req) => {
     else if (filters.length > 1) queryBody.filter = { and: filters };
 
 
-    const items: { id: string; title: string; image: string; url: string; typ: string; stroj: string; createdTime: string }[] = [];
+    const items: { id: string; title: string; image: string; url: string; typ: string[]; stroj: string[]; createdTime: string }[] = [];
     let cursor: string | undefined = undefined;
     let safety = 10;
     do {
@@ -134,8 +148,8 @@ Deno.serve(async (req) => {
           title: titleOf(page),
           image,
           url: page.url,
-          typ: selectOf(page, "typ"),
-          stroj: selectOf(page, "stroj"),
+          typ: valuesOf(page, "typ"),
+          stroj: valuesOf(page, "stroj"),
           createdTime: page.created_time,
         });
         if (items.length >= limit) break;

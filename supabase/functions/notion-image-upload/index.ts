@@ -61,8 +61,8 @@ Deno.serve(async (req) => {
       contentType?: string;
       extraFile?: { fileBase64: string; fileName: string; contentType?: string };
       title: string;
-      typ?: string;
-      stroj?: string;
+      typ?: string | string[];
+      stroj?: string | string[];
       folderId?: string;
       databaseId?: string;
     } = body ?? {};
@@ -123,8 +123,26 @@ Deno.serve(async (req) => {
         ],
       },
     };
-    if (typ) properties["typ"] = { select: { name: typ } };
-    if (stroj) properties["stroj"] = { select: { name: stroj } };
+    const toList = (v: unknown): string[] =>
+      Array.isArray(v) ? v.map((x) => String(x).trim()).filter(Boolean)
+        : typeof v === "string" && v.trim() ? [v.trim()] : [];
+    const typList = toList(typ);
+    const strojList = toList(stroj);
+    if (typList.length || strojList.length) {
+      const sr = await fetch(`https://api.notion.com/v1/databases/${databaseId || DEFAULT_DB_ID}`, {
+        headers: { Authorization: `Bearer ${NOTION_API_KEY}`, "Notion-Version": NOTION_VERSION },
+      });
+      if (!sr.ok) throw new Error(`Notion schema failed [${sr.status}]: ${await sr.text()}`);
+      const db = await sr.json();
+      const write = (prop: string, vals: string[]) => {
+        if (!vals.length) return;
+        properties[prop] = db.properties?.[prop]?.type === "multi_select"
+          ? { multi_select: vals.map((name) => ({ name })) }
+          : { select: { name: vals[0] } };
+      };
+      write("typ", typList);
+      write("stroj", strojList);
+    }
     if (folderId) properties["slozka"] = { relation: [{ id: folderId }] };
 
     const pageBody = {
