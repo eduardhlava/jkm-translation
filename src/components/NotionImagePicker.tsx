@@ -28,8 +28,6 @@ interface Props {
 
 export default function NotionImagePicker({ open, onOpenChange, onInsert }: Props) {
   const filterOpts = useFilterOptions(open);
-  const TYP_OPTIONS = filterOpts.typ;
-  const STROJ_OPTIONS = filterOpts.stroj;
   const [items, setItems] = useState<NotionImageItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,7 +89,7 @@ export default function NotionImagePicker({ open, onOpenChange, onInsert }: Prop
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value={ALL}>Vše</SelectItem>
-                  {TYP_OPTIONS.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                  {filterOpts.typ.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -101,7 +99,7 @@ export default function NotionImagePicker({ open, onOpenChange, onInsert }: Prop
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value={ALL}>Vše</SelectItem>
-                  {STROJ_OPTIONS.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                  {filterOpts.stroj.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
