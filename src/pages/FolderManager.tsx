@@ -78,8 +78,15 @@ const FolderManager = () => {
 
   const call = useCallback(async (body: Record<string, unknown>) => {
     const { data, error } = await supabase.functions.invoke("notion-folders", { body });
-    if (error) throw new Error(error.message);
     if ((data as any)?.error) throw new Error((data as any).error);
+    if (error) {
+      let msg = error.message;
+      try {
+        const body = await (error as any).context?.json?.();
+        if (body?.error) msg = body.error;
+      } catch { /* ignore */ }
+      throw new Error(msg);
+    }
     setFolders(((data as any)?.folders ?? []) as FolderItem[]);
   }, []);
 
