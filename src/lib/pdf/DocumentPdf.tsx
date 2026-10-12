@@ -270,7 +270,7 @@ function RunsText({ runs }: { runs: Run[] }) {
         if (r.href) style.color = "#2563eb";
         if (r.bg) style.backgroundColor = r.bg;
         if (r.sup || r.sub) {
-          style.fontSize = "65%";
+          style.fontSize = 7;
           style.verticalAlign = r.sup ? "super" : "sub";
         }
         if (r.href) {
