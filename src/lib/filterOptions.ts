@@ -10,8 +10,10 @@ export const STROJ_OPTIONS = [
 export type FilterOption = { id: string; name: string; color?: string };
 export type FilterOptionsData = { typ: FilterOption[]; stroj: FilterOption[] };
 
-export const sortCs = (list: string[]) =>
-  Array.from(new Set(list.filter(Boolean))).sort((a, b) => a.localeCompare(b, "cs"));
+export const sortCs = (list: unknown[]) =>
+  Array.from(new Set(list.flatMap((v) => (Array.isArray(v) ? v : [v])).filter(Boolean).map(String))).sort(
+    (a, b) => a.localeCompare(b, "cs"),
+  );
 
 /** Normalize a value that may be a string (legacy select) or string[] (multi_select). */
 export const asList = (v: unknown): string[] =>
