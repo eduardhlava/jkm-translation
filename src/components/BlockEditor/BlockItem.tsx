@@ -651,7 +651,7 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
             onChange(block.id, { content: { ...block.content, html } });
             saveSelection();
           }}
-          className="ProseMirror min-h-[60px] flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring prose prose-sm max-w-none"
+          className="ProseMirror min-h-[60px] flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring prose prose-sm max-w-none [&_sup]:align-super [&_sup]:static [&_sub]:align-sub [&_sub]:static"
         />
       </div>
     </div>
