@@ -512,9 +512,9 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
       <div className="flex items-center gap-1 flex-wrap">
         <Button type="button" variant="ghost" size="sm" title="Tučně (Ctrl/⌘+B)" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("bold")} className="h-7 px-2 font-bold">B</Button>
         <Button type="button" variant="ghost" size="sm" title="Kurzíva (Ctrl/⌘+I)" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("italic")} className="h-7 px-2 italic">I</Button>
-        <Button type="button" variant="ghost" size="sm" title="Horní index (Ctrl/⌘+.)" aria-label="Horní index" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("superscript")} className="h-7 px-2 text-xs">x<sup>2</sup></Button>
-        <Button type="button" variant="ghost" size="sm" title="Dolní index (Ctrl/⌘+,)" aria-label="Dolní index" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("subscript")} className="h-7 px-2 text-xs">x<sub>2</sub></Button>
-        <Button type="button" variant="ghost" size="sm" title="Vložit bez formátování" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => setPlainOpen(true)} className="h-7 px-2 text-xs">Vložit bez formátování</Button>
+        <Button type="button" variant="ghost" size="icon" title="Horní index (Ctrl/⌘+.)" aria-label="Horní index" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("superscript")} className="h-7 w-7"><Superscript className="h-4 w-4" /></Button>
+        <Button type="button" variant="ghost" size="icon" title="Dolní index (Ctrl/⌘+,)" aria-label="Dolní index" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("subscript")} className="h-7 w-7"><Subscript className="h-4 w-4" /></Button>
+        <Button type="button" variant="ghost" size="icon" title="Vložit bez formátování" aria-label="Vložit bez formátování" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => setPlainOpen(true)} className="h-7 w-7"><RemoveFormatting className="h-4 w-4" /></Button>
         <Dialog open={plainOpen} onOpenChange={setPlainOpen}>
           <DialogContent>
             <DialogHeader><DialogTitle>Vložit bez formátování</DialogTitle></DialogHeader>
