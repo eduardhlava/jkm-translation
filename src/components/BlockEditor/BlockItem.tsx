@@ -1,6 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Trash2, AlertTriangle, Info, AlertCircle, Loader2, Upload, Plus, Minus, ChevronDown, ChevronRight, List, ListMinus, ListOrdered, Link, ImageIcon, AlignLeft, AlignCenter, AlignRight, SeparatorHorizontal, Pencil, MoreVertical, Superscript, Subscript, RemoveFormatting } from "lucide-react";
+import { GripVertical, Trash2, AlertTriangle, Info, AlertCircle, Loader2, Upload, Plus, Minus, ChevronDown, ChevronRight, List, ListMinus, ListOrdered, Link, ImageIcon, AlignLeft, AlignCenter, AlignRight, SeparatorHorizontal, Pencil, MoreVertical, Superscript, Subscript, RemoveFormatting, ClipboardType, Highlighter } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -566,7 +566,12 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
           </TooltipTrigger>
           <TooltipContent>Zrušit formátování</TooltipContent>
         </Tooltip>
-        <Button type="button" variant="ghost" size="icon" title="Vložit bez formátování" aria-label="Vložit bez formátování" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => setPlainOpen(true)} className="h-7 w-7"><RemoveFormatting className="h-4 w-4" /></Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button type="button" variant="ghost" size="icon" title="Vložit bez formátování" aria-label="Vložit bez formátování" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => setPlainOpen(true)} className="h-7 w-7"><ClipboardType className="h-4 w-4" /></Button>
+          </TooltipTrigger>
+          <TooltipContent>Vložit bez formátování</TooltipContent>
+        </Tooltip>
         <Dialog open={plainOpen} onOpenChange={setPlainOpen}>
           <DialogContent>
             <DialogHeader><DialogTitle>Vložit bez formátování</DialogTitle></DialogHeader>
@@ -597,12 +602,24 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
         </Select>
         <div className="mx-1 h-5 w-px bg-border" />
         <Popover open={highlightOpen} onOpenChange={setHighlightOpen}>
-          <PopoverTrigger asChild>
-            <Button type="button" variant="ghost" size="sm" title="Barva pozadí" aria-label="Barva pozadí" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} className="h-7 gap-1 px-2">
-              <span className="flex h-4 w-4 items-center justify-center rounded-sm border border-foreground/30 text-xs" style={{ backgroundColor: activeHighlight ?? undefined }}>{activeHighlight ? null : "×"}</span>
-              <ChevronDown className="h-3 w-3" />
-            </Button>
-          </PopoverTrigger>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <PopoverTrigger asChild>
+                <Button type="button" variant="ghost" size="sm" title="Barva pozadí" aria-label="Barva pozadí" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} className="h-7 gap-1 px-1.5">
+                  <span className="relative flex h-4 w-4 items-center justify-center">
+                    <Highlighter className="h-4 w-4" />
+                    <span
+                      aria-hidden
+                      className="absolute bottom-[-2px] left-1/2 h-[3px] w-[14px] -translate-x-1/2 rounded-[1px] border border-foreground/25"
+                      style={{ backgroundColor: activeHighlight ?? "transparent" }}
+                    />
+                  </span>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </PopoverTrigger>
+            </TooltipTrigger>
+            <TooltipContent>Barva pozadí</TooltipContent>
+          </Tooltip>
           <PopoverContent className="w-40 p-1" align="start" onOpenAutoFocus={(e) => e.preventDefault()} onCloseAutoFocus={(e) => e.preventDefault()}>
             {HIGHLIGHT_COLORS.map((c) => (
               <Button key={c.key} type="button" variant="ghost" size="sm" aria-label={`Podbarvit ${c.label}`} onMouseDown={(e) => e.preventDefault()} onClick={() => applyHighlight(c.color)} className="w-full justify-start gap-2 text-xs">
