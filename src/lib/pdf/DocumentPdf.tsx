@@ -437,16 +437,28 @@ function TextBlock({ block }: { block: Block }) {
   };
 
   const renderRootChildren = (parent: HTMLElement) => {
+    // Consecutive inline nodes (text, <b>, <i>, <sup>, <span>…) belong to the
+    // same paragraph — buffer them and flush as one <Text> line.
+    let inlineBuf = "";
+    const flushInline = () => {
+      if (!inlineBuf) return;
+      const paras = parseInline(inlineBuf);
+      inlineBuf = "";
+      paras.forEach((runs) => {
+        if (!runs.length || !runs.some((r) => r.text.trim())) return;
+        nodes.push(<View key={key++} style={styles.paragraphWrap}><Text style={defaultPStyle}><RunsText runs={runs} /></Text></View>);
+      });
+    };
     parent.childNodes.forEach((n) => {
       if (n.nodeType === Node.TEXT_NODE) {
-        const t = n.textContent ?? "";
-        if (t.trim()) nodes.push(<View key={key++} style={styles.paragraphWrap}><Text style={defaultPStyle}>{t}</Text></View>);
+        inlineBuf += (n.textContent ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         return;
       }
       if (n.nodeType !== Node.ELEMENT_NODE) return;
       const el = n as HTMLElement;
       const tag = el.tagName.toUpperCase();
       if (tag === "UL" || tag === "OL") {
+        flushInline();
         const items = Array.from(el.children).filter((c) => c.tagName.toUpperCase() === "LI");
         items.forEach((li, i) => {
           const runs = renderInlineNode(li);
@@ -463,6 +475,7 @@ function TextBlock({ block }: { block: Block }) {
         return;
       }
       if (tag === "P" || tag === "DIV") {
+        flushInline();
         const runs = parseInline(el.innerHTML).flat();
         if (!runs.length) return;
         const s = parseStyleAttr(el);
@@ -470,10 +483,10 @@ function TextBlock({ block }: { block: Block }) {
         nodes.push(<View key={key++} style={styles.paragraphWrap}><Text style={pStyle}><RunsText runs={runs} /></Text></View>);
         return;
       }
-      // Fallback: treat as paragraph
-      const runs = parseInline(el.outerHTML).flat();
-      if (runs.length) nodes.push(<View key={key++} style={styles.paragraphWrap}><Text style={defaultPStyle}><RunsText runs={runs} /></Text></View>);
+      // Inline element: keep in the current paragraph
+      inlineBuf += el.outerHTML;
     });
+    flushInline();
   };
 
   let body: JSX.Element;
