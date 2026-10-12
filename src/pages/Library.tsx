@@ -73,6 +73,14 @@ const PAGE_SIZE = 20;
 
 const normId = (id: string | null | undefined) => (id ? id.replace(/-/g, "") : null);
 
+const fmtUploaded = (iso: string | null | undefined) => {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getDate()}. ${d.getMonth() + 1}. ${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
 const FolderTree = ({
   folders,
   parentId,
@@ -268,6 +276,7 @@ const Library = () => {
       <div className="flex gap-1">Typ: {badges(it.typ)}</div>
       <div className="flex gap-1">Stroj: {badges(it.stroj)}</div>
       <div className="truncate">Stav: {it.stav || "—"}</div>
+      <div className="truncate">Nahráno: {fmtUploaded(it.createdTime)}</div>
     </div>
   );
 
@@ -549,6 +558,9 @@ const Library = () => {
                             <div className="hidden w-24 shrink-0 truncate text-xs text-muted-foreground sm:block">
                               {it.stav || "—"}
                             </div>
+                            <div className="hidden w-40 shrink-0 truncate text-xs text-muted-foreground sm:block">
+                              {fmtUploaded(it.createdTime)}
+                            </div>
                             {editBtn(it)}
                           </div>
                         );
@@ -578,7 +590,8 @@ const Library = () => {
                   <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                     <span className="flex gap-1">Typ: {badges(detail.typ)}</span>·
                     <span className="flex gap-1">Stroj: {badges(detail.stroj)}</span>·
-                    <span>Stav: {detail.stav || "—"}</span>
+                    <span>Stav: {detail.stav || "—"}</span>·
+                    <span>Nahráno: {fmtUploaded(detail.createdTime)}</span>
                   </div>
                 </DialogDescription>
               </DialogHeader>
