@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const action: string = body.action ?? "list";
 
-    if (["add", "rename", "delete", "merge"].includes(action)) {
+    if (["add", "rename", "delete"].includes(action)) {
       const prop = body.property as Prop;
       if (!PROPS.includes(prop)) throw new Error("Neplatná vlastnost (povoleno: typ, stroj).");
       const db = await getDb(FILES_DB_ID);
@@ -137,19 +137,6 @@ Deno.serve(async (req) => {
           throw new Error(`Položku „${target.name}“ stále používají soubory – nelze ji smazat. Použijte Sloučit do…`);
         }
         await patchOptions(prop, type, opts.filter((o) => o.id !== target.id).map(keep));
-      } else if (action === "merge") {
-        const source = opts.find((o) => o.id === String(body.sourceId ?? ""));
-        const target = opts.find((o) => o.id === String(body.targetId ?? ""));
-        if (!source || !target) throw new Error("Zdrojová nebo cílová položka nebyla nalezena.");
-        if (source.id === target.id) throw new Error("Položku nelze sloučit sama se sebou.");
-        const failed = await remap(type, prop, source.name, target.name);
-        if (failed.length) {
-          throw new Error(
-            `Sloučení nedokončeno – nepodařilo se přepsat ${failed.length} soubor(ů): ${failed.join(", ")}. Položka „${source.name}“ nebyla odstraněna.`,
-          );
-        }
-        const after = optionsOf(await getDb(FILES_DB_ID, true), prop);
-        await patchOptions(prop, type, after.filter((o) => o.id !== source.id).map(keep));
       } else {
         const id = String(body.id ?? "");
         const target = opts.find((o) => o.id === id);
