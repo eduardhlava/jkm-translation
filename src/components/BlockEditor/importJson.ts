@@ -4,7 +4,7 @@ import { META_BLOCK_PREFIX, META_DOC_PREFIX } from "./serialize";
 
 const VALID_TYPES: BlockType[] = [
   "heading1", "heading2", "heading3", "heading4",
-  "text", "table", "image", "image-table", "alert", "info", "warning", "pagebreak",
+  "text", "table", "image", "image-table", "alert", "info", "warning", "pagebreak", "spacer",
 ];
 
 const VALID_ALIGN = ["left", "center", "right"] as const;
@@ -74,6 +74,7 @@ function normalizeContent(type: BlockType, raw: any): any {
     case "warning":
       return { text: String(c.text ?? "") };
     case "pagebreak":
+    case "spacer":
       return {};
   }
 }
@@ -248,6 +249,12 @@ export function parseDocumentHtml(html: string): ParsedDocument {
     const blockMeta = readMarkerJson(el, META_BLOCK_PREFIX);
     if (blockMeta) {
       pendingMeta = blockMeta;
+      if (blockMeta.t === "spacer") {
+        push("spacer", {});
+        const next = children[i + 1];
+        if (next?.hasAttribute("data-lov-spacer")) i += 1;
+        continue;
+      }
       // image-table consumes two following elements (figure/img + table)
       if (blockMeta.t === "image-table") {
         const a = children[i + 1];
@@ -276,7 +283,8 @@ export function parseDocumentHtml(html: string): ParsedDocument {
       continue;
     }
 
-    if (tag === "H1") push("heading1", { text: el.textContent ?? "" });
+    if (el.hasAttribute("data-lov-spacer")) push("spacer", {});
+    else if (tag === "H1") push("heading1", { text: el.textContent ?? "" });
     else if (tag === "H2") push("heading2", { text: el.textContent ?? "" });
     else if (tag === "H3") push("heading3", { text: el.textContent ?? "" });
     else if (tag === "H4") push("heading4", { text: el.textContent ?? "" });

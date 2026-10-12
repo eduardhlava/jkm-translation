@@ -10,7 +10,8 @@ export type BlockType =
   | "alert"
   | "info"
   | "warning"
-  | "pagebreak";
+  | "pagebreak"
+  | "spacer";
 
 export type TextAlign = "left" | "center" | "right";
 export type TextSize = "small" | "normal" | "large";
@@ -107,6 +108,7 @@ export const BLOCK_TYPE_LABELS: Record<BlockType, string> = {
   info: "Informace",
   warning: "Upozornění",
   pagebreak: "Konec stránky",
+  spacer: "Horizontální mezera",
 };
 
 export function emptyContent(type: BlockType): any {
@@ -140,6 +142,7 @@ export function emptyContent(type: BlockType): any {
     case "warning":
       return { text: "" };
     case "pagebreak":
+    case "spacer":
       return {};
   }
 }

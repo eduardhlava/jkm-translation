@@ -87,6 +87,8 @@ function blockPreview(block: Block): string {
     }
     case "pagebreak":
       return "— konec stránky —";
+    case "spacer":
+      return "";
     default:
       return "";
   }
@@ -306,6 +308,8 @@ function BlockBody({ block, onChange, headingNumber, imageNumber, imageLabelPref
       return <CalloutBlockEditor block={block} onChange={onChange} />;
     case "pagebreak":
       return <PageBreakBlock />;
+    case "spacer":
+      return <div className="h-8" aria-label="Horizontální mezera" />;
   }
 }
 
@@ -1058,7 +1062,7 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                         const parsed = parseCellPictogram(cell);
                         return (
                           <td key={ci} className="border border-muted-foreground/50 p-0 relative group/cell">
-                            <div className="flex items-center">
+                            <div className="flex min-w-0 items-center">
                               {parsed.pictogram !== "none" && (
                                 <span className="pl-1 shrink-0">
                                   <PictogramIcon kind={parsed.pictogram} size={20} />
@@ -1067,7 +1071,7 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                               <Input
                                 value={parsed.text}
                                 onChange={(e) => updateCell(ri, ci, buildCellValue(parsed.pictogram, e.target.value))}
-                                className={`h-8 rounded-none border-0 shadow-none focus-visible:ring-1 ${bgCls} ${
+                                className={`h-8 min-w-0 flex-1 rounded-none border-0 shadow-none focus-visible:ring-1 ${bgCls} ${
                                   isHeaderCell ? "font-semibold" : ""
                                 } ${narrowFirstCol && ci === 0 ? "text-center" : ""}`}
                               />

@@ -140,6 +140,8 @@ export function blockToHtml(b: Block): string {
     }
     case "pagebreak":
       return `<div style="page-break-before:always;break-before:page;"></div>`;
+    case "spacer":
+      return `<div data-lov-spacer="true" style="height:31.5pt;"></div>`;
     case "image": {
       const url = escapeHtml(b.content.url ?? "");
       const alt = escapeHtml(b.content.alt ?? "");
