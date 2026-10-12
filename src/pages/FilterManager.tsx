@@ -136,17 +136,6 @@ const FilterManager = () => {
                 >
                   <Pencil className="mr-1 h-3.5 w-3.5" /> Upravit
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={list.length < 2}
-                  onClick={() => {
-                    setMergeSource({ prop, item: o });
-                    setMergeTargetId("");
-                  }}
-                >
-                  <GitMerge className="mr-1 h-3.5 w-3.5" /> Sloučit do…
-                </Button>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span>
@@ -163,7 +152,7 @@ const FilterManager = () => {
                   </TooltipTrigger>
                   <TooltipContent>
                     {(o.count ?? 0) > 0
-                      ? `Položku používá ${souboru(o.count ?? 0)} – nejdřív je přeřaďte nebo použijte Sloučit do…`
+                      ? `Položku používá ${souboru(o.count ?? 0)} – nejdřív je přeřaďte.`
                       : "Smazat položku"}
                   </TooltipContent>
                 </Tooltip>
