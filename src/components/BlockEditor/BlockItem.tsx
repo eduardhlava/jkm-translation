@@ -393,11 +393,52 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
     }
   };
 
+  // Inline formatting must produce real tags (<b>, <i>, <sup>, <sub>) so the
+  // PDF export and Notion sync recognise them — never CSS spans.
+  const TAG_CMDS = new Set(["bold", "italic", "underline", "superscript", "subscript"]);
   const exec = (cmd: string, value?: string) => {
     restoreSelection();
-    try { document.execCommand("styleWithCSS", false, "true"); } catch {}
+    try { document.execCommand("styleWithCSS", false, TAG_CMDS.has(cmd) ? "false" : "true"); } catch {}
     document.execCommand(cmd, false, value);
     syncHtml();
+  };
+
+  const [plainOpen, setPlainOpen] = useState(false);
+  const [plainText, setPlainText] = useState("");
+  const insertPlain = () => {
+    const text = plainText;
+    setPlainOpen(false);
+    setPlainText("");
+    if (!text) return;
+    ref.current?.focus();
+    restoreSelection();
+    if (!getEditorSelection() && ref.current) {
+      const r = document.createRange();
+      r.selectNodeContents(ref.current);
+      r.collapse(false);
+      const s = window.getSelection();
+      s?.removeAllRanges();
+      s?.addRange(r);
+    }
+    const html = escapeHtml(text).replace(/\r?\n/g, "<br>");
+    document.execCommand("insertHTML", false, html);
+    syncHtml();
+  };
+
+  const onEditorKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    e.stopPropagation(); // keep drag&drop keyboard sensor away
+    if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+    const k = e.key.toLowerCase();
+    let cmd: string | null = null;
+    if (k === "b") cmd = "bold";
+    else if (k === "i") cmd = "italic";
+    else if (k === "u") cmd = "underline";
+    else if (k === "." || (e.shiftKey && (k === "+" || k === "="))) cmd = "superscript";
+    else if (k === "," || (!e.shiftKey && k === "=")) cmd = "subscript";
+    if (!cmd) return;
+    e.preventDefault();
+    saveSelection();
+    exec(cmd);
   };
 
   const applyHighlight = (color: string | null) => {
@@ -469,8 +510,21 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-1 flex-wrap">
-        <Button type="button" variant="ghost" size="sm" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("bold")} className="h-7 px-2 font-bold">B</Button>
-        <Button type="button" variant="ghost" size="sm" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("italic")} className="h-7 px-2 italic">I</Button>
+        <Button type="button" variant="ghost" size="sm" title="Tučně (Ctrl/⌘+B)" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("bold")} className="h-7 px-2 font-bold">B</Button>
+        <Button type="button" variant="ghost" size="sm" title="Kurzíva (Ctrl/⌘+I)" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("italic")} className="h-7 px-2 italic">I</Button>
+        <Button type="button" variant="ghost" size="sm" title="Horní index (Ctrl/⌘+.)" aria-label="Horní index" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("superscript")} className="h-7 px-2 text-xs">x<sup>2</sup></Button>
+        <Button type="button" variant="ghost" size="sm" title="Dolní index (Ctrl/⌘+,)" aria-label="Dolní index" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("subscript")} className="h-7 px-2 text-xs">x<sub>2</sub></Button>
+        <Button type="button" variant="ghost" size="sm" title="Vložit bez formátování" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => setPlainOpen(true)} className="h-7 px-2 text-xs">Vložit bez formátování</Button>
+        <Dialog open={plainOpen} onOpenChange={setPlainOpen}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Vložit bez formátování</DialogTitle></DialogHeader>
+            <Textarea autoFocus rows={10} value={plainText} onChange={(e) => setPlainText(e.target.value)} placeholder="Sem vložte text…" />
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setPlainOpen(false)}>Zrušit</Button>
+              <Button type="button" onClick={insertPlain} disabled={!plainText}>Vložit</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
         <Button type="button" variant="ghost" size="icon" title="Nečíslovaný seznam" aria-label="Nečíslovaný seznam" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("insertUnorderedList")} className="h-7 w-7"><List className="h-4 w-4" /></Button>
         <Button type="button" variant="ghost" size="icon" title="Číslovaný seznam" aria-label="Číslovaný seznam" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("insertOrderedList")} className="h-7 w-7"><ListOrdered className="h-4 w-4" /></Button>
         <Button type="button" variant="ghost" size="icon" title="Vložit odkaz" aria-label="Vložit odkaz" onMouseDown={(e) => e.preventDefault()} onClick={onLink} className="h-7 w-7"><Link className="h-4 w-4" /></Button>
@@ -543,6 +597,7 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
           ref={ref}
           contentEditable
           suppressContentEditableWarning
+          onKeyDown={onEditorKeyDown}
           onKeyUp={saveSelection}
           onMouseUp={saveSelection}
           onInput={(e) => {
