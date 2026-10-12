@@ -4,7 +4,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import MultiSelect from "@/components/MultiSelect";
+import { useFilterOptions } from "@/lib/filterOptions";
 import { Loader2, Upload, X, Check, Folder, ChevronRight, ChevronDown, Home, FileCode2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -12,12 +13,6 @@ import { toast } from "sonner";
 const LAST_FOLDER_KEY = "notion-upload-last-folder";
 
 
-const TYP_OPTIONS = ["schéma", "3D model", "fotografie", "elektrické schéma", "ostatní"];
-const STROJ_OPTIONS = [
-  "JCM", "JGS", "JGP", "JHA", "JHV", "JHP", "JHS", "JHI", "JHD", "JHC",
-  "JCT", "JGT", "JGD", "JGC", "JCR", "JCC", "JAB", "JVR",
-  "JCP", "JTE", "JMS", "JTU", "JCS", "JVE", "JVL", "JVC", "JTR",
-];
 
 export type UploadedNotionImage = {
   id: string;
@@ -26,7 +21,7 @@ export type UploadedNotionImage = {
   url?: string;
 };
 
-interface NotionFolder {
+export interface NotionFolder {
   id: string;
   name: string;
   parentId: string | null;
@@ -37,8 +32,8 @@ interface PendingFile {
   file: File;
   preview: string;
   title: string;
-  typ: string;
-  stroj: string;
+  typ: string[];
+  stroj: string[];
   folderId: string;
   uploading?: boolean;
   done?: boolean;
@@ -86,6 +81,7 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert, 
   const [folders, setFolders] = useState<NotionFolder[]>([]);
   const [foldersLoading, setFoldersLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const filterOptions = useFilterOptions(open);
 
   useEffect(() => {
     if (!open || folders.length > 0 || foldersLoading) return;
@@ -152,8 +148,8 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert, 
         preview: isCadFile(first.name) ? "" : URL.createObjectURL(first),
         isCad: isCadFile(first.name),
         title: stripExt(first.name),
-        typ: "",
-        stroj: "",
+        typ: [],
+        stroj: [],
         folderId: last,
       },
     ]);
@@ -214,8 +210,8 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert, 
               }
             : undefined,
           title: item.title.trim(),
-          typ: item.typ || undefined,
-          stroj: item.stroj || undefined,
+          typ: item.typ.length ? item.typ : undefined,
+          stroj: item.stroj.length ? item.stroj : undefined,
           folderId: item.folderId || undefined,
         },
       });
@@ -315,29 +311,21 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert, 
                     <div className="grid grid-cols-2 gap-2">
                       <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">Typ</Label>
-                        <Select
+                        <MultiSelect
+                          options={filterOptions.typ}
                           value={f.typ}
-                          onValueChange={(v) => updateOne(f.localId, { typ: v })}
+                          onChange={(v) => updateOne(f.localId, { typ: v })}
                           disabled={f.done}
-                        >
-                          <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                          <SelectContent>
-                            {TYP_OPTIONS.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
+                        />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">Stroj</Label>
-                        <Select
+                        <MultiSelect
+                          options={filterOptions.stroj}
                           value={f.stroj}
-                          onValueChange={(v) => updateOne(f.localId, { stroj: v })}
+                          onChange={(v) => updateOne(f.localId, { stroj: v })}
                           disabled={f.done}
-                        >
-                          <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                          <SelectContent>
-                            {STROJ_OPTIONS.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
+                        />
                       </div>
                     </div>
                     <div className="space-y-1">
@@ -427,7 +415,7 @@ export default function NotionImageUploadDialog({ open, onOpenChange, onInsert, 
   );
 }
 
-function FolderBrowser({
+export function FolderBrowser({
   value,
   disabled,
   loading,

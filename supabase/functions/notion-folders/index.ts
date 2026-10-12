@@ -6,6 +6,7 @@ const corsHeaders = {
 };
 
 const NOTION_VERSION = "2022-06-28";
+const FILES_DB_ID = "3689450d-3d3f-8024-8801-fdd841839156";
 const FOLDERS_DB_ID = "29fb66d5-98b9-48da-b616-bcb81db5cd3c";
 const NOTION_API_KEY = Deno.env.get("NOTION_API_KEY");
 
@@ -57,6 +58,8 @@ async function listFolders() {
     name: titleOf(p),
     parentId: relationIds(p, "nadřazená_složka")[0] ?? null,
     url: p.url as string,
+    fileCount: relationIds(p, "soubory").length,
+    filesHasMore: Boolean(p.properties?.["soubory"]?.has_more),
   }));
 }
 
@@ -98,6 +101,22 @@ Deno.serve(async (req) => {
           "nadřazená_složka": { relation: parentId ? [{ id: parentId }] : [] },
         },
       });
+    } else if (action === "delete") {
+      const id = String(body.id ?? "");
+      if (!id) throw new Error("Chybí ID složky");
+      const n = (x: string | null) => (x ? x.replace(/-/g, "") : null);
+      const all = await listFolders();
+      if (all.some((f) => n(f.parentId) === n(id))) {
+        throw new Error("Složku nelze smazat – obsahuje podsložky.");
+      }
+      const files = await notion(`/databases/${FILES_DB_ID}/query`, "POST", {
+        page_size: 1,
+        filter: { property: "slozka", relation: { contains: id } },
+      });
+      if ((files.results ?? []).length > 0) {
+        throw new Error("Složku nelze smazat – obsahuje soubory.");
+      }
+      await notion(`/pages/${id}`, "PATCH", { archived: true });
     } else if (action !== "list") {
       throw new Error(`Neznámá akce: ${action}`);
     }

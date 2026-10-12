@@ -32,11 +32,16 @@ import {
   List as ListIcon,
   Loader2,
   LogOut,
+  Pencil,
   RefreshCw,
   Settings as SettingsIcon,
   Upload,
 } from "lucide-react";
 import NotionImageUploadDialog from "@/components/NotionImageUploadDialog";
+import EditFileDialog, { type EditableFile } from "@/components/EditFileDialog";
+import MultiSelect from "@/components/MultiSelect";
+import { Badge } from "@/components/ui/badge";
+import { asList, sortCs, useFilterOptions } from "@/lib/filterOptions";
 import jkLogo from "@/assets/jk-machinery-logo.png";
 
 const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp"]);
@@ -56,8 +61,8 @@ type FileItem = {
   title: string;
   image: string;
   url: string;
-  typ: string;
-  stroj: string;
+  typ: string[];
+  stroj: string[];
   stav: string;
   folderId: string | null;
   createdTime: string;
@@ -149,8 +154,10 @@ const Library = () => {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [debounced, setDebounced] = useState("");
-  const [typ, setTyp] = useState(ALL);
-  const [stroj, setStroj] = useState(ALL);
+  const [typ, setTyp] = useState<string[]>([]);
+  const [stroj, setStroj] = useState<string[]>([]);
+  const [editing, setEditing] = useState<EditableFile | null>(null);
+  const filterOpts = useFilterOptions();
   const [stav, setStav] = useState(ALL);
   const [view, setView] = useState<"gallery" | "list">("list");
   const [visible, setVisible] = useState(PAGE_SIZE);
@@ -185,7 +192,9 @@ const Library = () => {
     } else {
       setFolders((data?.folders ?? []) as FolderItem[]);
       setAllFolderList((data?.allFolders ?? []) as FolderItem[]);
-      setFiles((data?.files ?? []) as FileItem[]);
+      setFiles(
+        ((data?.files ?? []) as any[]).map((f) => ({ ...f, typ: asList(f.typ), stroj: asList(f.stroj) })) as FileItem[],
+      );
       const crumbs = (data?.breadcrumbs ?? []) as { id: string; name: string }[];
       setBreadcrumbs(crumbs);
       if (crumbs.length) {
@@ -204,21 +213,16 @@ const Library = () => {
     void load();
   }, [load]);
 
-  const optionsOf = (key: "typ" | "stroj" | "stav") =>
-    Array.from(new Set(files.map((f) => f[key]).filter(Boolean))).sort((a, b) =>
-      a.localeCompare(b, "cs"),
-    );
-
-  const typOptions = useMemo(() => optionsOf("typ"), [files]);
-  const strojOptions = useMemo(() => optionsOf("stroj"), [files]);
-  const stavOptions = useMemo(() => optionsOf("stav"), [files]);
+  const typOptions = useMemo(() => sortCs([...filterOpts.typ, ...files.flatMap((f) => f.typ)]), [files, filterOpts.typ]);
+  const strojOptions = useMemo(() => sortCs([...filterOpts.stroj, ...files.flatMap((f) => f.stroj)]), [files, filterOpts.stroj]);
+  const stavOptions = useMemo(() => sortCs(files.map((f) => f.stav)), [files]);
 
   const filtered = useMemo(() => {
     const q = debounced.toLowerCase();
     return files.filter((f) => {
-      if (q && !`${f.title} ${f.typ} ${f.stroj} ${f.stav}`.toLowerCase().includes(q)) return false;
-      if (typ !== ALL && f.typ !== typ) return false;
-      if (stroj !== ALL && f.stroj !== stroj) return false;
+      if (q && !`${f.title} ${f.typ.join(" ")} ${f.stroj.join(" ")} ${f.stav}`.toLowerCase().includes(q)) return false;
+      if (typ.length && !f.typ.some((v) => typ.includes(v))) return false;
+      if (stroj.length && !f.stroj.some((v) => stroj.includes(v))) return false;
       if (stav !== ALL && f.stav !== stav) return false;
       return true;
     });
@@ -230,10 +234,39 @@ const Library = () => {
 
   const shown = filtered.slice(0, visible);
 
+  const badges = (vals: string[]) =>
+    vals.length === 0 ? (
+      <span>—</span>
+    ) : (
+      <span className="inline-flex flex-wrap gap-1">
+        {vals.map((v) => (
+          <Badge key={v} variant="secondary" className="px-1.5 py-0 text-[10px] font-normal">
+            {v}
+          </Badge>
+        ))}
+      </span>
+    );
+
+  const editBtn = (it: FileItem) => (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-7 w-7 shrink-0"
+      title="Upravit"
+      aria-label="Upravit"
+      onClick={(e) => {
+        e.stopPropagation();
+        setEditing({ id: it.id, title: it.title, typ: it.typ, stroj: it.stroj, folderId: it.folderId });
+      }}
+    >
+      <Pencil className="h-3.5 w-3.5" />
+    </Button>
+  );
+
   const meta = (it: FileItem) => (
     <div className="space-y-0.5 text-xs text-muted-foreground">
-      <div className="truncate">Typ: {it.typ || "—"}</div>
-      <div className="truncate">Stroj: {it.stroj || "—"}</div>
+      <div className="flex gap-1">Typ: {badges(it.typ)}</div>
+      <div className="flex gap-1">Stroj: {badges(it.stroj)}</div>
       <div className="truncate">Stav: {it.stav || "—"}</div>
     </div>
   );
@@ -245,6 +278,12 @@ const Library = () => {
         onOpenChange={setUploadOpen}
         initialFolderId={allFolders ? null : folderId}
         onInsert={() => void load()}
+      />
+      <EditFileDialog
+        file={editing}
+        folders={allFolderList}
+        onClose={() => setEditing(null)}
+        onSaved={() => void load()}
       />
       <header className="border-b-[3px] bg-card" style={{ borderBottomColor: sectionAccent }}>
         <div className="container max-w-[105rem] flex flex-wrap items-center gap-4 py-4">
@@ -346,6 +385,11 @@ const Library = () => {
                     <Link to="/library/folders">Správa složek</Link>
                   </Button>
                 )}
+                {profile?.can_folders !== false && (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/library/filters">Správa filtrů</Link>
+                  </Button>
+                )}
 
                 <Button variant="outline" size="icon" onClick={() => void load()} disabled={loading}>
                   <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
@@ -380,9 +424,15 @@ const Library = () => {
                   placeholder="Hledat…"
                 />
               </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Typ</Label>
+                <MultiSelect options={typOptions} value={typ} onChange={setTyp} placeholder="Vše" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Stroj</Label>
+                <MultiSelect options={strojOptions} value={stroj} onChange={setStroj} placeholder="Vše" />
+              </div>
               {[
-                { label: "Typ", value: typ, set: setTyp, opts: typOptions },
-                { label: "Stroj", value: stroj, set: setStroj, opts: strojOptions },
                 { label: "Stav", value: stav, set: setStav, opts: stavOptions },
               ].map((f) => (
                 <div key={f.label} className="space-y-1">
@@ -453,7 +503,10 @@ const Library = () => {
                               )}
                             </div>
                             <div className="space-y-1 p-3">
-                              <div className="truncate text-sm font-medium">{it.title || "Bez názvu"}</div>
+                              <div className="flex items-center gap-1">
+                                <div className="min-w-0 flex-1 truncate text-sm font-medium">{it.title || "Bez názvu"}</div>
+                                {editBtn(it)}
+                              </div>
                               {meta(it)}
                             </div>
                           </Card>
@@ -487,15 +540,16 @@ const Library = () => {
                             <div className="min-w-0 flex-1 truncate text-sm font-medium">
                               {it.title || "Bez názvu"}
                             </div>
-                            <div className="hidden w-32 shrink-0 truncate text-xs text-muted-foreground sm:block">
-                              {it.typ || "—"}
+                            <div className="hidden w-40 shrink-0 text-xs text-muted-foreground sm:block">
+                              {badges(it.typ)}
                             </div>
-                            <div className="hidden w-24 shrink-0 truncate text-xs text-muted-foreground sm:block">
-                              {it.stroj || "—"}
+                            <div className="hidden w-32 shrink-0 text-xs text-muted-foreground sm:block">
+                              {badges(it.stroj)}
                             </div>
                             <div className="hidden w-24 shrink-0 truncate text-xs text-muted-foreground sm:block">
                               {it.stav || "—"}
                             </div>
+                            {editBtn(it)}
                           </div>
                         );
                       })}
@@ -520,8 +574,12 @@ const Library = () => {
             <DialogContent className="max-w-3xl">
               <DialogHeader>
                 <DialogTitle>{detail.title || "Bez názvu"}</DialogTitle>
-                <DialogDescription>
-                  Typ: {detail.typ || "—"} · Stroj: {detail.stroj || "—"} · Stav: {detail.stav || "—"}
+                <DialogDescription asChild>
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                    <span className="flex gap-1">Typ: {badges(detail.typ)}</span>·
+                    <span className="flex gap-1">Stroj: {badges(detail.stroj)}</span>·
+                    <span>Stav: {detail.stav || "—"}</span>
+                  </div>
                 </DialogDescription>
               </DialogHeader>
               <div className="flex max-h-[70vh] items-center justify-center rounded-md border bg-muted p-2">

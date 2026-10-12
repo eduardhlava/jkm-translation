@@ -51,6 +51,13 @@ function selectOf(page: any, name: string): string {
 }
 
 
+function valuesOf(page: any, name: string): string[] {
+  const p = page.properties?.[name];
+  if (p?.type === "select") return p.select?.name ? [p.select.name] : [];
+  if (p?.type === "multi_select") return (p.multi_select ?? []).map((s: any) => s.name).filter(Boolean);
+  return [];
+}
+
 function relationIds(page: any, name: string): string[] {
   const p = page.properties?.[name];
   if (p?.type !== "relation") return [];
@@ -150,8 +157,8 @@ Deno.serve(async (req) => {
       title: titleOf(p),
       image: imageOf(p),
       url: p.url as string,
-      typ: selectOf(p, "typ"),
-      stroj: selectOf(p, "stroj"),
+      typ: valuesOf(p, "typ"),
+      stroj: valuesOf(p, "stroj"),
       stav: selectOf(p, "stav"),
       folderId: relationIds(p, "slozka")[0] ?? null,
       createdTime: p.created_time,

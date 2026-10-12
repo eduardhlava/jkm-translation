@@ -6,23 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { asList, useFilterOptions } from "@/lib/filterOptions";
 
 export type NotionImageItem = {
   id: string;
   title: string;
   image: string;
   url: string;
-  typ?: string;
-  stroj?: string;
+  typ?: string[] | string;
+  stroj?: string[] | string;
   createdTime?: string;
 };
 
-const TYP_OPTIONS = ["schéma", "3D model", "fotografie", "elektrické schéma", "ostatní"];
-const STROJ_OPTIONS = [
-  "JCM", "JGS", "JGP", "JHA", "JHV", "JHP", "JHS", "JHI", "JHD", "JHC",
-  "JCT", "JGT", "JGD", "JGC", "JCR", "JCC", "JAB", "JVR",
-  "JCP", "JTE", "JMS", "JTU", "JCS", "JVE", "JVL", "JVC", "JTR",
-];
 const ALL = "__all__";
 
 interface Props {
@@ -32,6 +27,9 @@ interface Props {
 }
 
 export default function NotionImagePicker({ open, onOpenChange, onInsert }: Props) {
+  const filterOpts = useFilterOptions(open);
+  const TYP_OPTIONS = filterOpts.typ;
+  const STROJ_OPTIONS = filterOpts.stroj;
   const [items, setItems] = useState<NotionImageItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -130,7 +128,7 @@ export default function NotionImagePicker({ open, onOpenChange, onInsert }: Prop
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium">{it.title || "Bez názvu"}</div>
                       <div className="truncate text-xs text-muted-foreground">
-                        {[it.typ, it.stroj].filter(Boolean).join(" • ")}
+                        {[...asList(it.typ), ...asList(it.stroj)].join(" • ")}
                       </div>
                     </div>
                     <Button type="button" size="sm" className="shrink-0" onClick={() => onInsert(it)}>

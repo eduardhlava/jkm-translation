@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.notion-library]
 verify_jwt = false
+
+[functions.notion-filter-options]
+verify_jwt = false
+
+[functions.notion-file-update]
+verify_jwt = false
