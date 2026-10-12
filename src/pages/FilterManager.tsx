@@ -8,9 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, GitMerge, Loader2, LogOut, Pencil, Plus, Settings as SettingsIcon, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, LogOut, Pencil, Plus, Settings as SettingsIcon, Trash2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,8 +44,6 @@ const FilterManager = () => {
   const [editor, setEditor] = useState<{ prop: Prop; item?: FilterOption } | null>(null);
   const [name, setName] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<{ prop: Prop; item: FilterOption } | null>(null);
-  const [mergeSource, setMergeSource] = useState<{ prop: Prop; item: FilterOption } | null>(null);
-  const [mergeTargetId, setMergeTargetId] = useState("");
 
   const souboru = (n: number) => (n === 1 ? "1 soubor" : n >= 2 && n <= 4 ? `${n} soubory` : `${n} souborů`);
 
@@ -139,17 +136,6 @@ const FilterManager = () => {
                 >
                   <Pencil className="mr-1 h-3.5 w-3.5" /> Upravit
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={list.length < 2}
-                  onClick={() => {
-                    setMergeSource({ prop, item: o });
-                    setMergeTargetId("");
-                  }}
-                >
-                  <GitMerge className="mr-1 h-3.5 w-3.5" /> Sloučit do…
-                </Button>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span>
@@ -166,7 +152,7 @@ const FilterManager = () => {
                   </TooltipTrigger>
                   <TooltipContent>
                     {(o.count ?? 0) > 0
-                      ? `Položku používá ${souboru(o.count ?? 0)} – nejdřív je přeřaďte nebo použijte Sloučit do…`
+                      ? `Položku používá ${souboru(o.count ?? 0)} – nejdřív je přeřaďte.`
                       : "Smazat položku"}
                   </TooltipContent>
                 </Tooltip>
@@ -284,60 +270,6 @@ const FilterManager = () => {
               }}
             >
               {saving && <Loader2 className="mr-1 h-4 w-4 animate-spin" />} Smazat
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={!!mergeSource} onOpenChange={(o) => !o && setMergeSource(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Sloučit „{mergeSource?.item.name}“ do…</AlertDialogTitle>
-          </AlertDialogHeader>
-          {mergeSource && (
-            <div className="space-y-3">
-              <Select value={mergeTargetId} onValueChange={setMergeTargetId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Vyberte cílovou položku" />
-                </SelectTrigger>
-                <SelectContent>
-                  {[...data[mergeSource.prop]]
-                    .filter((x) => x.id !== mergeSource.item.id)
-                    .sort((a, b) => a.name.localeCompare(b.name, "cs"))
-                    .map((x) => (
-                      <SelectItem key={x.id} value={x.id}>
-                        {x.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-              {mergeTargetId && (
-                <p className="text-sm text-muted-foreground">
-                  Hodnota „{mergeSource.item.name}“ bude u {souboru(mergeSource.item.count ?? 0)} nahrazena
-                  hodnotou „{data[mergeSource.prop].find((x) => x.id === mergeTargetId)?.name}“ a „{mergeSource.item.name}“ bude odstraněna.
-                </p>
-              )}
-            </div>
-          )}
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={saving}>Zrušit</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={saving || !mergeTargetId}
-              onClick={async (e) => {
-                e.preventDefault();
-                const ok = await runAction(
-                  {
-                    action: "merge",
-                    property: mergeSource!.prop,
-                    sourceId: mergeSource!.item.id,
-                    targetId: mergeTargetId,
-                  },
-                  "Položky sloučeny",
-                );
-                if (ok) setMergeSource(null);
-              }}
-            >
-              {saving && <Loader2 className="mr-1 h-4 w-4 animate-spin" />} Sloučit
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
