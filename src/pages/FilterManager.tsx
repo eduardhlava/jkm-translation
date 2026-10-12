@@ -123,8 +123,10 @@ const FilterManager = () => {
           <ul className="divide-y rounded border">
             {list.map((o) => (
               <li key={o.id} className="flex items-center gap-2 px-3 py-1.5 text-sm">
-                <span className="truncate">{o.name}</span>
-                <span className="shrink-0 text-xs text-muted-foreground">{souboru(o.count ?? 0)}</span>
+                <div className="min-w-0 flex flex-col">
+                  <span className="truncate">{o.name}</span>
+                  <span className="text-xs text-muted-foreground">{souboru(o.count ?? 0)}</span>
+                </div>
                 <Button
                   variant="ghost"
                   size="sm"
