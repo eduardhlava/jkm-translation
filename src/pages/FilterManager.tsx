@@ -8,7 +8,19 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Loader2, LogOut, Pencil, Plus, Settings as SettingsIcon } from "lucide-react";
+import { ArrowLeft, GitMerge, Loader2, LogOut, Pencil, Plus, Settings as SettingsIcon, Trash2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import jkLogo from "@/assets/jk-machinery-logo.png";
 import { callFilterOptions, type FilterOption, type FilterOptionsData } from "@/lib/filterOptions";
 
@@ -32,6 +44,25 @@ const FilterManager = () => {
   const [saving, setSaving] = useState(false);
   const [editor, setEditor] = useState<{ prop: Prop; item?: FilterOption } | null>(null);
   const [name, setName] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{ prop: Prop; item: FilterOption } | null>(null);
+  const [mergeSource, setMergeSource] = useState<{ prop: Prop; item: FilterOption } | null>(null);
+  const [mergeTargetId, setMergeTargetId] = useState("");
+
+  const souboru = (n: number) => (n === 1 ? "1 soubor" : n >= 2 && n <= 4 ? `${n} soubory` : `${n} souborů`);
+
+  const runAction = async (body: Record<string, unknown>, success: string) => {
+    setSaving(true);
+    try {
+      setData(await callFilterOptions(body));
+      toast({ title: success });
+      return true;
+    } catch (e) {
+      toast({ title: "Chyba", description: (e as Error).message, variant: "destructive" });
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -96,6 +127,7 @@ const FilterManager = () => {
             {list.map((o) => (
               <li key={o.id} className="flex items-center gap-2 px-3 py-1.5 text-sm">
                 <span className="truncate">{o.name}</span>
+                <span className="shrink-0 text-xs text-muted-foreground">{souboru(o.count ?? 0)}</span>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -107,6 +139,37 @@ const FilterManager = () => {
                 >
                   <Pencil className="mr-1 h-3.5 w-3.5" /> Upravit
                 </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={list.length < 2}
+                  onClick={() => {
+                    setMergeSource({ prop, item: o });
+                    setMergeTargetId("");
+                  }}
+                >
+                  <GitMerge className="mr-1 h-3.5 w-3.5" /> Sloučit do…
+                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        aria-label="Smazat položku"
+                        disabled={(o.count ?? 0) > 0}
+                        onClick={() => setDeleteTarget({ prop, item: o })}
+                      >
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {(o.count ?? 0) > 0
+                      ? `Položku používá ${souboru(o.count ?? 0)} – nejdřív je přeřaďte nebo použijte Sloučit do…`
+                      : "Smazat položku"}
+                  </TooltipContent>
+                </Tooltip>
               </li>
             ))}
           </ul>
@@ -197,6 +260,88 @@ const FilterManager = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Smazat položku „{deleteTarget?.item.name}“?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Položka bude odstraněna ze seznamu {deleteTarget ? LABELS[deleteTarget.prop] : ""} v Notion.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={saving}>Zrušit</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={saving}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async (e) => {
+                e.preventDefault();
+                const ok = await runAction(
+                  { action: "delete", property: deleteTarget!.prop, id: deleteTarget!.item.id },
+                  "Položka smazána",
+                );
+                if (ok) setDeleteTarget(null);
+              }}
+            >
+              {saving && <Loader2 className="mr-1 h-4 w-4 animate-spin" />} Smazat
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!mergeSource} onOpenChange={(o) => !o && setMergeSource(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sloučit „{mergeSource?.item.name}“ do…</AlertDialogTitle>
+          </AlertDialogHeader>
+          {mergeSource && (
+            <div className="space-y-3">
+              <Select value={mergeTargetId} onValueChange={setMergeTargetId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Vyberte cílovou položku" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[...data[mergeSource.prop]]
+                    .filter((x) => x.id !== mergeSource.item.id)
+                    .sort((a, b) => a.name.localeCompare(b.name, "cs"))
+                    .map((x) => (
+                      <SelectItem key={x.id} value={x.id}>
+                        {x.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              {mergeTargetId && (
+                <p className="text-sm text-muted-foreground">
+                  Hodnota „{mergeSource.item.name}“ bude u {souboru(mergeSource.item.count ?? 0)} nahrazena
+                  hodnotou „{data[mergeSource.prop].find((x) => x.id === mergeTargetId)?.name}“ a „{mergeSource.item.name}“ bude odstraněna.
+                </p>
+              )}
+            </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={saving}>Zrušit</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={saving || !mergeTargetId}
+              onClick={async (e) => {
+                e.preventDefault();
+                const ok = await runAction(
+                  {
+                    action: "merge",
+                    property: mergeSource!.prop,
+                    sourceId: mergeSource!.item.id,
+                    targetId: mergeTargetId,
+                  },
+                  "Položky sloučeny",
+                );
+                if (ok) setMergeSource(null);
+              }}
+            >
+              {saving && <Loader2 className="mr-1 h-4 w-4 animate-spin" />} Sloučit
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
