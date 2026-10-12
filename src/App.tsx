@@ -10,6 +10,7 @@ import NotFound from "./pages/NotFound.tsx";
 import DocumentCreator from "./pages/DocumentCreator.tsx";
 import Library from "./pages/Library.tsx";
 import FolderManager from "./pages/FolderManager.tsx";
+import FilterManager from "./pages/FilterManager.tsx";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -60,6 +61,14 @@ const App = () => (
               <ProtectedRoute requireSection="folders">
 
                 <FolderManager />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/library/filters"
+            element={
+              <ProtectedRoute requireSection="folders">
+                <FilterManager />
               </ProtectedRoute>
             }
           />

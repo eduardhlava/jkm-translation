@@ -33,10 +33,29 @@ import {
   MoveRight,
   Pencil,
   Settings as SettingsIcon,
+  Trash2,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import jkLogo from "@/assets/jk-machinery-logo.png";
 
-type FolderItem = { id: string; name: string; parentId: string | null; url: string };
+type FolderItem = {
+  id: string;
+  name: string;
+  parentId: string | null;
+  url: string;
+  fileCount?: number;
+  filesHasMore?: boolean;
+};
 
 const ROOT = "__root__";
 const norm = (id: string | null | undefined) => (id ? id.replace(/-/g, "") : null);
@@ -55,6 +74,7 @@ const FolderManager = () => {
   const [renameName, setRenameName] = useState("");
   const [moveTarget, setMoveTarget] = useState<FolderItem | null>(null);
   const [moveParent, setMoveParent] = useState<string>(ROOT);
+  const [deleteTarget, setDeleteTarget] = useState<FolderItem | null>(null);
 
   const call = useCallback(async (body: Record<string, unknown>) => {
     const { data, error } = await supabase.functions.invoke("notion-folders", { body });
@@ -183,6 +203,29 @@ const FolderManager = () => {
               <Button variant="ghost" size="sm" onClick={() => { setCreateParent(f.id); setCreateName(""); }}>
                 <FolderPlus className="h-3.5 w-3.5" />
               </Button>
+              {(() => {
+                const notEmpty = kids.length > 0 || (f.fileCount ?? 0) > 0 || !!f.filesHasMore;
+                return (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={notEmpty}
+                          aria-label="Smazat složku"
+                          onClick={() => setDeleteTarget(f)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {notEmpty ? "Složku nelze smazat – obsahuje soubory nebo podsložky" : "Smazat složku"}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })()}
             </div>
           </div>
           {open && renderTree(norm(f.id)!, depth + 1)}
@@ -271,7 +314,7 @@ const FolderManager = () => {
           )}
         </Card>
         <p className="text-xs text-muted-foreground">
-          Změny se ukládají přímo do Notion. Mazání složek není povoleno.
+          Změny se ukládají přímo do Notion.
         </p>
       </main>
 
@@ -314,6 +357,32 @@ const FolderManager = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Smazat složku „{deleteTarget?.name}“?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Složka bude odstraněna i v Notion (přesunuta do koše). Tuto akci nelze vrátit z aplikace.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={saving}>Zrušit</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={saving}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async (e) => {
+                e.preventDefault();
+                const ok = await runAction({ action: "delete", id: deleteTarget!.id }, "Složka smazána");
+                if (ok) setDeleteTarget(null);
+              }}
+            >
+              {saving && <Loader2 className="mr-1 h-4 w-4 animate-spin" />} Smazat
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Rename */}
       <Dialog open={!!renameTarget} onOpenChange={(o) => !o && setRenameTarget(null)}>
