@@ -1,13 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export const STROJ_OPTIONS = [
-  "JCM", "JGS", "JGP", "JHA", "JHV", "JHP", "JHS", "JHI", "JHD", "JHC",
-  "JCT", "JGT", "JGD", "JGC", "JCR", "JCC", "JAB", "JVR",
-  "JCP", "JTE", "JMS", "JTU", "JCS", "JVE", "JVL", "JVC", "JTR",
-];
 
-export type FilterOption = { id: string; name: string; color?: string };
+export type FilterOption = { id: string; name: string; color?: string; count?: number };
 export type FilterOptionsData = { typ: FilterOption[]; stroj: FilterOption[] };
 
 export const sortCs = (list: unknown[]) =>
@@ -33,18 +28,18 @@ export async function callFilterOptions(body: Record<string, unknown>): Promise<
   return { typ: (data as any)?.typ ?? [], stroj: (data as any)?.stroj ?? [] };
 }
 
-/** Options for pickers: typ from Notion, stroj = Notion ∪ STROJ_OPTIONS. */
+/** Options for pickers, loaded only from the Notion schema. */
 export function useFilterOptions(enabled = true) {
   const [typ, setTyp] = useState<string[]>([]);
-  const [stroj, setStroj] = useState<string[]>(sortCs(STROJ_OPTIONS));
+  const [stroj, setStroj] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   const reload = useCallback(async () => {
     setLoading(true);
     try {
-      const d = await callFilterOptions({ action: "list" });
+      const d = await callFilterOptions({ action: "list", counts: false });
       setTyp(sortCs(d.typ.map((o) => o.name)));
-      setStroj(sortCs([...d.stroj.map((o) => o.name), ...STROJ_OPTIONS]));
+      setStroj(sortCs(d.stroj.map((o) => o.name)));
     } catch (e) {
       console.error("notion-filter-options:", e);
     } finally {

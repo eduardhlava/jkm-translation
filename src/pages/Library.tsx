@@ -213,8 +213,8 @@ const Library = () => {
     void load();
   }, [load]);
 
-  const typOptions = useMemo(() => sortCs([...filterOpts.typ, ...files.flatMap((f) => f.typ)]), [files, filterOpts.typ]);
-  const strojOptions = useMemo(() => sortCs([...filterOpts.stroj, ...files.flatMap((f) => f.stroj)]), [files, filterOpts.stroj]);
+  const typOptions = useMemo(() => sortCs(filterOpts.typ), [filterOpts.typ]);
+  const strojOptions = useMemo(() => sortCs(filterOpts.stroj), [filterOpts.stroj]);
   const stavOptions = useMemo(() => sortCs(files.map((f) => f.stav)), [files]);
 
   const filtered = useMemo(() => {
