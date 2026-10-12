@@ -274,60 +274,6 @@ const FilterManager = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <AlertDialog open={!!mergeSource} onOpenChange={(o) => !o && setMergeSource(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Sloučit „{mergeSource?.item.name}“ do…</AlertDialogTitle>
-          </AlertDialogHeader>
-          {mergeSource && (
-            <div className="space-y-3">
-              <Select value={mergeTargetId} onValueChange={setMergeTargetId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Vyberte cílovou položku" />
-                </SelectTrigger>
-                <SelectContent>
-                  {[...data[mergeSource.prop]]
-                    .filter((x) => x.id !== mergeSource.item.id)
-                    .sort((a, b) => a.name.localeCompare(b.name, "cs"))
-                    .map((x) => (
-                      <SelectItem key={x.id} value={x.id}>
-                        {x.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-              {mergeTargetId && (
-                <p className="text-sm text-muted-foreground">
-                  Hodnota „{mergeSource.item.name}“ bude u {souboru(mergeSource.item.count ?? 0)} nahrazena
-                  hodnotou „{data[mergeSource.prop].find((x) => x.id === mergeTargetId)?.name}“ a „{mergeSource.item.name}“ bude odstraněna.
-                </p>
-              )}
-            </div>
-          )}
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={saving}>Zrušit</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={saving || !mergeTargetId}
-              onClick={async (e) => {
-                e.preventDefault();
-                const ok = await runAction(
-                  {
-                    action: "merge",
-                    property: mergeSource!.prop,
-                    sourceId: mergeSource!.item.id,
-                    targetId: mergeTargetId,
-                  },
-                  "Položky sloučeny",
-                );
-                if (ok) setMergeSource(null);
-              }}
-            >
-              {saving && <Loader2 className="mr-1 h-4 w-4 animate-spin" />} Sloučit
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
