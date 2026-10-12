@@ -182,7 +182,7 @@ const calloutCfg = {
 } as const;
 
 // ---------- HTML → inline runs ----------
-type Run = { text: string; bold?: boolean; italic?: boolean; underline?: boolean; href?: string; bg?: string };
+type Run = { text: string; bold?: boolean; italic?: boolean; underline?: boolean; href?: string; bg?: string; sup?: boolean; sub?: boolean };
 
 function parseInline(html: string): Run[][] {
   if (!html) return [[]];
@@ -228,6 +228,13 @@ function parseInline(html: string): Run[][] {
     if (tag === "STRONG" || tag === "B") next.bold = true;
     if (tag === "EM" || tag === "I") next.italic = true;
     if (tag === "U") next.underline = true;
+    if (tag === "SUP") { next.sup = true; next.sub = false; }
+    if (tag === "SUB") { next.sub = true; next.sup = false; }
+    const st = (el.getAttribute("style") || "").toLowerCase();
+    if (/font-weight\s*:\s*(bold|[6-9]00)/.test(st)) next.bold = true;
+    if (/font-style\s*:\s*italic/.test(st)) next.italic = true;
+    if (/vertical-align\s*:\s*super/.test(st)) next.sup = true;
+    if (/vertical-align\s*:\s*sub/.test(st)) next.sub = true;
     if (tag === "A") next.href = el.getAttribute("href") ?? undefined;
     const bg = readBg(el);
     if (bg) next.bg = bg;
@@ -252,7 +259,7 @@ function fontStyleFor(r: Run): Record<string, string> {
 }
 
 function RunsText({ runs }: { runs: Run[] }) {
-  const hasInlineStyles = runs.some((r) => r.bold || r.italic || r.underline || r.href || r.bg);
+  const hasInlineStyles = runs.some((r) => r.bold || r.italic || r.underline || r.href || r.bg || r.sup || r.sub);
   if (!hasInlineStyles) return <>{runs.map((r) => r.text).join("")}</>;
 
   return (
@@ -262,6 +269,10 @@ function RunsText({ runs }: { runs: Run[] }) {
         if (r.underline || r.href) style.textDecoration = "underline";
         if (r.href) style.color = "#2563eb";
         if (r.bg) style.backgroundColor = r.bg;
+        if (r.sup || r.sub) {
+          style.fontSize = "65%";
+          style.verticalAlign = r.sup ? "super" : "sub";
+        }
         if (r.href) {
           return (
             <Link key={i} src={r.href} style={style}>
