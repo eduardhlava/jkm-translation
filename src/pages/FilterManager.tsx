@@ -8,9 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, GitMerge, Loader2, LogOut, Pencil, Plus, Settings as SettingsIcon, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, LogOut, Pencil, Plus, Settings as SettingsIcon, Trash2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,8 +44,6 @@ const FilterManager = () => {
   const [editor, setEditor] = useState<{ prop: Prop; item?: FilterOption } | null>(null);
   const [name, setName] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<{ prop: Prop; item: FilterOption } | null>(null);
-  const [mergeSource, setMergeSource] = useState<{ prop: Prop; item: FilterOption } | null>(null);
-  const [mergeTargetId, setMergeTargetId] = useState("");
 
   const souboru = (n: number) => (n === 1 ? "1 soubor" : n >= 2 && n <= 4 ? `${n} soubory` : `${n} souborů`);
 
