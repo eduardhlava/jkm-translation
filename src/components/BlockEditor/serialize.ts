@@ -1,4 +1,6 @@
-import { cellToExportText, type Block } from "./types";
+import { type Block } from "./types";
+import { cellPlainText, cellTextToHtml, cellToExportHtml } from "./cellFormatting";
+import { parseCellPictogram } from "./types";
 import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
 
 // ---------- Round-trip metadata markers ----------
@@ -33,6 +35,7 @@ function serializeBlockMeta(b: Block): Record<string, unknown> {
       break;
     case "table":
       meta.hdr = c.headerRow !== false;
+      meta.indexedCells = indexedCells(c.rows ?? []);
       if (c.pictogram && c.pictogram !== "none") meta.pic = c.pictogram;
       break;
     case "image-table": {
@@ -40,11 +43,21 @@ function serializeBlockMeta(b: Block): Record<string, unknown> {
       const tbl = c.table ?? {};
       if (Number.isFinite(img.width)) meta.iw = img.width;
       meta.hdr = tbl.headerRow !== false;
+      meta.indexedCells = indexedCells(tbl.rows ?? []);
       if (c.pictogram && c.pictogram !== "none") meta.pic = c.pictogram;
       break;
     }
   }
   return meta;
+}
+
+// Notion has native B/I/U annotations, but no superscript/subscript annotations.
+// Retain indexed cells only, guarded by their visible text when importing.
+function indexedCells(rows: string[][]) {
+  return rows.flatMap((row, r) => row.flatMap((cell, c) => {
+    const html = cellTextToHtml(parseCellPictogram(cell).text);
+    return /<(sup|sub)\b/i.test(html) ? [{ r, c, value: cell, text: cellPlainText(cell) }] : [];
+  }));
 }
 
 function blockMetaMarker(b: Block): string {
@@ -155,10 +168,10 @@ export function blockToHtml(b: Block): string {
       const cellStyle = `style="border:1px solid #d1d5db;padding:6px 8px;text-align:left;"`;
       const thStyle = `style="border:1px solid #d1d5db;padding:6px 8px;text-align:left;background-color:#f3f4f6;font-weight:600;"`;
       const head = b.content.headerRow && rows[0]
-        ? `<thead><tr>${rows[0].map((c) => `<th ${thStyle}>${escapeHtml(cellToExportText(c))}</th>`).join("")}</tr></thead>`
+        ? `<thead><tr>${rows[0].map((c) => `<th ${thStyle}>${cellToExportHtml(c)}</th>`).join("")}</tr></thead>`
         : "";
       const bodyRows = b.content.headerRow ? rows.slice(1) : rows;
-      const body = `<tbody>${bodyRows.map((r) => `<tr>${r.map((c) => `<td ${cellStyle}>${escapeHtml(cellToExportText(c))}</td>`).join("")}</tr>`).join("")}</tbody>`;
+      const body = `<tbody>${bodyRows.map((r) => `<tr>${r.map((c) => `<td ${cellStyle}>${cellToExportHtml(c)}</td>`).join("")}</tr>`).join("")}</tbody>`;
       return `<table style="width:100%;border-collapse:collapse;border:1px solid #d1d5db;">${head}${body}</table>`;
     }
     case "image-table": {

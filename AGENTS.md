@@ -1,3 +1,4 @@
 # Architecture rules
+- Table rows remain string cells: rich cells use an explicit HTML discriminator after the pictogram token, sanitized by shared cell helpers; native Notion annotations carry B/I/U and metadata preserves unsupported indices with a visible-text guard, so legacy plain cells and Notion edits remain compatible.
 - Document metadata edits rename the Notion page through the existing updateTitle action before updating the local list; printed metadata remains separate to prevent unsynchronized names and PDF changes.
 - Structural spacing is represented by a `spacer` block with empty content and a round-trip metadata marker, so JSON and Notion retain document layout independently of visible text.- Notion files DB 'typ'/'stroj' may be select or multi_select: edge functions read them as string[] and pick the write/filter shape from the live DB schema (helpers in supabase/functions/_shared/notion.ts), so a manual Notion type change needs no redeploy.
