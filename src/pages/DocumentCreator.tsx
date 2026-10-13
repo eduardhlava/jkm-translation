@@ -138,6 +138,9 @@ const DocumentCreator = () => {
   const [mode, setMode] = useState<EditorMode>("blocks");
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [docTitle, setDocTitle] = useState("");
+  const [titleDraft, setTitleDraft] = useState("");
+  const [savingTitle, setSavingTitle] = useState(false);
+  useEffect(() => { setTitleDraft(docTitle); }, [docTitle, activePage?.id]);
   const [originalTitle, setOriginalTitle] = useState("");
   const [lastExportAt, setLastExportAt] = useState<string | null>(null);
   const [overwriteDialog, setOverwriteDialog] = useState<{ open: boolean; targetId: string | null }>({ open: false, targetId: null });
@@ -149,6 +152,46 @@ const DocumentCreator = () => {
   const [backDialogOpen, setBackDialogOpen] = useState(false);
   const [exportMap, setExportMap] = useState<Record<string, string | null>>({});
   const [newDocOpen, setNewDocOpen] = useState(false);
+
+  const updateDocumentTitle = async (value: string) => {
+    if (!activePage) throw new Error("Není vybrán dokument");
+    const title = value.trim();
+    if (!title) throw new Error("Název dokumentu nesmí být prázdný");
+    const currentTitle = activePage.properties[titleProp] ?? docTitle;
+    if (title !== currentTitle) {
+      const { data, error } = await supabase.functions.invoke("notion-content", {
+        body: { action: "updateTitle", pageId: activePage.id, title },
+      });
+      if (error) {
+        const response = "context" in error ? error.context : undefined;
+        const details = response instanceof Response ? await response.text() : error.message;
+        throw new Error(details);
+      }
+      if (data?.error) throw new Error(data.error);
+      if (!data?.ok) throw new Error("Notion nepotvrdil změnu názvu");
+      const renamed = { ...activePage, properties: { ...activePage.properties, [titleProp]: title } };
+      setActivePage(renamed);
+      setItems((prev) => prev.map((item) => item.id === renamed.id ? renamed : item));
+      setOriginalTitle(title);
+    }
+    setDocTitle(title);
+    setTitleDraft(title);
+  };
+
+  const saveHeaderTitle = async () => {
+    if (savingTitle) return false;
+    setSavingTitle(true);
+    try {
+      await updateDocumentTitle(titleDraft);
+      return true;
+    } catch (e) {
+      setTitleDraft(activePage?.properties[titleProp] ?? docTitle);
+      toast.error("Uložení názvu selhalo", { description: e instanceof Error ? e.message : "" });
+      return false;
+    } finally {
+      setSavingTitle(false);
+    }
+  };
 
   const handleDocumentCreated = async (
     doc: CreatedDocument,
@@ -175,8 +218,9 @@ const DocumentCreator = () => {
     setBlocks([]);
     setMode("blocks");
     setActivePage(doc);
-    setDocTitle(meta.docCode);
-    setOriginalTitle(meta.docCode);
+    const createdTitle = doc.properties[titleProp] ?? meta.docCode;
+    setDocTitle(createdTitle);
+    setOriginalTitle(createdTitle);
     setNumberHeadings(false);
     setCollapsedBlocks({});
     setMetadata(mergedMeta);
@@ -187,7 +231,7 @@ const DocumentCreator = () => {
         numberHeadings: false,
         collapsedBlocks: {},
         metadata: mergedMeta,
-        docTitle: meta.docCode,
+        docTitle: createdTitle,
       }),
     );
   };
@@ -804,19 +848,25 @@ const DocumentCreator = () => {
                 </Tooltip>
                 <div className="flex flex-col gap-0.5 min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <Label className="text-xs text-muted-foreground whitespace-nowrap">Označení dokumentu:</Label>
+                    <Label htmlFor="editor-document-title" className="text-xs text-muted-foreground whitespace-nowrap">Název dokumentu:</Label>
                     <Input
-                      value={metadata.docCode}
-                      onChange={(e) => {
-                        setDocTitle(e.target.value);
-                        setMetadata((m) => ({ ...m, docCode: e.target.value }));
+                      id="editor-document-title"
+                      value={titleDraft}
+                      onChange={(e) => setTitleDraft(e.target.value)}
+                      onBlur={() => { void saveHeaderTitle(); }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); }
+                        if (e.key === "Escape") { setTitleDraft(docTitle); }
                       }}
+                      disabled={savingTitle || saving}
                       className="h-8 max-w-md font-medium"
-                      placeholder="Označení dokumentu"
+                      placeholder="Název dokumentu"
                     />
                   </div>
                 </div>
-                <Button type="button" variant="outline" size="sm" onClick={() => setMetadataOpen(true)}>
+                <Button type="button" variant="outline" size="sm" disabled={savingTitle} onMouseDown={(e) => e.preventDefault()} onClick={async () => {
+                  if (await saveHeaderTitle()) setMetadataOpen(true);
+                }}>
                   <FileCog className="w-4 h-4 mr-1" /> Nastavení dokumentu
                 </Button>
 
@@ -1011,25 +1061,7 @@ const DocumentCreator = () => {
         value={metadata}
         documentTitle={activePage?.properties[titleProp] ?? docTitle}
         onChange={async (next, title) => {
-          if (!activePage) throw new Error("Není vybrán dokument");
-          const currentTitle = activePage.properties[titleProp] ?? docTitle;
-          if (title !== currentTitle) {
-            const { data, error } = await supabase.functions.invoke("notion-content", {
-              body: { action: "updateTitle", pageId: activePage.id, title },
-            });
-            if (error) {
-              const response = "context" in error ? error.context : undefined;
-              const details = response instanceof Response ? await response.text() : error.message;
-              throw new Error(details);
-            }
-            if (data?.error) throw new Error(data.error);
-            if (!data?.ok) throw new Error("Notion nepotvrdil změnu názvu");
-            const renamed = { ...activePage, properties: { ...activePage.properties, [titleProp]: title } };
-            setActivePage(renamed);
-            setItems((prev) => prev.map((item) => item.id === renamed.id ? renamed : item));
-            setDocTitle(title);
-            setOriginalTitle(title);
-          }
+          await updateDocumentTitle(title);
           setMetadata(next);
         }}
       />
