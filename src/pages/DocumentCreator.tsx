@@ -806,7 +806,7 @@ const DocumentCreator = () => {
                   <div className="flex items-center gap-2">
                     <Label className="text-xs text-muted-foreground whitespace-nowrap">Označení dokumentu:</Label>
                     <Input
-                      value={docTitle}
+                      value={metadata.docCode}
                       onChange={(e) => {
                         setDocTitle(e.target.value);
                         setMetadata((m) => ({ ...m, docCode: e.target.value }));
