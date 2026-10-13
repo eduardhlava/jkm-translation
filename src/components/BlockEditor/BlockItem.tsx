@@ -23,6 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BLOCK_TYPE_LABELS, buildCellValue, parseCellPictogram, type Block, type Pictogram } from "./types";
+import TableCellEditor from "./TableCellEditor";
 
 const PICTOGRAM_LABELS: Record<string, string> = {
   alert: "Výstraha",
@@ -1126,10 +1127,11 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                                   <PictogramIcon kind={parsed.pictogram} size={20} />
                                 </span>
                               )}
-                              <Input
+                              <TableCellEditor
+                                label={`Buňka ${ri + 1}, ${ci + 1}`}
                                 value={parsed.text}
-                                onChange={(e) => updateCell(ri, ci, buildCellValue(parsed.pictogram, e.target.value))}
-                                className={`h-8 min-w-0 flex-1 rounded-none border-0 shadow-none focus-visible:ring-1 ${bgCls} ${
+                                onChange={(value) => updateCell(ri, ci, buildCellValue(parsed.pictogram, value))}
+                                className={`min-w-0 flex-1 rounded-none border-0 shadow-none focus-visible:ring-1 ${bgCls} ${
                                   isHeaderCell ? "font-semibold" : ""
                                 } ${narrowFirstCol && ci === 0 ? "text-center" : ""}`}
                               />

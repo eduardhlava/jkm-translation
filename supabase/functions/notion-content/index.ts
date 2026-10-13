@@ -691,7 +691,7 @@ function htmlToBlocks(html: string): any[] {
           const cells: string[] = [];
           let cm: RegExpExecArray | null;
           while ((cm = cellRe.exec(rm[1])) !== null) {
-            cells.push(stripTags(cm[2]));
+            cells.push(cm[2]);
           }
           if (cells.length) rows.push(cells);
         }
@@ -708,7 +708,7 @@ function htmlToBlocks(html: string): any[] {
                 object: "block",
                 type: "table_row",
                 table_row: {
-                  cells: Array.from({ length: width }, (_, i) => textToRich(r[i] ?? "")),
+                  cells: Array.from({ length: width }, (_, i) => htmlToRich(r[i] ?? "")),
                 },
               })),
             },

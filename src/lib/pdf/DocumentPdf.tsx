@@ -1,4 +1,6 @@
 import { Document, Page, Text, View, Image, Link, StyleSheet, Font, Svg, Polygon, Path, Circle } from "@react-pdf/renderer";
+import { Fragment } from "react";
+import { cellTextToHtml } from "@/components/BlockEditor/cellFormatting";
 import { parseCellPictogram, type Block, type Pictogram } from "@/components/BlockEditor/types";
 import notoRegular from "@/assets/fonts/NotoSans-Regular.ttf?url";
 import notoBold from "@/assets/fonts/NotoSans-Bold.ttf?url";
@@ -556,18 +558,20 @@ function TableBlock({ block }: { block: Block }) {
                 : { flex: 1 };
               const isHeader = headerRow && ri === 0 && !rowBg;
               const { pictogram: cellPic, text: cellText } = parseCellPictogram(cell ?? "");
+              const paragraphs = parseInline(cellTextToHtml(cellText));
+              const formattedText = paragraphs.map((runs, i) => <Fragment key={i}>{i > 0 ? "\n" : ""}<RunsText runs={headerRow && ri === 0 ? runs.map((run) => ({ ...run, bold: true })) : runs} /></Fragment>);
               const cellStyle = [styles.td, wStyle, isHeader ? styles.th : {}, headerRow && ri === 0 ? { fontFamily: "NotoSans", fontWeight: "bold" } : {}] as any;
               if (cellPic !== "none") {
                 return (
                   <View key={ci} style={[cellStyle, { flexDirection: "row", alignItems: "center", gap: 4 }] as any}>
                     <View style={styles.cellIcon}><PictogramSvg kind={cellPic} size={16} /></View>
-                    {cellText ? <Text style={styles.cellText}>{cellText}</Text> : null}
+                    {cellText ? <Text style={styles.cellText}>{formattedText}</Text> : null}
                   </View>
                 );
               }
               return (
                 <Text key={ci} style={cellStyle}>
-                  {cellText}
+                  {formattedText}
                 </Text>
               );
             })}

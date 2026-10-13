@@ -1,4 +1,5 @@
-import { type Block, type BlockType, emptyContent, cellFromExportText } from "./types";
+import { type Block, type BlockType, emptyContent } from "./types";
+import { cellFromExportHtml, cellPlainText } from "./cellFormatting";
 import { type DocumentMetadata, mergeMetadata } from "@/components/DocumentMetadata/types";
 import { META_BLOCK_PREFIX, META_DOC_PREFIX } from "./serialize";
 
@@ -177,6 +178,14 @@ function applyBlockMeta(block: Block, meta: any | null): void {
       if (c.table && typeof meta.hdr === "boolean") c.table.headerRow = meta.hdr;
       break;
   }
+  const table = block.type === "table" ? c : block.type === "image-table" ? c.table : null;
+  if (table && Array.isArray(meta.indexedCells)) {
+    for (const entry of meta.indexedCells) {
+      if (!Number.isInteger(entry.r) || !Number.isInteger(entry.c) || typeof entry.value !== "string") continue;
+      const current = table.rows?.[entry.r]?.[entry.c];
+      if (typeof current === "string" && cellPlainText(current) === entry.text) table.rows[entry.r][entry.c] = entry.value;
+    }
+  }
   block.content = c;
 }
 
@@ -224,7 +233,7 @@ export function parseDocumentHtml(html: string): ParsedDocument {
     const rows: string[][] = [];
     el.querySelectorAll("tr").forEach((tr) => {
       const cells: string[] = [];
-      tr.querySelectorAll("th,td").forEach((c) => cells.push(cellFromExportText(c.textContent ?? "")));
+      tr.querySelectorAll("th,td").forEach((c) => cells.push(cellFromExportHtml(c.innerHTML)));
       rows.push(cells);
     });
     const headerRow = !!el.querySelector("thead th") || !!el.querySelector("tr > th");
