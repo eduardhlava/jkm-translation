@@ -108,7 +108,7 @@ export default function NewDocumentDialog({ open, onOpenChange, schema, onCreate
             <Input value={docCode} onChange={(e) => setDocCode(e.target.value)} placeholder="např. JHI 05_CZ" />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Název dokumentu</Label>
+            <Label className="text-xs text-muted-foreground">Nadpis dokumentu</Label>
             <Input value={docName} onChange={(e) => setDocName(e.target.value)} placeholder="např. Návod k obsluze" />
           </div>
           <div className="space-y-1.5">

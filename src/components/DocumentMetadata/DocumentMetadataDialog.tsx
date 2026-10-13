@@ -17,18 +17,24 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   value: DocumentMetadata;
-  onChange: (next: DocumentMetadata) => void;
+  documentTitle: string;
+  onChange: (next: DocumentMetadata, title: string) => Promise<void>;
 }
 
-export default function DocumentMetadataDialog({ open, onOpenChange, value, onChange }: Props) {
+export default function DocumentMetadataDialog({ open, onOpenChange, value, documentTitle, onChange }: Props) {
   const [draft, setDraft] = useState<DocumentMetadata>(value);
+  const [title, setTitle] = useState(documentTitle);
+  const [saving, setSaving] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (open) setDraft(value);
-  }, [open, value]);
+    if (open) {
+      setDraft(value);
+      setTitle(documentTitle);
+    }
+  }, [open, value, documentTitle]);
 
   const update = (patch: Partial<DocumentMetadata>) => setDraft((d) => ({ ...d, ...patch }));
   const updateDisclaimer = (
@@ -36,9 +42,20 @@ export default function DocumentMetadataDialog({ open, onOpenChange, value, onCh
     patch: Partial<DocumentDisclaimer>,
   ) => setDraft((d) => ({ ...d, [key]: { ...d[key], ...patch } }));
 
-  const save = () => {
-    onChange(draft);
-    onOpenChange(false);
+  const save = async () => {
+    if (!title.trim()) {
+      toast.error("Název dokumentu nesmí být prázdný");
+      return;
+    }
+    setSaving(true);
+    try {
+      await onChange(draft, title.trim());
+      onOpenChange(false);
+    } catch (e) {
+      toast.error("Uložení metadat selhalo", { description: e instanceof Error ? e.message : "" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const resetDefaults = () => setDraft(DEFAULT_DOCUMENT_METADATA);
@@ -65,7 +82,7 @@ export default function DocumentMetadataDialog({ open, onOpenChange, value, onCh
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(next) => { if (!saving) onOpenChange(next); }}>
       <DialogContent
         className="max-w-2xl w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto"
         style={{ ["--border" as any]: "220 13% 70%", ["--input" as any]: "220 13% 70%" }}
@@ -75,14 +92,18 @@ export default function DocumentMetadataDialog({ open, onOpenChange, value, onCh
         </DialogHeader>
 
         <div className="space-y-5">
+          <div className="space-y-1.5">
+            <Label htmlFor="metadata-document-title" className="text-xs text-muted-foreground">Název dokumentu</Label>
+            <Input id="metadata-document-title" value={title} onChange={(e) => setTitle(e.target.value)} disabled={saving} required />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Označení dokumentu</Label>
-              <Input value={draft.docCode} onChange={(e) => update({ docCode: e.target.value })} placeholder="např. JHI 05_CZ" />
+              <Label htmlFor="metadata-document-code" className="text-xs text-muted-foreground">Označení dokumentu</Label>
+              <Input id="metadata-document-code" value={draft.docCode} onChange={(e) => update({ docCode: e.target.value })} placeholder="např. JHI 05_CZ" />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Název dokumentu</Label>
-              <Input value={draft.docName} onChange={(e) => update({ docName: e.target.value })} />
+              <Label htmlFor="metadata-document-heading" className="text-xs text-muted-foreground">Nadpis dokumentu</Label>
+              <Input id="metadata-document-heading" value={draft.docName} onChange={(e) => update({ docName: e.target.value })} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Jazyk dokumentu</Label>
@@ -205,9 +226,11 @@ export default function DocumentMetadataDialog({ open, onOpenChange, value, onCh
         </div>
 
         <DialogFooter className="gap-2 sm:gap-2">
-          <Button type="button" variant="ghost" onClick={resetDefaults}>Obnovit výchozí</Button>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Zrušit</Button>
-          <Button type="button" onClick={save}>Uložit změny</Button>
+          <Button type="button" variant="ghost" onClick={resetDefaults} disabled={saving}>Obnovit výchozí</Button>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Zrušit</Button>
+          <Button type="button" onClick={save} disabled={saving}>
+            {saving && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}Uložit změny
+          </Button>
         </DialogFooter>
 
         <NotionImagePicker
