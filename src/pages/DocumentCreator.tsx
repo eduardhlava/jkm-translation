@@ -310,7 +310,7 @@ const DocumentCreator = () => {
         savedSettings.metadata
           ? savedSettings.metadata
           : (parsedHtml.documentMetadata ?? {});
-      // Notion "název" (title) = Označení dokumentu; "název_souboru" = Název dokumentu
+      // The page title is independent of the printed document code and heading.
       const fileNameKey = Object.keys(item.properties ?? {}).find(
         (k) => k.trim().toLowerCase().replace(/[\s_]+/g, "_") === "název_souboru" ||
                k.trim().toLowerCase().replace(/[\s_]+/g, "_") === "nazev_souboru",
@@ -318,7 +318,7 @@ const DocumentCreator = () => {
       const notionFileName = fileNameKey ? item.properties[fileNameKey] : "";
       const mergedMeta = mergeMetadata({
         ...metaSource,
-        docCode: initialTitle,
+        docCode: (metaSource as Partial<DocumentMetadata>).docCode ?? initialTitle,
         docName: notionFileName || (metaSource as any).docName || "",
       });
 
@@ -806,7 +806,7 @@ const DocumentCreator = () => {
                   <div className="flex items-center gap-2">
                     <Label className="text-xs text-muted-foreground whitespace-nowrap">Označení dokumentu:</Label>
                     <Input
-                      value={docTitle}
+                      value={metadata.docCode}
                       onChange={(e) => {
                         setDocTitle(e.target.value);
                         setMetadata((m) => ({ ...m, docCode: e.target.value }));
@@ -1009,9 +1009,28 @@ const DocumentCreator = () => {
         open={metadataOpen}
         onOpenChange={setMetadataOpen}
         value={metadata}
-        onChange={(next) => {
+        documentTitle={activePage?.properties[titleProp] ?? docTitle}
+        onChange={async (next, title) => {
+          if (!activePage) throw new Error("Není vybrán dokument");
+          const currentTitle = activePage.properties[titleProp] ?? docTitle;
+          if (title !== currentTitle) {
+            const { data, error } = await supabase.functions.invoke("notion-content", {
+              body: { action: "updateTitle", pageId: activePage.id, title },
+            });
+            if (error) {
+              const response = "context" in error ? error.context : undefined;
+              const details = response instanceof Response ? await response.text() : error.message;
+              throw new Error(details);
+            }
+            if (data?.error) throw new Error(data.error);
+            if (!data?.ok) throw new Error("Notion nepotvrdil změnu názvu");
+            const renamed = { ...activePage, properties: { ...activePage.properties, [titleProp]: title } };
+            setActivePage(renamed);
+            setItems((prev) => prev.map((item) => item.id === renamed.id ? renamed : item));
+            setDocTitle(title);
+            setOriginalTitle(title);
+          }
           setMetadata(next);
-          if (next.docCode !== metadata.docCode) setDocTitle(next.docCode);
         }}
       />
 
