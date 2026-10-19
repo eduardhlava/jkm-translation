@@ -3,6 +3,7 @@ import { Font, pdf } from "@react-pdf/renderer";
 import { resolve } from "node:path";
 import { DocumentPdf, type MeasureContext } from "./DocumentPdf";
 import type { Block } from "@/components/BlockEditor/types";
+import { runPaginationLoop, toPreparedBlocks } from "./paginate";
 
 // Real renderer regression: a breakable paragraph must not defeat the 3-line
 // reservation. Local font paths let the renderer run without network requests.
@@ -26,7 +27,7 @@ function fixture(spacers: number): Block[] {
 function measurement(): MeasureContext {
   return {
     keepWithNextPt: 47.25, headingPages: new Map(), prevEndPages: new Map(),
-    nextStartPages: new Map(), tableStartPages: new Map(), tableEndPages: new Map(),
+    nextStartPages: new Map(), tableStartPages: new Map(), tablePartStartPages: new Map(), tableEndPages: new Map(),
   };
 }
 
@@ -66,4 +67,30 @@ describe("real DocumentPdf heading probe", () => {
     expect(measure.tableEndPages.get("table")).toBe(2);
     expect(measure.nextStartPages.get("heading")).toBe(1);
   });
+
+  it("escalates a roughly 500pt image + 15-row table to an internal table break", async () => {
+    // 475×500 at the renderer's 98% body width gives approximately 511pt height.
+    const image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAdsAAAH0AQAAAABd+7p6AAAAeUlEQVR42u3LMQ0AMAgAMMC/ySkZHuAiaf/mj7FXsSDLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsixfzw1x8QXIpFtcYwAAAABJRU5ErkJggg==";
+    const combined: Block = { id: "combined", type: "image-table", template: "default", order: 1,
+      content: { image: { url: image, alt: "Tall image caption" }, table: { headerRow: false, rows: Array.from({ length: 15 }, (_, i) => [`Part ${i + 1}`]) } } };
+    const blocks: Block[] = [{ id: "before", type: "spacer", template: "default", order: 0, content: {} }, combined];
+    const measured: MeasureContext[] = [];
+    const result = await runPaginationLoop(blocks, async (current) => {
+      const measure = measurement();
+      await pdf(<DocumentPdf title="" blocks={toPreparedBlocks(current, blocks)} includeToc={false} measure={measure} />).toBuffer();
+      measured.push(measure);
+      return measure;
+    });
+    const initial = measured[0];
+    expect(initial.tablePartStartPages.get(combined.id)).toBe(1);
+    expect(initial.tableEndPages.get(combined.id)).toBe(2);
+    const final = measured.at(-1);
+    expect(final?.tableStartPages.get(combined.id)).toBe(1);
+    expect(final?.tablePartStartPages.get(combined.id)).toBe(2);
+    expect(final?.tableEndPages.get(combined.id)).toBe(2);
+    expect(result.blocks.find((b) => b.id === combined.id)?.content.autoTableBreak).toBe(true);
+    expect(result.blocks.some((b) => b.type === "pagebreak")).toBe(false);
+    expect(result.tooLongTables).toBe(0);
+    expect(result.remaining).toEqual([]);
+  }, 20000);
 });
