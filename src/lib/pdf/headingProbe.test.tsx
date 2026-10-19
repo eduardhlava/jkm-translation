@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { cloneElement } from "react";
 import { Font, pdf } from "@react-pdf/renderer";
 import { resolve } from "node:path";
+import { readFileSync } from "node:fs";
 import { DocumentPdf, type MeasureContext } from "./DocumentPdf";
 import type { Block } from "@/components/BlockEditor/types";
 import { runPaginationLoop, toPreparedBlocks } from "./paginate";
@@ -58,7 +59,7 @@ function assertNoFlowOverlap(node: LayoutNode) {
 }
 
 describe("real DocumentPdf portrait image safety", () => {
-  const portrait = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAASwAQAAAAD9UCHwAAAAzElEQVR42u3LMQEAAAgDoGn/zjODP/xM87VRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRcvmiCl8ejtCLAAAAAElFTkSuQmCC";
+  const portrait = `data:image/png;base64,${readFileSync(resolve("src/lib/pdf/fixtures/portrait.png")).toString("base64")}`;
 
   it.each(["image", "image-table"] as const)("caps %s at 640pt without squeezing adjacent paragraphs", async (type) => {
     const image = { url: portrait, alt: "Portrait caption" };
@@ -78,7 +79,6 @@ describe("real DocumentPdf portrait image safety", () => {
         layout = data._INTERNAL__LAYOUT__DATA_;
       } })).toBuffer();
       if (!layout) throw new Error("Renderer did not return layout");
-      console.log(JSON.stringify(layout, (key, value) => ["image", "data", "lines", "glyphs"].includes(key) ? undefined : value).slice(0, 16000)); console.log(warn.mock.calls);
       expect(layout.children).toHaveLength(2);
       const images: Array<{ node: LayoutNode; page: number; parent: LayoutNode }> = [];
       const paragraphs: Array<{ node: LayoutNode; page: number }> = [];
