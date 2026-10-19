@@ -895,20 +895,33 @@ export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collect
       <Page size="A4" style={styles.page}>
         <Footer footerVersion={footerVersion} />
         {!showToc && !metadata && <Text style={styles.docTitle}>{title}</Text>}
-        {ordered.map((b) => (
-          <Fragment key={b.id}>
-            {measure && (b.type === "heading2" || b.type === "heading3" || b.type === "heading4") && (
-              <Text
-                style={{ height: 0, fontSize: 0 }}
-                render={({ pageNumber }) => {
-                  measure.prevEndPages.set(b.id, pageNumber);
-                  return "";
-                }}
-              />
-            )}
-            <BlockNode block={b} collector={collector} number={numbers?.get(b.id)} imageCaption={captionFor(b)} measure={measure} />
-          </Fragment>
-        ))}
+        {(() => {
+          // Řetězec nadpisů H2/H3/H4 bez obsahu mezi nimi – první obsahový
+          // blok za řetězcem dostane značku začátku pro všechny jeho nadpisy.
+          let headingChain: string[] = [];
+          return ordered.map((b) => {
+            const isKeepHeading = b.type === "heading2" || b.type === "heading3" || b.type === "heading4";
+            const nextFor = !isKeepHeading && b.type !== "heading1" && b.type !== "pagebreak" && headingChain.length > 0
+              ? headingChain
+              : undefined;
+            const node = (
+              <Fragment key={b.id}>
+                {measure && isKeepHeading && (
+                  <Text
+                    style={{ height: 0, fontSize: 0 }}
+                    render={({ pageNumber }) => {
+                      measure.prevEndPages.set(b.id, pageNumber);
+                      return "";
+                    }}
+                  />
+                )}
+                <BlockNode block={b} collector={collector} number={numbers?.get(b.id)} imageCaption={captionFor(b)} measure={measure} measureNextFor={nextFor} />
+              </Fragment>
+            );
+            headingChain = isKeepHeading ? [...headingChain, b.id] : [];
+            return node;
+          });
+        })()}
       </Page>
     </Document>
   );
