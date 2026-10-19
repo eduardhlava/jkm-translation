@@ -16,7 +16,7 @@ import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
  *    v naší struktuře ukázal jako nespolehlivý, ověřeno empiricky).
  *  - Řetězce nadpisů (H2→H3→H4 bez obsahu mezi nimi) se řeší vložením konce
  *    stránky před PRVNÍ nadpis řetězce.
- *  - Piktogram sám obsah nezne­zalomí: text je zalomitelný, obrázky si ponechají
+ *  - Piktogram sám nebrání dělení obsahu: text je zalomitelný, obrázky si ponechají
  *    vlastní wrap={false} a tabulky se mohou dělit pouze mezi řádky.
  *  - Tabulka (ani tabulková část image-table) se nesmí lámat přes stránky –
  *    jinak se před ni vloží konec stránky. Tabulka delší než stránka se

@@ -46,7 +46,7 @@ describe("real DocumentPdf heading probe", () => {
     const blocks = fixture(16);
     const text = blocks.find((b) => b.id === "text");
     if (!text) throw new Error("Missing fixture text");
-    text.content = { pictogram: "warning", html: `<p>${Array.from({ length: 30 }, (_, i) => `Warning line ${i + 1}`).join("<br>")}</p>` };
+    text.content = { pictogram: "warning", html: `<p>${Array.from({ length: 30 }, (_, i) => `Warning ${i + 1}: Follow all safety precautions before operating this machinery.`).join(" ")}</p>` };
     blocks.push({ id: "after", type: "heading2", template: "default", order: blocks.length, content: { text: "AFTER LONG TEXT" } });
     const measure = measurement();
     const collector = new Map<string, number>();
