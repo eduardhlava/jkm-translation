@@ -1,5 +1,5 @@
 import { Document, Page, Text, View, Image, Link, StyleSheet, Font, Svg, Polygon, Path, Circle } from "@react-pdf/renderer";
-import { Fragment } from "react";
+import { Fragment, cloneElement } from "react";
 import { cellTextToHtml } from "@/components/BlockEditor/cellFormatting";
 import { parseCellPictogram, type Block, type Pictogram } from "@/components/BlockEditor/types";
 import notoRegular from "@/assets/fonts/NotoSans-Regular.ttf?url";
@@ -581,13 +581,14 @@ function TextBlock({ block, startMarker }: { block: Block; startMarker?: JSX.Ele
   return body;
 }
 
-function ImageBlock({ block, captionOverride }: { block: Block; captionOverride?: string }) {
+function ImageBlock({ block, captionOverride, startMarker }: { block: Block; captionOverride?: string; startMarker?: JSX.Element }) {
   const url = block.content?.url;
   const alt = block.content?.alt;
   if (!url) return null;
   const caption = captionOverride !== undefined ? captionOverride : alt;
   return (
     <View wrap={false} style={styles.imageBlock}>
+      {startMarker}
       {/* eslint-disable-next-line jsx-a11y/alt-text */}
       <Image src={url} style={[styles.image, { width: "98%" }] as any} />
       {caption ? <Text style={styles.caption}>{caption}</Text> : null}
