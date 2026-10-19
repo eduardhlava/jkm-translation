@@ -248,11 +248,12 @@ const DocumentCreator = () => {
 
   // Fingerprint obsahu relevantního pro layout PDF — náhled PDF je povolen
   // jen tehdy, když odpovídá stavu po posledním uspořádání stránkování.
-  const layoutFingerprint = useMemo(
-    () => JSON.stringify({ blocks, numberHeadings, metadata }),
+  // URL obrázků se ignorují (rehydratace permanentních URL layout nemění).
+  const fingerprint = useMemo(
+    () => layoutFingerprint(blocks, numberHeadings, metadata),
     [blocks, numberHeadings, metadata]
   );
-  const pdfPreviewLocked = paginatedSnapshot === null || layoutFingerprint !== paginatedSnapshot;
+  const pdfPreviewLocked = paginatedSnapshot === null || fingerprint !== paginatedSnapshot;
 
   const arrangePagination = async () => {
     if (!activePage || paginating) return;
