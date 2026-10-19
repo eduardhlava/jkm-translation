@@ -12,7 +12,8 @@ import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
  *    stránky) se vloží automatický konec stránky.
  *  - H2/H3/H4 nesmí zůstat na spodku stránky s méně než KEEP_WITH_NEXT_PT
  *    prostorem pod sebou (cca 3 řádky textu). Detekce používá reálný layout
- *    react-pdf (measure režim DocumentPdf s minPresenceAhead).
+ *    react-pdf (measure režim DocumentPdf se sondou – minPresenceAhead se
+ *    v naší struktuře ukázal jako nespolehlivý, ověřeno empiricky).
  *  - Řetězce nadpisů (H2→H3→H4 bez obsahu mezi nimi) se řeší vložením konce
  *    stránky před PRVNÍ nadpis řetězce.
  *  - Nikdy nevkládáme konec stránky za jiný konec stránky ani jako první blok.
