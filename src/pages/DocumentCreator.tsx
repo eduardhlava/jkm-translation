@@ -63,6 +63,7 @@ import {
   ExternalLink,
   Eye,
   FileText,
+  ListOrdered,
   Loader2,
   LogOut,
   RefreshCw,
@@ -152,6 +153,8 @@ const DocumentCreator = () => {
   const [backDialogOpen, setBackDialogOpen] = useState(false);
   const [exportMap, setExportMap] = useState<Record<string, string | null>>({});
   const [newDocOpen, setNewDocOpen] = useState(false);
+  const [paginating, setPaginating] = useState(false);
+  const [paginatedSnapshot, setPaginatedSnapshot] = useState<string | null>(null);
 
   const updateDocumentTitle = async (value: string) => {
     if (!activePage) throw new Error("Není vybrán dokument");
@@ -234,6 +237,7 @@ const DocumentCreator = () => {
         docTitle: createdTitle,
       }),
     );
+    setPaginatedSnapshot(null);
   };
 
   const currentSnapshot = useMemo(
@@ -241,6 +245,35 @@ const DocumentCreator = () => {
     [blocks, numberHeadings, collapsedBlocks, metadata, docTitle]
   );
   const isDirty = activePage !== null && baselineSnapshot !== "" && currentSnapshot !== baselineSnapshot;
+
+  // Fingerprint obsahu relevantního pro layout PDF — náhled PDF je povolen
+  // jen tehdy, když odpovídá stavu po posledním uspořádání stránkování.
+  const layoutFingerprint = useMemo(
+    () => JSON.stringify({ blocks, numberHeadings, metadata }),
+    [blocks, numberHeadings, metadata]
+  );
+  const pdfPreviewLocked = paginatedSnapshot === null || layoutFingerprint !== paginatedSnapshot;
+
+  const arrangePagination = async () => {
+    if (!activePage || paginating) return;
+    setPaginating(true);
+    try {
+      const { arrangePagination: arrange } = await import("@/lib/pdf/paginate");
+      const result = await arrange(blocks, { numberHeadings, metadata, pageId: activePage.id });
+      setBlocks(result.blocks);
+      setPaginatedSnapshot(JSON.stringify({ blocks: result.blocks, numberHeadings, metadata }));
+      toast.success(
+        result.inserted > 0
+          ? `Stránkování uspořádáno – vloženo ${result.inserted} konců stránky`
+          : "Stránkování je v pořádku, nic nebylo potřeba měnit",
+      );
+    } catch (e) {
+      console.error("[paginate] failed", e);
+      toast.error("Uspořádání stránkování selhalo", { description: e instanceof Error ? e.message : "" });
+    } finally {
+      setPaginating(false);
+    }
+  };
 
 
 
@@ -376,6 +409,7 @@ const DocumentCreator = () => {
         metadata: mergedMeta,
         docTitle: initialTitle,
       }));
+      setPaginatedSnapshot(null);
       toast.success("Obsah načten");
     } catch (e) {
       toast.error("Načtení obsahu selhalo", { description: e instanceof Error ? e.message : "" });
@@ -904,9 +938,24 @@ const DocumentCreator = () => {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button variant="outline" size="sm" onClick={previewPdf} disabled={saving}>
-                  <Eye className="w-4 h-4 mr-1" /> Náhled PDF
+                <Button variant="outline" size="sm" onClick={arrangePagination} disabled={paginating || saving}>
+                  {paginating ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <ListOrdered className="w-4 h-4 mr-1" />}
+                  {paginating ? "Uspořádávám…" : "Uspořádat stránkování"}
                 </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex">
+                      <Button variant="outline" size="sm" onClick={previewPdf} disabled={saving || pdfPreviewLocked}>
+                        <Eye className="w-4 h-4 mr-1" /> Náhled PDF
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  {pdfPreviewLocked && (
+                    <TooltipContent>
+                      <p className="text-xs">Nejdřív klikněte na „Uspořádat stránkování“</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
 
                 <div className="flex flex-col items-end">
                   <Tooltip>

@@ -311,12 +311,19 @@ export function collectHeadings(blocks: Block[]): HeadingEntry[] {
 }
 
 // ---------- Block renderers ----------
-function Heading({ block, level, collector, number }: { block: Block; level: 1 | 2 | 3 | 4; collector?: PageMap; number?: string }) {
+export interface MeasureContext {
+  keepWithNextPt: number;
+  headingPages: Map<string, number>;
+  prevEndPages: Map<string, number>;
+}
+
+function Heading({ block, level, collector, number, measure }: { block: Block; level: 1 | 2 | 3 | 4; collector?: PageMap; number?: string; measure?: MeasureContext }) {
   const styleMap = { 1: styles.h1, 2: styles.h2, 3: styles.h3, 4: styles.h4 } as const;
   const wrapStyleMap = { 1: styles.h1Wrap, 2: styles.h2Wrap, 3: styles.h3Wrap, 4: styles.h4Wrap } as const;
   const text = block.content?.text ?? "";
   const prefixed = number ? `${number}  ${text}` : text;
-  return (
+  const keepWithNext = measure && level >= 2;
+  const inner = (
     <View wrap={false} style={wrapStyleMap[level]}>
       <Text style={styleMap[level]}>{prefixed}</Text>
       {collector && level <= 3 && (
@@ -328,6 +335,28 @@ function Heading({ block, level, collector, number }: { block: Block; level: 1 |
           }}
         />
       )}
+      {keepWithNext && (
+        <Text
+          style={{ height: 0, fontSize: 0 }}
+          render={({ pageNumber }) => {
+            measure.headingPages.set(block.id, pageNumber);
+            return "";
+          }}
+        />
+      )}
+    </View>
+  );
+  if (!keepWithNext) return inner;
+  // minPresenceAhead se v naší struktuře (sourozenci v jedné <Page>) spolehlivě
+  // neuplatní, proto měříme sondou: nadpis + neviditelná sonda vysoká
+  // keepWithNextPt s kompenzačním záporným marginem v nezalomitelném
+  // kontejneru. Když se pod nadpis nevejde keepWithNextPt prostoru, react-pdf
+  // přesune celý kontejner na další stránku a my porušení poznáme podle
+  // rozdílu stránek (headingPage > prevEndPage).
+  return (
+    <View wrap={false}>
+      {inner}
+      <View style={{ height: measure.keepWithNextPt, marginBottom: -measure.keepWithNextPt }} />
     </View>
   );
 }
@@ -612,12 +641,12 @@ function withPictogram(block: Block, node: JSX.Element) {
   );
 }
 
-function BlockNode({ block, collector, number, imageCaption }: { block: Block; collector?: PageMap; number?: string; imageCaption?: string }) {
+function BlockNode({ block, collector, number, imageCaption, measure }: { block: Block; collector?: PageMap; number?: string; imageCaption?: string; measure?: MeasureContext }) {
   switch (block.type) {
     case "heading1": return <Heading block={block} level={1} collector={collector} number={number} />;
-    case "heading2": return <Heading block={block} level={2} collector={collector} number={number} />;
-    case "heading3": return <Heading block={block} level={3} collector={collector} number={number} />;
-    case "heading4": return <Heading block={block} level={4} number={number} />;
+    case "heading2": return <Heading block={block} level={2} collector={collector} number={number} measure={measure} />;
+    case "heading3": return <Heading block={block} level={3} collector={collector} number={number} measure={measure} />;
+    case "heading4": return <Heading block={block} level={4} number={number} measure={measure} />;
     case "text":     return <TextBlock block={block} />;
     case "image":    return withPictogram(block, <ImageBlock block={block} captionOverride={imageCaption} />);
     case "table":    return withPictogram(block, <TableBlock block={block} />);
@@ -762,9 +791,10 @@ export interface DocumentPdfProps {
   numberHeadings?: boolean;
   metadata?: DocumentMetadata;
   logoDataUrl?: string;
+  measure?: MeasureContext; // pagination measurement mode (no visual change)
 }
 
-export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collector, numberHeadings, metadata: metadataProp, logoDataUrl }: DocumentPdfProps) {
+export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collector, numberHeadings, metadata: metadataProp, logoDataUrl, measure }: DocumentPdfProps) {
   // Metadata mohou přijít neúplná (starší dokumenty, marker z Notion duplikátu),
   // proto je vždy sloučíme s výchozími hodnotami – jinak by render spadl.
   const metadata = metadataProp ? mergeMetadata(metadataProp) : undefined;
@@ -828,7 +858,18 @@ export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collect
         <Footer footerVersion={footerVersion} />
         {!showToc && !metadata && <Text style={styles.docTitle}>{title}</Text>}
         {ordered.map((b) => (
-          <BlockNode key={b.id} block={b} collector={collector} number={numbers?.get(b.id)} imageCaption={captionFor(b)} />
+          <Fragment key={b.id}>
+            {measure && (b.type === "heading2" || b.type === "heading3" || b.type === "heading4") && (
+              <Text
+                style={{ height: 0, fontSize: 0 }}
+                render={({ pageNumber }) => {
+                  measure.prevEndPages.set(b.id, pageNumber);
+                  return "";
+                }}
+              />
+            )}
+            <BlockNode block={b} collector={collector} number={numbers?.get(b.id)} imageCaption={captionFor(b)} measure={measure} />
+          </Fragment>
         ))}
       </Page>
     </Document>

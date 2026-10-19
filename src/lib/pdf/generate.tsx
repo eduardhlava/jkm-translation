@@ -85,7 +85,7 @@ async function fetchAsDataUrl(url: string, pageId?: string): Promise<{ data: str
   return await refreshImageUrl(url, pageId);
 }
 
-async function inlineImages(blocks: Block[], pageId?: string): Promise<{ blocks: Block[]; rewrites: Map<string, string> }> {
+export async function inlineImages(blocks: Block[], pageId?: string): Promise<{ blocks: Block[]; rewrites: Map<string, string> }> {
   const cache = new Map<string, { data: string | null; permanentUrl?: string }>();
   const rewrites = new Map<string, string>();
   const out = await Promise.all(
@@ -119,7 +119,7 @@ async function inlineImages(blocks: Block[], pageId?: string): Promise<{ blocks:
   return { blocks: out, rewrites };
 }
 
-async function inlineMetadataAssets(metadata: DocumentMetadata | undefined, pageId?: string): Promise<DocumentMetadata | undefined> {
+export async function inlineMetadataAssets(metadata: DocumentMetadata | undefined, pageId?: string): Promise<DocumentMetadata | undefined> {
   if (!metadata) return metadata;
   const cover = metadata.coverImageUrl;
   if (!cover || cover.startsWith("data:")) return metadata;
