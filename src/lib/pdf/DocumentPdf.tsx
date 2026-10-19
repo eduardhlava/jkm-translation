@@ -311,19 +311,35 @@ export function collectHeadings(blocks: Block[]): HeadingEntry[] {
 }
 
 // ---------- Block renderers ----------
-function Heading({ block, level, collector, number }: { block: Block; level: 1 | 2 | 3 | 4; collector?: PageMap; number?: string }) {
+export interface MeasureContext {
+  keepWithNextPt: number;
+  headingPages: Map<string, number>;
+  prevEndPages: Map<string, number>;
+}
+
+function Heading({ block, level, collector, number, measure }: { block: Block; level: 1 | 2 | 3 | 4; collector?: PageMap; number?: string; measure?: MeasureContext }) {
   const styleMap = { 1: styles.h1, 2: styles.h2, 3: styles.h3, 4: styles.h4 } as const;
   const wrapStyleMap = { 1: styles.h1Wrap, 2: styles.h2Wrap, 3: styles.h3Wrap, 4: styles.h4Wrap } as const;
   const text = block.content?.text ?? "";
   const prefixed = number ? `${number}  ${text}` : text;
+  const keepWithNext = measure && level >= 2;
   return (
-    <View wrap={false} style={wrapStyleMap[level]}>
+    <View wrap={false} style={wrapStyleMap[level]} {...(keepWithNext ? { minPresenceAhead: measure.keepWithNextPt } : {})}>
       <Text style={styleMap[level]}>{prefixed}</Text>
       {collector && level <= 3 && (
         <Text
           style={{ height: 0, fontSize: 0 }}
           render={({ pageNumber }) => {
             collector.set(block.id, pageNumber);
+            return "";
+          }}
+        />
+      )}
+      {keepWithNext && (
+        <Text
+          style={{ height: 0, fontSize: 0 }}
+          render={({ pageNumber }) => {
+            measure.headingPages.set(block.id, pageNumber);
             return "";
           }}
         />
@@ -612,12 +628,12 @@ function withPictogram(block: Block, node: JSX.Element) {
   );
 }
 
-function BlockNode({ block, collector, number, imageCaption }: { block: Block; collector?: PageMap; number?: string; imageCaption?: string }) {
+function BlockNode({ block, collector, number, imageCaption, measure }: { block: Block; collector?: PageMap; number?: string; imageCaption?: string; measure?: MeasureContext }) {
   switch (block.type) {
     case "heading1": return <Heading block={block} level={1} collector={collector} number={number} />;
-    case "heading2": return <Heading block={block} level={2} collector={collector} number={number} />;
-    case "heading3": return <Heading block={block} level={3} collector={collector} number={number} />;
-    case "heading4": return <Heading block={block} level={4} number={number} />;
+    case "heading2": return <Heading block={block} level={2} collector={collector} number={number} measure={measure} />;
+    case "heading3": return <Heading block={block} level={3} collector={collector} number={number} measure={measure} />;
+    case "heading4": return <Heading block={block} level={4} number={number} measure={measure} />;
     case "text":     return <TextBlock block={block} />;
     case "image":    return withPictogram(block, <ImageBlock block={block} captionOverride={imageCaption} />);
     case "table":    return withPictogram(block, <TableBlock block={block} />);
