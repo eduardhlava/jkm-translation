@@ -237,6 +237,7 @@ const DocumentCreator = () => {
         docTitle: createdTitle,
       }),
     );
+    setPaginatedSnapshot(null);
   };
 
   const currentSnapshot = useMemo(
@@ -408,6 +409,7 @@ const DocumentCreator = () => {
         metadata: mergedMeta,
         docTitle: initialTitle,
       }));
+      setPaginatedSnapshot(null);
       toast.success("Obsah načten");
     } catch (e) {
       toast.error("Načtení obsahu selhalo", { description: e instanceof Error ? e.message : "" });
@@ -936,9 +938,24 @@ const DocumentCreator = () => {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button variant="outline" size="sm" onClick={previewPdf} disabled={saving}>
-                  <Eye className="w-4 h-4 mr-1" /> Náhled PDF
+                <Button variant="outline" size="sm" onClick={arrangePagination} disabled={paginating || saving}>
+                  {paginating ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <ListOrdered className="w-4 h-4 mr-1" />}
+                  {paginating ? "Uspořádávám…" : "Uspořádat stránkování"}
                 </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex">
+                      <Button variant="outline" size="sm" onClick={previewPdf} disabled={saving || pdfPreviewLocked}>
+                        <Eye className="w-4 h-4 mr-1" /> Náhled PDF
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  {pdfPreviewLocked && (
+                    <TooltipContent>
+                      <p className="text-xs">Nejdřív klikněte na „Uspořádat stránkování“</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
 
                 <div className="flex flex-col items-end">
                   <Tooltip>
