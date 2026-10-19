@@ -78,6 +78,7 @@ describe("real DocumentPdf portrait image safety", () => {
         layout = data._INTERNAL__LAYOUT__DATA_;
       } })).toBuffer();
       if (!layout) throw new Error("Renderer did not return layout");
+      console.log(JSON.stringify(layout, (key, value) => ["image", "data", "lines", "glyphs"].includes(key) ? undefined : value).slice(0, 16000)); console.log(warn.mock.calls);
       expect(layout.children).toHaveLength(2);
       const images: Array<{ node: LayoutNode; page: number; parent: LayoutNode }> = [];
       const paragraphs: Array<{ node: LayoutNode; page: number }> = [];
