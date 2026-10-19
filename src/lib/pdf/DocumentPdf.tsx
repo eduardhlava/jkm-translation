@@ -389,10 +389,14 @@ function Heading({ block, level, collector, number, measure }: { block: Block; l
   // kontejneru. Když se pod nadpis nevejde keepWithNextPt prostoru, react-pdf
   // přesune celý kontejner na další stránku a my porušení poznáme podle
   // rozdílu stránek (headingPage > prevEndPage).
+  // Regression: negative margin MUST be on the OUTER container. Putting it
+  // on the probe shrinks the container's measured height to the heading alone,
+  // so react-pdf 4.5.1 never sees the reserved space during its page-fit check.
+  // The outer margin compensates only following content positions, not fit height.
   return (
-    <View wrap={false}>
+    <View wrap={false} style={{ marginBottom: -measure.keepWithNextPt }}>
       {inner}
-      <View style={{ height: measure.keepWithNextPt, marginBottom: -measure.keepWithNextPt }} />
+      <View style={{ height: measure.keepWithNextPt }} />
     </View>
   );
 }

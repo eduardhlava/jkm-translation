@@ -237,6 +237,7 @@ describe("runPaginationLoop (sekvenční)", () => {
     expect(res.inserted).toBe(0);
     expect(res.tooLongTables).toBe(1);
     expect(res.blocks.some((b) => b.type === "pagebreak")).toBe(false);
+    expect(res.remaining).toEqual([{ id: T.id, type: "table", text: "Tabulka" }]);
   });
 
   it("nadpis s obrázkem, který odskočí, se přesune s ním", async () => {
@@ -249,5 +250,34 @@ describe("runPaginationLoop (sekvenční)", () => {
     const blocks = list(blk("text", { h: 60 }), blk("table", { h: 50 }), blk("text", { h: 60 }), blk("table", { h: 50 }));
     const res = await runPaginationLoop(blocks, fakeMeasure, { maxIterations: 1 });
     expect(res.unresolved).toBeGreaterThan(0);
+  });
+
+  it("závěrečná kontrola hlásí nadpis za ručním koncem, který nelze přesunout", async () => {
+    const h = blk("heading2", { h: 5, text: "2.5 BEZPEČNOST PRÁCE" });
+    const blocks = list(blk("pagebreak"), h, blk("image", { h: 110 }));
+    let calls = 0;
+    const res = await runPaginationLoop(blocks, async (current) => {
+      calls++;
+      return fakeMeasure(current);
+    });
+    expect(calls).toBe(res.passes + 1);
+    expect(res.inserted).toBe(0);
+    expect(res.remaining).toEqual([{ id: h.id, type: "heading2", text: "2.5 BEZPEČNOST PRÁCE" }]);
+    expect(res.unresolved).toBe(1);
+  });
+
+  it("i po konvergenci vždy přeměří finální bloky a vrátí nově naměřené porušení", async () => {
+    const table = blk("image-table", { h: 150 });
+    let calls = 0;
+    const res = await runPaginationLoop(list(table), async () => {
+      calls++;
+      return {
+        headingPages: new Map(), prevEndPages: new Map(), nextStartPages: new Map(),
+        tableStartPages: new Map([[table.id, 1]]),
+        tableEndPages: new Map([[table.id, calls === 1 ? 1 : 2]]),
+      };
+    });
+    expect(calls).toBe(2);
+    expect(res.remaining).toEqual([{ id: table.id, type: "image-table", text: "Tabulka" }]);
   });
 });

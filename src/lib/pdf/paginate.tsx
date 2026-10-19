@@ -30,6 +30,7 @@ import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
 export const KEEP_WITH_NEXT_PT = 3 * 10.5 * 1.5;
 
 const MAX_ITERATIONS = 80;
+export const PAGINATION_BUILD_MARKER = "[paginate] v3";
 
 const KEEP_WITH_NEXT_TYPES = new Set(["heading2", "heading3", "heading4"]);
 
@@ -153,6 +154,22 @@ export interface MeasureResult {
 
 export type MeasureFn = (blocks: Block[]) => Promise<MeasureResult>;
 
+export interface RemainingViolation {
+  id: string;
+  type: Block["type"];
+  text: string;
+}
+
+/** Final verification never suppresses too-long tables or unfixable headings. */
+export function collectRemaining(blocks: Block[], m: MeasureResult): RemainingViolation[] {
+  const ids = new Set(findViolations(blocks, m, new Set()));
+  return blocks.filter((b) => ids.has(b.id)).map((b) => ({
+    id: b.id,
+    type: b.type,
+    text: b.type.startsWith("heading") ? (b.content?.text ?? "") : "Tabulka",
+  }));
+}
+
 /**
  * Najde porušení v POŘADÍ DOKUMENTU (nadpis keep-with-next nebo rozdělená
  * tabulka). Vrací id bloků s porušením seřazené podle pořadí.
@@ -186,20 +203,17 @@ export async function runPaginationLoop(
   start: Block[],
   measure: MeasureFn,
   opts: { maxIterations?: number; onProgress?: (pass: number) => void } = {},
-): Promise<{ blocks: Block[]; inserted: number; tooLongTables: number; unresolved: number; passes: number }> {
+): Promise<{ blocks: Block[]; inserted: number; tooLongTables: number; unresolved: number; passes: number; remaining: RemainingViolation[] }> {
   const max = opts.maxIterations ?? MAX_ITERATIONS;
   let current = start;
   let inserted = 0;
   const tooLong = new Set<string>();
   let pending: { tableId: string; breakId: string } | null = null;
   let passes = 0;
-  let unresolved = 0;
 
   for (;;) {
     if (passes >= max) {
-      // Bezpečnostní limit – změř ještě jednou, kolik porušení zbylo.
-      const m = await measure(current);
-      unresolved = findViolations(current, m, tooLong).length;
+      // Final verification below also runs when the safety limit is reached.
       break;
     }
     passes++;
@@ -240,17 +254,19 @@ export async function runPaginationLoop(
       break;
     }
     if (!handled) {
-      unresolved = violations.filter((id) => !tooLong.has(id)).length;
       break;
     }
   }
-  return { blocks: current, inserted, tooLongTables: tooLong.size, unresolved, passes };
+  // Always remeasure the returned layout, even after convergence or a revert.
+  // Include problems that insertion guards and the tooLong skip could not fix.
+  const remaining = collectRemaining(current, await measure(current));
+  return { blocks: current, inserted, tooLongTables: tooLong.size, unresolved: remaining.length, passes, remaining };
 }
 
 export async function arrangePagination(
   blocks: Block[],
   options: ArrangeOptions & { onProgress?: (pass: number) => void } = {},
-): Promise<{ blocks: Block[]; inserted: number; tooLongTables: number; unresolved: number }> {
+): Promise<{ blocks: Block[]; inserted: number; tooLongTables: number; unresolved: number; remaining: RemainingViolation[] }> {
   const { numberHeadings, metadata, pageId, onProgress } = options;
 
   const h1 = applyH1Rule(stripAutoBreaks(blocks));
@@ -284,6 +300,6 @@ export async function arrangePagination(
 
   const res = await runPaginationLoop(h1.blocks, measure, { onProgress });
   const inserted = h1.inserted + res.inserted;
-  console.info("[paginate]", { passes: res.passes, inserted, tooLong: res.tooLongTables, unresolved: res.unresolved });
-  return { blocks: applyImageRewrites(res.blocks, rewrites), inserted, tooLongTables: res.tooLongTables, unresolved: res.unresolved };
+  console.info(PAGINATION_BUILD_MARKER, { passes: res.passes, inserted, tooLong: res.tooLongTables, unresolved: res.unresolved, remaining: res.remaining });
+  return { blocks: applyImageRewrites(res.blocks, rewrites), inserted, tooLongTables: res.tooLongTables, unresolved: res.unresolved, remaining: res.remaining };
 }
