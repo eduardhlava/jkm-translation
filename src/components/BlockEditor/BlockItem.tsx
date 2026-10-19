@@ -118,6 +118,7 @@ export default function BlockItem({ block, collapsed, onToggleCollapsed, onChang
         onChange={onChange}
         onDelete={onDelete}
         preview={preview}
+        headingNumber={headingNumber}
         attributes={attributes}
         listeners={listeners}
       />
@@ -138,6 +139,7 @@ function BlockHeader({
   onChange,
   onDelete,
   preview,
+  headingNumber,
   attributes,
   listeners,
 }: {
@@ -147,6 +149,7 @@ function BlockHeader({
   onChange: Props["onChange"];
   onDelete: Props["onDelete"];
   preview: string;
+  headingNumber?: string;
   attributes: any;
   listeners: any;
 }) {
@@ -191,13 +194,20 @@ function BlockHeader({
             {BLOCK_TYPE_LABELS[block.type]}
           </span>
         )}
+        {block.type.startsWith("heading") && headingNumber && (
+          <span className="shrink-0 rounded-full border border-muted-foreground/30 px-1.5 py-0.5 font-mono text-xs font-semibold tabular-nums text-muted-foreground">
+            {headingNumber}
+          </span>
+        )}
         {block.type === "image-table" && block.content?.autoTableBreak === true && (
           <span className="rounded-full border border-muted-foreground/30 px-1.5 py-0.5 text-[10px] text-muted-foreground">
             auto: tabulka na nové stránce
           </span>
         )}
         {collapsed && preview && (
-          <span className="ml-2 truncate text-xs text-muted-foreground/80">— {preview}</span>
+          <span className="ml-2 truncate text-xs text-muted-foreground/80">
+            {`— ${block.type.startsWith("heading") && headingNumber ? `${headingNumber} ` : ""}${preview}`}
+          </span>
         )}
       </div>
       <div className="flex items-center gap-10">
