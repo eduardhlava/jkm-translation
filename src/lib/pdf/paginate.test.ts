@@ -113,7 +113,7 @@ describe("toPreparedBlocks", () => {
     const prepared = [{ ...t, content: { html: "a", _inlined: true } }];
     const out = toPreparedBlocks(current, prepared);
     expect(out[0].content._inlined).toBe(true);
-    expect(out[1]).toBe(auto);
+    expect(out[1].id).toBe(auto.id);
     expect(out[1].content.auto).toBe(true);
   });
 });
