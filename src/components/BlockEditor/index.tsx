@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 import {
   DndContext,
   PointerSensor,
@@ -92,18 +93,56 @@ export default function BlockEditor({ blocks, onChange, numberHeadings, imageLab
     setCollapsed(() => Object.fromEntries(sorted.map((b) => [b.id, true])));
   const expandAll = () => setCollapsed(() => ({}));
 
+  // Sticky toolbar: detect "stuck" (scrolled away from the top) via the
+  // nearest scrolling ancestor's scrollTop, so only icons show while stuck.
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const [stuck, setStuck] = useState(false);
+  useEffect(() => {
+    const el = toolbarRef.current;
+    if (!el) return;
+    const scroller = el.closest(".overflow-auto");
+    if (!scroller) return;
+    const onScroll = () => setStuck((scroller as HTMLElement).scrollTop > 4);
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => scroller.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
     <div className="space-y-3">
       {(sorted.length > 0 || leftSlot) && (
-        <div className="flex items-center justify-between gap-2">
+        <div
+          ref={toolbarRef}
+          className={cn(
+            // Negative margins cancel the scroll container's p-4 so the bar pins flush.
+            "sticky top-0 z-20 -mx-4 -mt-4 px-4 pt-3 pb-2 flex items-center justify-between gap-2 bg-muted",
+            stuck && "border-b border-border/60 shadow-sm"
+          )}
+        >
           <div className="flex items-center gap-2">{leftSlot}</div>
           {sorted.length > 0 && (
             <div className="flex gap-1">
-              <Button type="button" variant="outline" size="sm" onClick={collapseAll}>
-                <ChevronsDownUp className="w-4 h-4 mr-1" /> Sbalit vše
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={collapseAll}
+                aria-label="Sbalit vše"
+                title="Sbalit vše"
+              >
+                <ChevronsDownUp className="w-4 h-4" />
+                {!stuck && <span className="ml-1">Sbalit vše</span>}
               </Button>
-              <Button type="button" variant="outline" size="sm" onClick={expandAll}>
-                <ChevronsUpDown className="w-4 h-4 mr-1" /> Rozbalit vše
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={expandAll}
+                aria-label="Rozbalit vše"
+                title="Rozbalit vše"
+              >
+                <ChevronsUpDown className="w-4 h-4" />
+                {!stuck && <span className="ml-1">Rozbalit vše</span>}
               </Button>
             </div>
           )}
