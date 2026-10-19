@@ -26,7 +26,7 @@ import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
 // Body text: 10.5pt × lineHeight 1.5 = 15.75pt na řádek → 3 řádky ≈ 47.25pt
 export const KEEP_WITH_NEXT_PT = 3 * 10.5 * 1.5;
 
-const MAX_ITERATIONS = 6;
+const MAX_ITERATIONS = 10;
 
 const KEEP_WITH_NEXT_TYPES = new Set(["heading2", "heading3", "heading4"]);
 
@@ -67,33 +67,47 @@ export function applyH1Rule(blocks: Block[]): { blocks: Block[]; inserted: numbe
 }
 
 /**
- * Vloží automatické konce stránky před nadpisy se zjištěným porušením
- * keep-with-next. Řetězce nadpisů (nadpisy bezprostředně za sebou) se řeší
- * vložením konce před první nadpis řetězce. Nikdy nevloží konec za jiný konec
- * ani jako první blok.
+ * Vloží automatické konce stránky před bloky se zjištěným porušením
+ * (keep-with-next nadpisů nebo rozdělená tabulka). Je-li cílový blok
+ * bezprostředně předcházen nadpisem či řetězcem nadpisů (bez obsahu mezi
+ * nimi), konec se vloží před PRVNÍ nadpis řetězce, aby nadpisy zůstaly
+ * spolu s obsahem. Nikdy nevloží konec za jiný konec ani jako první blok.
+ * Vrací i mapu původní cílové id → id vloženého konce (pro případný revert).
  */
 export function insertBreaksBefore(
   blocks: Block[],
   violatingIds: Set<string>,
-): { blocks: Block[]; inserted: number } {
-  const targets = new Set<string>();
+): { blocks: Block[]; inserted: number; breaksByTarget: Map<string, string> } {
+  const resolved = new Map<string, string>(); // původní cíl → id prvního bloku řetězce
   for (const id of violatingIds) {
     const idx = blocks.findIndex((b) => b.id === id);
     if (idx < 0) continue;
     let first = idx;
     while (first - 1 >= 0 && blocks[first - 1].type.startsWith("heading")) first--;
-    targets.add(blocks[first].id);
+    resolved.set(id, blocks[first].id);
   }
   const out: Block[] = [];
+  const breaksByTarget = new Map<string, string>();
   let inserted = 0;
   for (const b of blocks) {
-    if (targets.has(b.id) && out.length > 0 && out[out.length - 1].type !== "pagebreak") {
-      out.push(autoBreak(0));
+    const targetsHere = [...resolved.entries()].filter(([, firstId]) => firstId === b.id).map(([targetId]) => targetId);
+    if (targetsHere.length > 0 && out.length > 0 && out[out.length - 1].type !== "pagebreak") {
+      const brk = autoBreak(0);
+      out.push(brk);
       inserted++;
+      for (const targetId of targetsHere) breaksByTarget.set(targetId, brk.id);
     }
     out.push(b);
   }
-  return { blocks: renumber(out), inserted };
+  return { blocks: renumber(out), inserted, breaksByTarget };
+}
+
+/**
+ * Odebere konkrétní automatický konec stránky (revert pro tabulku delší než
+ * stránka) a přečísluje order. Ostatní konce (auto i ruční) zůstávají.
+ */
+export function revertAutoBreak(blocks: Block[], breakId: string): Block[] {
+  return renumber(blocks.filter((b) => !(b.id === breakId && b.type === "pagebreak" && b.content?.auto === true)));
 }
 
 export interface ArrangeOptions {
