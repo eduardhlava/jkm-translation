@@ -79,7 +79,7 @@ describe("real DocumentPdf portrait image safety", () => {
         layout = data._INTERNAL__LAYOUT__DATA_;
       } })).toBuffer();
       if (!layout) throw new Error("Renderer did not return layout");
-      expect(layout.children).toHaveLength(2);
+      expect(layout.children).toHaveLength(type === "image" ? 2 : 3);
       const images: Array<{ node: LayoutNode; page: number; parent: LayoutNode }> = [];
       const paragraphs: Array<{ node: LayoutNode; page: number }> = [];
       const walk = (node: LayoutNode, page: number, parent: LayoutNode) => {
@@ -99,9 +99,10 @@ describe("real DocumentPdf portrait image safety", () => {
       expect(parentBox.top + parentBox.height).toBeLessThanOrEqual(842 - 60);
       expect(parentBox.height).toBeGreaterThan(imageBox.height);
       const bodyParagraphs = paragraphs.filter(({ node }) => node.box && Math.abs(node.box.height - 15.75) < 0.1);
-      expect(bodyParagraphs.map(({ page }) => page)).toEqual([1, 2]);
-      assertNoFlowOverlap(layout);
-      expect(warn.mock.calls.filter((args) => args.some((arg) => String(arg).includes("can't wrap")))).toEqual([]);
+      expect(bodyParagraphs.map(({ page }) => page)).toEqual([1, type === "image" ? 2 : 3]);
+      // Pages use independent coordinate systems, so compare flow within each.
+      layout.children?.forEach(assertNoFlowOverlap);
+      expect(warn.mock.calls).toEqual([]);
     } finally {
       warn.mockRestore();
     }
