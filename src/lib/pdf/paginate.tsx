@@ -286,7 +286,7 @@ export async function runPaginationLoop(
           handled = true;
           break;
         }
-        if (tgt && (tgt.type === "table" || tgt.type === "image-table")) tooLong.add(id);
+        if (tgt?.type === "table") tooLong.add(id);
         continue;
       }
       inserted += res.inserted;
