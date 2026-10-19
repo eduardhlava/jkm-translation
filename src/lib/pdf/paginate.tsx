@@ -155,7 +155,7 @@ export function applyImageRewrites(blocks: Block[], rewrites: Map<string, string
 export async function arrangePagination(
   blocks: Block[],
   options: ArrangeOptions = {},
-): Promise<{ blocks: Block[]; inserted: number }> {
+): Promise<{ blocks: Block[]; inserted: number; tooLongTables: number }> {
   const { numberHeadings, metadata, pageId } = options;
 
   let current = stripAutoBreaks(blocks);
@@ -172,12 +172,21 @@ export async function arrangePagination(
     inlineMetadataAssets(metadata, pageId),
   ]);
 
+  // Tabulky, u kterých se i po vloženém konci stránky ukázalo, že jsou delší
+  // než stránka – konec se revertuje (vytvořil by jen prázdné místo) a
+  // tabulka se v tomto běhu už nezkouší znovu.
+  const tooLong = new Set<string>();
+  // Tabulky s čerstvě vloženým koncem stránky: id tabulky → id konce.
+  const tableBreaks = new Map<string, string>();
+
   for (let iter = 0; iter < MAX_ITERATIONS; iter++) {
     const prepared = toPreparedBlocks(current, preparedBase);
 
     const headingPages = new Map<string, number>();
     const prevEndPages = new Map<string, number>();
     const nextStartPages = new Map<string, number>();
+    const tableStartPages = new Map<string, number>();
+    const tableEndPages = new Map<string, number>();
     await pdf(
       <DocumentPdf
         title=""
@@ -186,30 +195,62 @@ export async function arrangePagination(
         pageMap={new Map()}
         numberHeadings={numberHeadings}
         metadata={preparedMetadata}
-        measure={{ keepWithNextPt: KEEP_WITH_NEXT_PT, headingPages, prevEndPages, nextStartPages }}
+        measure={{ keepWithNextPt: KEEP_WITH_NEXT_PT, headingPages, prevEndPages, nextStartPages, tableStartPages, tableEndPages }}
       />,
     ).toBlob();
 
+    // Revert příliš dlouhých tabulek: konec byl vložen, ale tabulka se stále
+    // láme → je delší než stránka, konec odebereme a označíme jako tooLong.
+    let reverted = false;
+    for (const [tableId, breakId] of tableBreaks) {
+      const s = tableStartPages.get(tableId);
+      const e = tableEndPages.get(tableId);
+      if (s !== undefined && e !== undefined && e > s) {
+        current = revertAutoBreak(current, breakId);
+        tooLong.add(tableId);
+        reverted = true;
+      }
+      tableBreaks.delete(tableId);
+    }
+
     const violations = new Set<string>();
     for (const b of prepared) {
-      if (!KEEP_WITH_NEXT_TYPES.has(b.type)) continue;
-      const headingPage = headingPages.get(b.id);
-      const prevEndPage = prevEndPages.get(b.id);
-      if (headingPage !== undefined && prevEndPage !== undefined && headingPage > prevEndPage) {
-        violations.add(b.id);
+      if (KEEP_WITH_NEXT_TYPES.has(b.type)) {
+        const headingPage = headingPages.get(b.id);
+        const prevEndPage = prevEndPages.get(b.id);
+        if (headingPage !== undefined && prevEndPage !== undefined && headingPage > prevEndPage) {
+          violations.add(b.id);
+          continue;
+        }
+        const nextStartPage = nextStartPages.get(b.id);
+        if (headingPage !== undefined && nextStartPage !== undefined && nextStartPage > headingPage) {
+          violations.add(b.id);
+        }
         continue;
       }
-      const nextStartPage = nextStartPages.get(b.id);
-      if (headingPage !== undefined && nextStartPage !== undefined && nextStartPage > headingPage) {
-        violations.add(b.id);
+      // Pravidlo pro tabulky: tabulka (nebo tabulková část image-table) se
+      // nesmí lámat přes stránky.
+      if ((b.type === "table" || b.type === "image-table") && !tooLong.has(b.id)) {
+        const s = tableStartPages.get(b.id);
+        const e = tableEndPages.get(b.id);
+        if (s !== undefined && e !== undefined && e > s) violations.add(b.id);
       }
     }
 
-    if (violations.size === 0) break;
+    if (violations.size === 0) {
+      if (reverted) continue; // po revertu přeměřit
+      break;
+    }
     const res = insertBreaksBefore(current, violations);
     inserted += res.inserted;
+    for (const [targetId, breakId] of res.breaksByTarget) {
+      const tgt = current.find((b) => b.id === targetId);
+      if (tgt && (tgt.type === "table" || tgt.type === "image-table")) {
+        tableBreaks.set(targetId, breakId);
+      }
+    }
     current = res.blocks;
   }
 
-  return { blocks: applyImageRewrites(current, rewrites), inserted };
+  return { blocks: applyImageRewrites(current, rewrites), inserted, tooLongTables: tooLong.size };
 }
