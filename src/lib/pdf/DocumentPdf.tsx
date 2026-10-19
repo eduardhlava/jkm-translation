@@ -713,11 +713,11 @@ function BlockNode({ block, collector, number, imageCaption, measure, measureNex
     case "heading4": return <Heading block={block} level={4} number={number} measure={measure} />;
     case "text":     return <TextBlock block={block} startMarker={startMarker} />;
     case "image":    return withPictogram(block, <ImageBlock block={block} captionOverride={imageCaption} startMarker={startMarker} />);
-    case "table":    return withPictogram(block, <TableBlock block={block} startMarker={startMarker} />);
+    case "table":    return withPictogram(block, <TableBlock block={block} startMarker={startMarker} measure={measure} measureStartId={block.id} measureEndId={block.id} />);
     case "image-table": return withPictogram(block, (
       <>
-        <ImageBlock block={{ ...block, type: "image", content: block.content?.image ?? {} } as Block} captionOverride={imageCaption} startMarker={startMarker} />
-        <TableBlock block={{ ...block, type: "table", content: block.content?.table ?? { headerRow: true, rows: [] } } as Block} />
+        <ImageBlock block={{ ...block, type: "image", content: block.content?.image ?? {} } as Block} captionOverride={imageCaption} startMarker={startMarker} measure={measure} measureStartId={block.id} />
+        <TableBlock block={{ ...block, type: "table", content: block.content?.table ?? { headerRow: true, rows: [] } } as Block} measure={measure} measureEndId={block.id} />
       </>
     ));
     case "alert":
