@@ -54,6 +54,11 @@ for (const family of FONT_ALIASES) {
 Font.registerHyphenationCallback((word) => [word]);
 
 
+// Regression: an oversized unbreakable image makes react-pdf shrink siblings,
+// squeezing text lines and overlapping images. Reserve room for margins/caption
+// within the 732pt A4 body, and never flex-shrink the surrounding block containers.
+const MAX_IMAGE_HEIGHT_PT = 640;
+
 // ---------- Styles ----------
 const styles = StyleSheet.create({
   page: {
@@ -65,25 +70,26 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
   docTitle: { fontSize: 20, lineHeight: 1.2, fontFamily: "NotoSans", fontWeight: "bold", marginBottom: 14 },
-  h1Wrap: { width: "100%", marginTop: 28, marginBottom: 8 },
-  h2Wrap: { width: "100%", marginTop: 24, marginBottom: 6 },
-  h3Wrap: { width: "100%", marginTop: 20, marginBottom: 4 },
-  h4Wrap: { width: "100%", marginTop: 18, marginBottom: 3 },
+  h1Wrap: { width: "100%", marginTop: 28, marginBottom: 8, flexShrink: 0 },
+  h2Wrap: { width: "100%", marginTop: 24, marginBottom: 6, flexShrink: 0 },
+  h3Wrap: { width: "100%", marginTop: 20, marginBottom: 4, flexShrink: 0 },
+  h4Wrap: { width: "100%", marginTop: 18, marginBottom: 3, flexShrink: 0 },
   spacer: { height: 31.5, flexShrink: 0 },
   h1: { fontSize: 16, lineHeight: 1.25, fontFamily: "NotoSans", fontWeight: "bold" },
   h2: { fontSize: 13, lineHeight: 1.25, fontFamily: "NotoSans", fontWeight: "bold" },
   h3: { fontSize: 11.5, lineHeight: 1.25, fontFamily: "NotoSans", fontWeight: "bold" },
   h4: { fontSize: 10.5, lineHeight: 1.25, fontFamily: "NotoSans", fontWeight: "bold" },
-  textBlock: { width: "100%" },
-  paragraphWrap: { width: "100%", marginBottom: 6 },
+  textBlock: { width: "100%", flexShrink: 0 },
+  paragraphWrap: { width: "100%", marginBottom: 6, flexShrink: 0 },
   p: { fontSize: 10.5, lineHeight: 1.5 },
-  li: { flexDirection: "row", marginBottom: 2, fontSize: 10.5, lineHeight: 1.5 },
+  li: { flexDirection: "row", marginBottom: 2, fontSize: 10.5, lineHeight: 1.5, flexShrink: 0 },
   liBullet: { width: 14 },
   liContent: { flex: 1 },
-  imageBlock: { width: "100%", marginVertical: 10, alignItems: "center" },
+  imageBlock: { width: "100%", marginVertical: 10, alignItems: "center", flexShrink: 0 },
   image: { objectFit: "contain" },
   caption: { fontSize: 9, color: "#6b7280", textAlign: "center", marginTop: 2 },
   callout: {
+    flexShrink: 0,
     flexDirection: "row",
     gap: 8,
     padding: 10,
@@ -93,8 +99,8 @@ const styles = StyleSheet.create({
   },
   calloutIcon: { fontSize: 14 },
   calloutText: { flex: 1 },
-  table: { borderWidth: 1, borderColor: "#d1d5db", marginVertical: 6 },
-  tr: { flexDirection: "row" },
+  table: { borderWidth: 1, borderColor: "#d1d5db", marginVertical: 6, flexShrink: 0 },
+  tr: { flexDirection: "row", flexShrink: 0 },
   td: { flex: 1, minWidth: 0, padding: 5, borderRightWidth: 1, borderBottomWidth: 1, borderColor: "#d1d5db", fontSize: 10 },
   cellIcon: { width: 16, height: 16, flexShrink: 0 },
   cellText: { flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 0 },
@@ -395,7 +401,7 @@ function Heading({ block, level, collector, number, measure }: { block: Block; l
   // so react-pdf 4.5.1 never sees the reserved space during its page-fit check.
   // The outer margin compensates only following content positions, not fit height.
   return (
-    <View wrap={false} style={{ marginBottom: -measure.keepWithNextPt }}>
+    <View wrap={false} style={{ marginBottom: -measure.keepWithNextPt, flexShrink: 0 }}>
       {inner}
       <View style={{ height: measure.keepWithNextPt }} />
     </View>
@@ -593,7 +599,7 @@ function TextBlock({ block, startMarker }: { block: Block; startMarker?: JSX.Ele
   const pictogram = block.content?.pictogram;
   if (pictogram && pictogram !== "none") {
     return (
-      <View style={{ position: "relative", marginVertical: 4 }}>
+      <View style={{ position: "relative", marginVertical: 4, flexShrink: 0 }}>
         <View style={{ position: "absolute", left: -36, top: 2, width: 30, alignItems: "center" }}>
           <PictogramSvg kind={pictogram} size={26} />
         </View>
@@ -616,7 +622,7 @@ function ImageBlock({ block, captionOverride, startMarker, measure, measureStart
         <PageMarker onPage={(p) => measure.tableStartPages.set(measureStartId, p)} />
       )}
       {/* eslint-disable-next-line jsx-a11y/alt-text */}
-      <Image src={url} style={[styles.image, { width: "98%" }] as any} />
+      <Image src={url} style={[styles.image, { width: "98%", maxHeight: MAX_IMAGE_HEIGHT_PT }]} />
       {caption ? <Text style={styles.caption}>{caption}</Text> : null}
     </View>
   );
@@ -699,7 +705,7 @@ function withPictogram(block: Block, node: JSX.Element) {
   const pictogram = block.content?.pictogram;
   if (!pictogram || pictogram === "none") return node;
   return (
-    <View style={{ position: "relative", marginVertical: 4 }}>
+    <View style={{ position: "relative", marginVertical: 4, flexShrink: 0 }}>
       <View style={{ position: "absolute", left: -36, top: 2, width: 30, alignItems: "center" }}>
         <PictogramSvg kind={pictogram} size={26} />
       </View>

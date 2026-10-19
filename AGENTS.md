@@ -1,4 +1,5 @@
 # Architecture rules
+- PDF content images are height-limited with contained aspect ratio, and block containers never flex-shrink, so oversized unbreakable nodes cannot squeeze neighboring text or images.
 - PDF preview confirms stale layout fingerprints instead of disabling access; pagination-then-preview passes returned blocks directly to generation to avoid stale React state.
 - Pagination measures the real DocumentPdf sequentially; the keep-with-next probe compensates on its outer container, and an unconditional final measurement reports all remaining violations (including too-long tables), so skipped problems cannot appear as success.
 - Image-table pagination measures image and table starts separately and escalates from a whole-block break to a transient internal table break; prepared assets preserve the current flag so only tables exceeding a fresh page are classified too long.

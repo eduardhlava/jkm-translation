@@ -35,7 +35,7 @@ import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
 export const KEEP_WITH_NEXT_PT = 3 * 10.5 * 1.5;
 
 const MAX_ITERATIONS = 80;
-export const PAGINATION_BUILD_MARKER = "[paginate] v5";
+export const PAGINATION_BUILD_MARKER = "[paginate] v6";
 
 const KEEP_WITH_NEXT_TYPES = new Set(["heading2", "heading3", "heading4"]);
 
