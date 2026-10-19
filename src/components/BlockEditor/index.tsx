@@ -110,44 +110,47 @@ export default function BlockEditor({ blocks, onChange, numberHeadings, imageLab
 
   return (
     <div className="space-y-3">
-      {(sorted.length > 0 || leftSlot) && (
+      {leftSlot && <div className="flex items-center gap-2">{leftSlot}</div>}
+      {sorted.length > 0 && (
+        // Only the button group sticks: a compact pill pinned to the top-right.
+        // The wrapper ignores pointer events so blocks under it stay clickable.
         <div
           ref={toolbarRef}
           className={cn(
-            // Negative margins cancel the scroll container's p-4 so the bar pins flush.
-            "sticky top-0 z-20 -mx-4 -mt-4 px-4 pt-3 pb-2 flex items-center justify-between gap-2 bg-muted",
-            stuck && "border-b border-border/60 shadow-sm"
+            "sticky top-0 z-20 ml-auto w-fit pointer-events-none",
+            stuck &&
+              "rounded-md bg-muted-foreground/15 px-1.5 py-1 shadow-sm backdrop-blur-sm"
           )}
         >
-          <div className="flex items-center gap-2">{leftSlot}</div>
-          {sorted.length > 0 && (
-            <div className="flex gap-1">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={collapseAll}
-                aria-label="Sbalit vše"
-                title="Sbalit vše"
-              >
-                <ChevronsDownUp className="w-4 h-4" />
-                {!stuck && <span className="ml-1">Sbalit vše</span>}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={expandAll}
-                aria-label="Rozbalit vše"
-                title="Rozbalit vše"
-              >
-                <ChevronsUpDown className="w-4 h-4" />
-                {!stuck && <span className="ml-1">Rozbalit vše</span>}
-              </Button>
-            </div>
-          )}
+          <div className="flex items-center gap-1 pointer-events-auto">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 px-2"
+              onClick={collapseAll}
+              aria-label="Sbalit vše"
+              title="Sbalit vše"
+            >
+              <ChevronsDownUp className="w-4 h-4" />
+              {!stuck && <span className="ml-1">Sbalit vše</span>}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 px-2"
+              onClick={expandAll}
+              aria-label="Rozbalit vše"
+              title="Rozbalit vše"
+            >
+              <ChevronsUpDown className="w-4 h-4" />
+              {!stuck && <span className="ml-1">Rozbalit vše</span>}
+            </Button>
+          </div>
         </div>
       )}
+
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={sorted.map((b) => b.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-2">
