@@ -41,4 +41,29 @@ describe("real DocumentPdf heading probe", () => {
     expect(measure.prevEndPages.get("heading")).toBe(1);
     expect(measure.headingPages.get("heading")).toBe(2);
   });
+
+  it("long pictogram text starts beside its heading and continues on the next page", async () => {
+    const blocks = fixture(16);
+    const text = blocks.find((b) => b.id === "text");
+    if (!text) throw new Error("Missing fixture text");
+    text.content = { pictogram: "warning", html: `<p>${Array.from({ length: 30 }, (_, i) => `Warning line ${i + 1}`).join("<br>")}</p>` };
+    blocks.push({ id: "after", type: "heading2", template: "default", order: blocks.length, content: { text: "AFTER LONG TEXT" } });
+    const measure = measurement();
+    const collector = new Map<string, number>();
+    await pdf(<DocumentPdf title="" blocks={blocks} includeToc={false} measure={measure} collector={collector} />).toBuffer();
+    expect(measure.headingPages.get("heading")).toBe(1);
+    expect(measure.nextStartPages.get("heading")).toBe(1);
+    expect(collector.get("after")).toBe(2);
+  });
+
+  it("pictogram tables split by rows like normal tables", async () => {
+    const blocks = fixture(16).filter((b) => b.id !== "text");
+    blocks.push({ id: "table", type: "table", template: "default", order: blocks.length,
+      content: { pictogram: "warning", headerRow: false, rows: Array.from({ length: 20 }, (_, i) => [`Row ${i + 1}`]) } });
+    const measure = measurement();
+    await pdf(<DocumentPdf title="" blocks={blocks} includeToc={false} measure={measure} />).toBuffer();
+    expect(measure.tableStartPages.get("table")).toBe(1);
+    expect(measure.tableEndPages.get("table")).toBe(2);
+    expect(measure.nextStartPages.get("heading")).toBe(1);
+  });
 });

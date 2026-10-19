@@ -565,7 +565,7 @@ function TextBlock({ block, startMarker }: { block: Block; startMarker?: JSX.Ele
   };
 
   let body: JSX.Element;
-  // Značku začátku vložíme DO prvního odstavce (první nezalomitelná jednotka),
+  // Značku začátku vložíme DO prvního odstavce (i u zalomitelného piktogramového textu),
   // aby zaznamenala stránku, kde text skutečně začíná.
   const withMarker = (children: (JSX.Element | null)[]): (JSX.Element | null)[] => {
     if (!startMarker) return children;
@@ -592,7 +592,7 @@ function TextBlock({ block, startMarker }: { block: Block; startMarker?: JSX.Ele
   const pictogram = block.content?.pictogram;
   if (pictogram && pictogram !== "none") {
     return (
-      <View style={{ position: "relative", marginVertical: 4 }} wrap={false}>
+      <View style={{ position: "relative", marginVertical: 4 }}>
         <View style={{ position: "absolute", left: -36, top: 2, width: 30, alignItems: "center" }}>
           <PictogramSvg kind={pictogram} size={26} />
         </View>
@@ -695,7 +695,7 @@ function withPictogram(block: Block, node: JSX.Element) {
   const pictogram = block.content?.pictogram;
   if (!pictogram || pictogram === "none") return node;
   return (
-    <View style={{ position: "relative", marginVertical: 4 }} wrap={false}>
+    <View style={{ position: "relative", marginVertical: 4 }}>
       <View style={{ position: "absolute", left: -36, top: 2, width: 30, alignItems: "center" }}>
         <PictogramSvg kind={pictogram} size={26} />
       </View>
