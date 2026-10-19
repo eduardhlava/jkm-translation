@@ -16,6 +16,8 @@ import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
  *    v naší struktuře ukázal jako nespolehlivý, ověřeno empiricky).
  *  - Řetězce nadpisů (H2→H3→H4 bez obsahu mezi nimi) se řeší vložením konce
  *    stránky před PRVNÍ nadpis řetězce.
+ *  - Piktogram sám nebrání dělení obsahu: text je zalomitelný, obrázky si ponechají
+ *    vlastní wrap={false} a tabulky se mohou dělit pouze mezi řádky.
  *  - Tabulka (ani tabulková část image-table) se nesmí lámat přes stránky –
  *    jinak se před ni vloží konec stránky. Tabulka delší než stránka se
  *    nepřesouvá (vložený konec se revertuje a tabulka se označí jako tooLong).
@@ -30,7 +32,7 @@ import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
 export const KEEP_WITH_NEXT_PT = 3 * 10.5 * 1.5;
 
 const MAX_ITERATIONS = 80;
-export const PAGINATION_BUILD_MARKER = "[paginate] v3";
+export const PAGINATION_BUILD_MARKER = "[paginate] v4";
 
 const KEEP_WITH_NEXT_TYPES = new Set(["heading2", "heading3", "heading4"]);
 
