@@ -153,7 +153,7 @@ function BlockHeader({
   const [deleteOpen, setDeleteOpen] = useState(false);
   return (
     <div className={`flex items-center justify-between border-b border-muted-foreground/30 px-2 py-1 ${block.type === "image" || block.type === "image-table" ? "bg-success/10" : "bg-muted/30"}`}>
-      <div className="flex items-center gap-1 min-w-0 flex-1">
+      <div className="flex items-center gap-1 min-w-0 flex-1 flex-wrap">
         <button
           {...attributes}
           {...listeners}
@@ -189,6 +189,11 @@ function BlockHeader({
         ) : (
           <span className="text-xs font-medium text-muted-foreground shrink-0">
             {BLOCK_TYPE_LABELS[block.type]}
+          </span>
+        )}
+        {block.type === "image-table" && block.content?.autoTableBreak === true && (
+          <span className="rounded-full border border-muted-foreground/30 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+            auto: tabulka na nové stránce
           </span>
         )}
         {collapsed && preview && (
