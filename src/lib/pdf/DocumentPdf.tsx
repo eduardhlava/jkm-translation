@@ -1,5 +1,5 @@
 import { Document, Page, Text, View, Image, Link, StyleSheet, Font, Svg, Polygon, Path, Circle } from "@react-pdf/renderer";
-import { Fragment } from "react";
+import { Fragment, cloneElement } from "react";
 import { cellTextToHtml } from "@/components/BlockEditor/cellFormatting";
 import { parseCellPictogram, type Block, type Pictogram } from "@/components/BlockEditor/types";
 import notoRegular from "@/assets/fonts/NotoSans-Regular.ttf?url";
@@ -315,6 +315,24 @@ export interface MeasureContext {
   keepWithNextPt: number;
   headingPages: Map<string, number>;
   prevEndPages: Map<string, number>;
+  // Pro každý nadpis řetězce H2/H3/H4: stránka, kde skutečně ZAČÍNÁ první
+  // nezalomitelná jednotka prvního obsahového bloku za řetězcem (obrázek,
+  // callout, první řádek tabulky, první odstavec textu…). Když nextStart >
+  // headingPage, blok odskočil na další stránku a nadpis zůstal osiřelý.
+  nextStartPages: Map<string, number>;
+}
+
+/** Neviditelná značka zaznamenávající stránku začátku bloku pro dané nadpisy. */
+function StartMarker({ ids, measure }: { ids: string[]; measure: MeasureContext }) {
+  return (
+    <Text
+      style={{ height: 0, fontSize: 0 }}
+      render={({ pageNumber }) => {
+        for (const id of ids) measure.nextStartPages.set(id, pageNumber);
+        return "";
+      }}
+    />
+  );
 }
 
 function Heading({ block, level, collector, number, measure }: { block: Block; level: 1 | 2 | 3 | 4; collector?: PageMap; number?: string; measure?: MeasureContext }) {
@@ -455,7 +473,7 @@ function PictogramSvg({ kind, size = 26 }: { kind: Pictogram; size?: number }) {
 }
 
 
-function TextBlock({ block }: { block: Block }) {
+function TextBlock({ block, startMarker }: { block: Block; startMarker?: JSX.Element }) {
   const defaultPStyle = { ...styles.p } as any;
   const defaultLiStyle = { ...styles.li } as any;
 
@@ -525,18 +543,28 @@ function TextBlock({ block }: { block: Block }) {
   };
 
   let body: JSX.Element;
+  // Značku začátku vložíme DO prvního odstavce (první nezalomitelná jednotka),
+  // aby zaznamenala stránku, kde text skutečně začíná.
+  const withMarker = (children: (JSX.Element | null)[]): (JSX.Element | null)[] => {
+    if (!startMarker) return children;
+    const idx = children.findIndex((c) => c !== null);
+    if (idx < 0) return children;
+    const first = children[idx]!;
+    const clone = cloneElement(first, { key: first.key ?? "first" }, startMarker, first.props.children);
+    return [...children.slice(0, idx), clone, ...children.slice(idx + 1)];
+  };
   if (!root || root.children.length === 0) {
     const paragraphs = parseInline(block.content?.html ?? "");
     body = (
       <View style={styles.textBlock}>
-        {paragraphs.map((runs, i) =>
+        {withMarker(paragraphs.map((runs, i) =>
           runs.length ? <View key={i} style={styles.paragraphWrap}><Text style={defaultPStyle}><RunsText runs={runs} /></Text></View> : null
-        )}
+        ))}
       </View>
     );
   } else {
     renderRootChildren(root);
-    body = <View style={styles.textBlock}>{nodes}</View>;
+    body = <View style={styles.textBlock}>{withMarker(nodes)}</View>;
   }
 
   const pictogram = block.content?.pictogram;
@@ -553,13 +581,14 @@ function TextBlock({ block }: { block: Block }) {
   return body;
 }
 
-function ImageBlock({ block, captionOverride }: { block: Block; captionOverride?: string }) {
+function ImageBlock({ block, captionOverride, startMarker }: { block: Block; captionOverride?: string; startMarker?: JSX.Element }) {
   const url = block.content?.url;
   const alt = block.content?.alt;
   if (!url) return null;
   const caption = captionOverride !== undefined ? captionOverride : alt;
   return (
     <View wrap={false} style={styles.imageBlock}>
+      {startMarker}
       {/* eslint-disable-next-line jsx-a11y/alt-text */}
       <Image src={url} style={[styles.image, { width: "98%" }] as any} />
       {caption ? <Text style={styles.caption}>{caption}</Text> : null}
@@ -567,7 +596,7 @@ function ImageBlock({ block, captionOverride }: { block: Block; captionOverride?
   );
 }
 
-function TableBlock({ block }: { block: Block }) {
+function TableBlock({ block, startMarker }: { block: Block; startMarker?: JSX.Element }) {
   const rows: string[][] = block.content?.rows ?? [];
   const headerRow = !!block.content?.headerRow;
   const colWidths: number[] | undefined = block.content?.colWidths;
@@ -581,6 +610,7 @@ function TableBlock({ block }: { block: Block }) {
         const rowBg = rowColors[ri] ?? null;
         return (
           <View key={ri} style={[styles.tr, rowBg ? { backgroundColor: rowBg } : {}] as any} wrap={false}>
+            {ri === 0 ? startMarker : null}
             {row.map((cell, ci) => {
               const wStyle = hasWidths && colWidths
                 ? { width: `${colWidths[ci]}%`, flexGrow: 0, flexShrink: 0, flexBasis: `${colWidths[ci]}%` }
@@ -612,7 +642,7 @@ function TableBlock({ block }: { block: Block }) {
   );
 }
 
-function CalloutBlock({ block }: { block: Block }) {
+function CalloutBlock({ block, startMarker }: { block: Block; startMarker?: JSX.Element }) {
   const cfg = calloutCfg[block.type as keyof typeof calloutCfg];
   return (
     <View
@@ -622,6 +652,7 @@ function CalloutBlock({ block }: { block: Block }) {
       ] as any}
       wrap={false}
     >
+      {startMarker}
       <Text style={styles.calloutIcon}>{cfg.icon}</Text>
       <Text style={styles.calloutText}>{block.content?.text ?? ""}</Text>
     </View>
@@ -641,26 +672,33 @@ function withPictogram(block: Block, node: JSX.Element) {
   );
 }
 
-function BlockNode({ block, collector, number, imageCaption, measure }: { block: Block; collector?: PageMap; number?: string; imageCaption?: string; measure?: MeasureContext }) {
+function BlockNode({ block, collector, number, imageCaption, measure, measureNextFor }: { block: Block; collector?: PageMap; number?: string; imageCaption?: string; measure?: MeasureContext; measureNextFor?: string[] }) {
+  // Značka začátku první nezalomitelné jednotky bloku – pro detekci osiřelých
+  // nadpisů před nezalomitelným blokem (obrázek, callout, tabulka…).
+  const startMarker = measure && measureNextFor && measureNextFor.length > 0
+    ? <StartMarker ids={measureNextFor} measure={measure} />
+    : undefined;
   switch (block.type) {
     case "heading1": return <Heading block={block} level={1} collector={collector} number={number} />;
     case "heading2": return <Heading block={block} level={2} collector={collector} number={number} measure={measure} />;
     case "heading3": return <Heading block={block} level={3} collector={collector} number={number} measure={measure} />;
     case "heading4": return <Heading block={block} level={4} number={number} measure={measure} />;
-    case "text":     return <TextBlock block={block} />;
-    case "image":    return withPictogram(block, <ImageBlock block={block} captionOverride={imageCaption} />);
-    case "table":    return withPictogram(block, <TableBlock block={block} />);
+    case "text":     return <TextBlock block={block} startMarker={startMarker} />;
+    case "image":    return withPictogram(block, <ImageBlock block={block} captionOverride={imageCaption} startMarker={startMarker} />);
+    case "table":    return withPictogram(block, <TableBlock block={block} startMarker={startMarker} />);
     case "image-table": return withPictogram(block, (
       <>
-        <ImageBlock block={{ ...block, type: "image", content: block.content?.image ?? {} } as Block} captionOverride={imageCaption} />
+        <ImageBlock block={{ ...block, type: "image", content: block.content?.image ?? {} } as Block} captionOverride={imageCaption} startMarker={startMarker} />
         <TableBlock block={{ ...block, type: "table", content: block.content?.table ?? { headerRow: true, rows: [] } } as Block} />
       </>
     ));
     case "alert":
     case "info":
-    case "warning":  return <CalloutBlock block={block} />;
+    case "warning":  return <CalloutBlock block={block} startMarker={startMarker} />;
     case "pagebreak": return <View break />;
-    case "spacer": return <View wrap={false} style={styles.spacer} />;
+    case "spacer": return startMarker
+      ? <View wrap={false}>{startMarker}<View style={styles.spacer} /></View>
+      : <View wrap={false} style={styles.spacer} />;
     default: return null;
 
   }
@@ -857,20 +895,33 @@ export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collect
       <Page size="A4" style={styles.page}>
         <Footer footerVersion={footerVersion} />
         {!showToc && !metadata && <Text style={styles.docTitle}>{title}</Text>}
-        {ordered.map((b) => (
-          <Fragment key={b.id}>
-            {measure && (b.type === "heading2" || b.type === "heading3" || b.type === "heading4") && (
-              <Text
-                style={{ height: 0, fontSize: 0 }}
-                render={({ pageNumber }) => {
-                  measure.prevEndPages.set(b.id, pageNumber);
-                  return "";
-                }}
-              />
-            )}
-            <BlockNode block={b} collector={collector} number={numbers?.get(b.id)} imageCaption={captionFor(b)} measure={measure} />
-          </Fragment>
-        ))}
+        {(() => {
+          // Řetězec nadpisů H2/H3/H4 bez obsahu mezi nimi – první obsahový
+          // blok za řetězcem dostane značku začátku pro všechny jeho nadpisy.
+          let headingChain: string[] = [];
+          return ordered.map((b) => {
+            const isKeepHeading = b.type === "heading2" || b.type === "heading3" || b.type === "heading4";
+            const nextFor = !isKeepHeading && b.type !== "heading1" && b.type !== "pagebreak" && headingChain.length > 0
+              ? headingChain
+              : undefined;
+            const node = (
+              <Fragment key={b.id}>
+                {measure && isKeepHeading && (
+                  <Text
+                    style={{ height: 0, fontSize: 0 }}
+                    render={({ pageNumber }) => {
+                      measure.prevEndPages.set(b.id, pageNumber);
+                      return "";
+                    }}
+                  />
+                )}
+                <BlockNode block={b} collector={collector} number={numbers?.get(b.id)} imageCaption={captionFor(b)} measure={measure} measureNextFor={nextFor} />
+              </Fragment>
+            );
+            headingChain = isKeepHeading ? [...headingChain, b.id] : [];
+            return node;
+          });
+        })()}
       </Page>
     </Document>
   );

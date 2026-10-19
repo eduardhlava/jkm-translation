@@ -85,6 +85,7 @@ import DocumentMetadataDialog from "@/components/DocumentMetadata/DocumentMetada
 import NewDocumentDialog, { type CreatedDocument } from "@/components/NewDocumentDialog";
 import { ChevronDown, Plus } from "lucide-react";
 import { DEFAULT_DOCUMENT_METADATA, mergeMetadata, type DocumentMetadata } from "@/components/DocumentMetadata/types";
+import { layoutFingerprint } from "@/lib/pdf/fingerprint";
 
 type EditorMode = "blocks" | "wysiwyg";
 
@@ -248,11 +249,12 @@ const DocumentCreator = () => {
 
   // Fingerprint obsahu relevantního pro layout PDF — náhled PDF je povolen
   // jen tehdy, když odpovídá stavu po posledním uspořádání stránkování.
-  const layoutFingerprint = useMemo(
-    () => JSON.stringify({ blocks, numberHeadings, metadata }),
+  // URL obrázků se ignorují (rehydratace permanentních URL layout nemění).
+  const fingerprint = useMemo(
+    () => layoutFingerprint(blocks, numberHeadings, metadata),
     [blocks, numberHeadings, metadata]
   );
-  const pdfPreviewLocked = paginatedSnapshot === null || layoutFingerprint !== paginatedSnapshot;
+  const pdfPreviewLocked = paginatedSnapshot === null || fingerprint !== paginatedSnapshot;
 
   const arrangePagination = async () => {
     if (!activePage || paginating) return;
@@ -261,7 +263,7 @@ const DocumentCreator = () => {
       const { arrangePagination: arrange } = await import("@/lib/pdf/paginate");
       const result = await arrange(blocks, { numberHeadings, metadata, pageId: activePage.id });
       setBlocks(result.blocks);
-      setPaginatedSnapshot(JSON.stringify({ blocks: result.blocks, numberHeadings, metadata }));
+      setPaginatedSnapshot(layoutFingerprint(result.blocks, numberHeadings, metadata));
       toast.success(
         result.inserted > 0
           ? `Stránkování uspořádáno – vloženo ${result.inserted} konců stránky`

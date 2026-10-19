@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { stripAutoBreaks, applyH1Rule, insertBreaksBefore, KEEP_WITH_NEXT_PT } from "./paginate";
+import { stripAutoBreaks, applyH1Rule, insertBreaksBefore, toPreparedBlocks, applyImageRewrites, KEEP_WITH_NEXT_PT } from "./paginate";
 import type { Block, BlockType } from "@/components/BlockEditor/types";
 
 let seq = 0;
@@ -102,5 +102,36 @@ describe("insertBreaksBefore", () => {
 describe("KEEP_WITH_NEXT_PT", () => {
   it("odpovídá 3 řádkům základního textu (10.5pt × 1.5)", () => {
     expect(KEEP_WITH_NEXT_PT).toBeCloseTo(47.25, 2);
+  });
+});
+
+describe("toPreparedBlocks", () => {
+  it("namapuje bloky podle id na prepared verze a zachová nové auto konce stránky", () => {
+    const t = blk("text", { html: "a" });
+    const auto = blk("pagebreak", { auto: true });
+    const current = list(t, auto);
+    const prepared = [{ ...t, content: { html: "a", _inlined: true } }];
+    const out = toPreparedBlocks(current, prepared);
+    expect(out[0].content._inlined).toBe(true);
+    expect(out[1].id).toBe(auto.id);
+    expect(out[1].content.auto).toBe(true);
+  });
+});
+
+describe("applyImageRewrites", () => {
+  it("přepíše URL obrázku i image-table podle rewrites", () => {
+    const img = blk("image", { url: "old", alt: "a" });
+    const it_ = blk("image-table", { image: { url: "old2", alt: "" }, table: { headerRow: true, rows: [] } });
+    const txt = blk("text", { html: "x" });
+    const rw = new Map([["old", "new"], ["old2", "new2"]]);
+    const out = applyImageRewrites(list(img, it_, txt), rw);
+    expect(out[0].content.url).toBe("new");
+    expect(out[1].content.image.url).toBe("new2");
+    expect(out[2].content.html).toBe("x");
+  });
+
+  it("bez rewrites vrátí bloky beze změny", () => {
+    const blocks = list(blk("image", { url: "old" }));
+    expect(applyImageRewrites(blocks, new Map())).toBe(blocks);
   });
 });
