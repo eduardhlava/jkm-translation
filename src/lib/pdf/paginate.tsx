@@ -21,6 +21,9 @@ import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
  *  - Tabulka (ani tabulková část image-table) se nesmí lámat přes stránky –
  *    jinak se před ni vloží konec stránky. Tabulka delší než stránka se
  *    nepřesouvá (vložený konec se revertuje a tabulka se označí jako tooLong).
+ *    Image-table nejprve přesune celý blok; pokud se tabulková část stále láme,
+ *    nahradí vnější konec interním autoTableBreak před tabulkou. Teprve když
+ *    se láme i na nové stránce, interní konec odstraní a označí tooLong.
  *  - Nikdy nevkládáme konec stránky za jiný konec stránky ani jako první blok.
  *
  * Automatické konce stránky jsou běžné `pagebreak` bloky s content.auto = true;
@@ -32,7 +35,7 @@ import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
 export const KEEP_WITH_NEXT_PT = 3 * 10.5 * 1.5;
 
 const MAX_ITERATIONS = 80;
-export const PAGINATION_BUILD_MARKER = "[paginate] v4";
+export const PAGINATION_BUILD_MARKER = "[paginate] v5";
 
 const KEEP_WITH_NEXT_TYPES = new Set(["heading2", "heading3", "heading4"]);
 
@@ -52,7 +55,11 @@ function renumber(blocks: Block[]): Block[] {
 
 /** Odstraní všechny automatické konce stránky (ruční zůstávají) a přečísluje order. */
 export function stripAutoBreaks(blocks: Block[]): Block[] {
-  return renumber(blocks.filter((b) => !(b.type === "pagebreak" && b.content?.auto === true)));
+  return renumber(blocks.filter((b) => !(b.type === "pagebreak" && b.content?.auto === true)).map((b) => {
+    if (b.type !== "image-table") return b;
+    const { autoTableBreak: _autoTableBreak, ...content } = b.content;
+    return { ...b, content };
+  }));
 }
 
 /**
@@ -129,7 +136,12 @@ export interface ArrangeOptions {
  */
 export function toPreparedBlocks(current: Block[], prepared: Block[]): Block[] {
   const byId = new Map(prepared.map((b) => [b.id, b]));
-  return current.map((b) => byId.get(b.id) ?? b);
+  return current.map((b) => {
+    const preparedBlock = byId.get(b.id);
+    if (!preparedBlock) return b;
+    // Keep the once-inlined assets, but measure the CURRENT internal break.
+    return { ...preparedBlock, order: b.order, content: { ...preparedBlock.content, autoTableBreak: b.content?.autoTableBreak } };
+  });
 }
 
 /** Aplikuje rehydratované (permanentní) URL obrázků na vracené bloky. */
@@ -151,6 +163,7 @@ export interface MeasureResult {
   prevEndPages: Map<string, number>;
   nextStartPages: Map<string, number>;
   tableStartPages: Map<string, number>;
+  tablePartStartPages: Map<string, number>;
   tableEndPages: Map<string, number>;
 }
 
@@ -187,7 +200,7 @@ export function findViolations(blocks: Block[], m: MeasureResult, tooLong: Set<s
       continue;
     }
     if ((b.type === "table" || b.type === "image-table") && !tooLong.has(b.id)) {
-      const s = m.tableStartPages.get(b.id);
+      const s = (b.type === "image-table" ? m.tablePartStartPages : m.tableStartPages).get(b.id);
       const e = m.tableEndPages.get(b.id);
       if (s !== undefined && e !== undefined && e > s) out.push(b.id);
     }
@@ -210,7 +223,14 @@ export async function runPaginationLoop(
   let current = start;
   let inserted = 0;
   const tooLong = new Set<string>();
-  let pending: { tableId: string; breakId: string } | null = null;
+  let pending: { tableId: string; stage: "whole" | "internal"; breakId?: string } | null = null;
+  const setTableBreak = (id: string, enabled: boolean) => {
+    current = current.map((b) => {
+      if (b.id !== id) return b;
+      const { autoTableBreak: _autoTableBreak, ...content } = b.content;
+      return { ...b, content: enabled ? { ...content, autoTableBreak: true } : content };
+    });
+  };
   let passes = 0;
 
   for (;;) {
@@ -223,13 +243,27 @@ export async function runPaginationLoop(
     const m = await measure(current);
 
     if (pending) {
-      const { tableId, breakId } = pending;
+      const { tableId, stage, breakId } = pending;
       pending = null;
-      const s = m.tableStartPages.get(tableId);
+      const target = current.find((b) => b.id === tableId);
+      const isImageTable = target?.type === "image-table";
+      const s = (isImageTable ? m.tablePartStartPages : m.tableStartPages).get(tableId);
       const e = m.tableEndPages.get(tableId);
       if (s !== undefined && e !== undefined && e > s) {
-        current = revertAutoBreak(current, breakId);
-        inserted--;
+        if (breakId) {
+          current = revertAutoBreak(current, breakId);
+          inserted--;
+        }
+        if (isImageTable && stage === "whole") {
+          setTableBreak(tableId, true);
+          inserted++;
+          pending = { tableId, stage: "internal" };
+          continue; // Step B: remeasure the table starting on a fresh page.
+        }
+        if (stage === "internal") {
+          setTableBreak(tableId, false);
+          inserted--;
+        }
         tooLong.add(tableId);
         continue; // přeměřit po revertu
       }
@@ -242,15 +276,23 @@ export async function runPaginationLoop(
     for (const id of violations) {
       const res = insertBreaksBefore(current, new Set([id]));
       if (res.inserted === 0) {
-        // Nelze vložit (první blok / za koncem stránky) – tabulku už nezkoušet.
+        // Already at the first block / after a break: Step A cannot add a break.
+        // Image-table still needs Step B, not a premature tooLong classification.
         const tgt = current.find((b) => b.id === id);
-        if (tgt && (tgt.type === "table" || tgt.type === "image-table")) tooLong.add(id);
+        if (tgt?.type === "image-table") {
+          setTableBreak(id, true);
+          inserted++;
+          pending = { tableId: id, stage: "internal" };
+          handled = true;
+          break;
+        }
+        if (tgt?.type === "table") tooLong.add(id);
         continue;
       }
       inserted += res.inserted;
       const tgt = current.find((b) => b.id === id);
       const brk = res.breaksByTarget.get(id);
-      if (tgt && brk && (tgt.type === "table" || tgt.type === "image-table")) pending = { tableId: id, breakId: brk };
+      if (tgt && brk && (tgt.type === "table" || tgt.type === "image-table")) pending = { tableId: id, stage: "whole", breakId: brk };
       current = res.blocks;
       handled = true;
       break;
@@ -283,7 +325,7 @@ export async function arrangePagination(
   const measure: MeasureFn = async (current) => {
     const m: MeasureResult = {
       headingPages: new Map(), prevEndPages: new Map(), nextStartPages: new Map(),
-      tableStartPages: new Map(), tableEndPages: new Map(),
+      tableStartPages: new Map(), tablePartStartPages: new Map(), tableEndPages: new Map(),
     };
     await pdf(
       <DocumentPdf

@@ -74,7 +74,7 @@ export interface TableContent {
   pictogram?: Pictogram;
 }
 export interface ImageContent { url: string; alt: string; width?: number; pictogram?: Pictogram }
-export interface ImageTableContent { image: ImageContent; table: TableContent; pictogram?: Pictogram }
+export interface ImageTableContent { image: ImageContent; table: TableContent; pictogram?: Pictogram; autoTableBreak?: boolean }
 export interface CalloutContent { text: string }
 export interface PageBreakContent {}
 

@@ -1,4 +1,5 @@
 # Tasks
+- [x] Implement image-table escalation with separate table-part measurement, internal automatic breaks, editor badge, export compatibility and v5 marker; all 48 tests pass including A→B→C mocks and a real ~511pt image + 15-row table rendered intact on page 2; automatic preview build OK.
 - [x] Allow pictogram text and table wrappers to split across PDF pages; retain first-paragraph start markers and inner non-wrapping units, marker v4; 39 tests pass including real PDF text/table splits, build OK; optional paragraph-size heuristic omitted.
 - [x] Correct the outer-container keep-with-next probe; final measurement reports all remaining violations with the v3 marker and warning toast; 37 tests pass including real DocumentPdf pagination regression; preview build OK.
 - [x] Correct the editable document header to use the page title with shared validated Notion rename handling; verified real rename, matching settings, empty-name and failed-write rollback in preview, then confirmed the original title after fresh reload.

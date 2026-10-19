@@ -1,5 +1,6 @@
 # Architecture rules
 - Pagination measures the real DocumentPdf sequentially; the keep-with-next probe compensates on its outer container, and an unconditional final measurement reports all remaining violations (including too-long tables), so skipped problems cannot appear as success.
+- Image-table pagination measures image and table starts separately and escalates from a whole-block break to a transient internal table break; prepared assets preserve the current flag so only tables exceeding a fresh page are classified too long.
 - Pictogram wrappers allow page wrapping; inner image and table-row units retain their own non-wrapping behavior so pictograms never force a whole text or table onto the next page.
 - Table rows remain string cells: rich cells use an explicit HTML discriminator after the pictogram token, sanitized by shared cell helpers; native Notion annotations carry B/I/U and metadata preserves unsupported indices with a visible-text guard, so legacy plain cells and Notion edits remain compatible.
 - Document header and metadata dialog share one title-update handler that renames the Notion page through updateTitle before updating the local list; printed metadata remains separate to prevent unsynchronized names and PDF changes.

@@ -321,9 +321,10 @@ export interface MeasureContext {
   // headingPage, blok odskočil na další stránku a nadpis zůstal osiřelý.
   nextStartPages: Map<string, number>;
   // Pravidlo pro tabulky: stránka prvního a posledního řádku tabulky
-  // (u image-table začátek = obrázek, konec = poslední řádek tabulky).
-  // Když endPage > startPage, tabulka se láme přes stránky.
+  // U image-table tableStartPages měří obrázek pro přesun celého bloku,
+  // tablePartStartPages měří první řádek pro detekci dělení samotné tabulky.
   tableStartPages: Map<string, number>;
+  tablePartStartPages: Map<string, number>;
   tableEndPages: Map<string, number>;
 }
 
@@ -621,7 +622,7 @@ function ImageBlock({ block, captionOverride, startMarker, measure, measureStart
   );
 }
 
-function TableBlock({ block, startMarker, measure, measureStartId, measureEndId }: { block: Block; startMarker?: JSX.Element; measure?: MeasureContext; measureStartId?: string; measureEndId?: string }) {
+function TableBlock({ block, startMarker, measure, measureStartId, measurePartStartId, measureEndId }: { block: Block; startMarker?: JSX.Element; measure?: MeasureContext; measureStartId?: string; measurePartStartId?: string; measureEndId?: string }) {
   const rows: string[][] = block.content?.rows ?? [];
   const headerRow = !!block.content?.headerRow;
   const colWidths: number[] | undefined = block.content?.colWidths;
@@ -639,6 +640,9 @@ function TableBlock({ block, startMarker, measure, measureStartId, measureEndId 
             {ri === 0 ? startMarker : null}
             {measure && measureStartId && ri === 0 && (
               <PageMarker onPage={(p) => measure.tableStartPages.set(measureStartId, p)} />
+            )}
+            {measure && measurePartStartId && ri === 0 && (
+              <PageMarker onPage={(p) => measure.tablePartStartPages.set(measurePartStartId, p)} />
             )}
             {measure && measureEndId && ri === lastRi && (
               <PageMarker onPage={(p) => measure.tableEndPages.set(measureEndId, p)} />
@@ -721,7 +725,9 @@ function BlockNode({ block, collector, number, imageCaption, measure, measureNex
     case "image-table": return withPictogram(block, (
       <>
         <ImageBlock block={{ ...block, type: "image", content: block.content?.image ?? {} } as Block} captionOverride={imageCaption} startMarker={startMarker} measure={measure} measureStartId={block.id} />
-        <TableBlock block={{ ...block, type: "table", content: block.content?.table ?? { headerRow: true, rows: [] } } as Block} measure={measure} measureEndId={block.id} />
+        {/* Caption stays inside ImageBlock; only the table moves to a new page. */}
+        {block.content?.autoTableBreak === true ? <View break /> : null}
+        <TableBlock block={{ ...block, type: "table", content: block.content?.table ?? { headerRow: true, rows: [] } } as Block} measure={measure} measurePartStartId={block.id} measureEndId={block.id} />
       </>
     ));
     case "alert":

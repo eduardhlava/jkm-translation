@@ -39,6 +39,7 @@ function serializeBlockMeta(b: Block): Record<string, unknown> {
       if (c.pictogram && c.pictogram !== "none") meta.pic = c.pictogram;
       break;
     case "image-table": {
+      // autoTableBreak is transient PDF layout, never Notion metadata/content.
       const img = c.image ?? {};
       const tbl = c.table ?? {};
       if (Number.isFinite(img.width)) meta.iw = img.width;

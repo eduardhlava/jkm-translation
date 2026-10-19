@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { stripAutoBreaks, applyH1Rule, insertBreaksBefore, toPreparedBlocks, applyImageRewrites, revertAutoBreak, KEEP_WITH_NEXT_PT } from "./paginate";
 import type { Block, BlockType } from "@/components/BlockEditor/types";
+import { blocksToHtml } from "@/components/BlockEditor/serialize";
 
 let seq = 0;
 function blk(type: BlockType, content: any = {}): Block {
@@ -29,6 +30,15 @@ describe("stripAutoBreaks", () => {
     const out = stripAutoBreaks(blocks);
     expect(out).toHaveLength(1);
     expect(out[0].order).toBe(0);
+  });
+
+  it("clears internal image-table breaks without mutating the original content", () => {
+    const table = blk("image-table", { autoTableBreak: true, image: { url: "image" }, table: { rows: [["a"]] } });
+    const out = stripAutoBreaks(list(table, blk("pagebreak")));
+    expect(out[0].content).not.toHaveProperty("autoTableBreak");
+    expect(table.content.autoTableBreak).toBe(true);
+    expect(stripAutoBreaks(out)).toEqual(out);
+    expect(out[1].type).toBe("pagebreak");
   });
 });
 
@@ -106,6 +116,15 @@ describe("KEEP_WITH_NEXT_PT", () => {
 });
 
 describe("toPreparedBlocks", () => {
+  it("preserves current internal breaks while reusing once-inlined images", () => {
+    const table = blk("image-table", { image: { url: "remote" }, table: { rows: [["a"]] } });
+    const prepared = [{ ...table, content: { ...table.content, image: { url: "data:inlined" } } }];
+    const current = { ...table, content: { ...table.content, autoTableBreak: true } };
+    const out = toPreparedBlocks([current], prepared);
+    expect(out[0].content.autoTableBreak).toBe(true);
+    expect(out[0].content.image.url).toBe("data:inlined");
+    expect(toPreparedBlocks([table], out)[0].content.autoTableBreak).toBeUndefined();
+  });
   it("namapuje bloky podle id na prepared verze a zachová nové auto konce stránky", () => {
     const t = blk("text", { html: "a" });
     const auto = blk("pagebreak", { auto: true });
@@ -185,7 +204,7 @@ import { runPaginationLoop, type MeasureResult } from "./paginate";
 /** Jednoduchý simulovaný layout: stránka 100 jednotek, výška v content.h. */
 function fakeMeasure(blocks: Block[]): Promise<MeasureResult> {
   const PAGE = 100;
-  const m: MeasureResult = { headingPages: new Map(), prevEndPages: new Map(), nextStartPages: new Map(), tableStartPages: new Map(), tableEndPages: new Map() };
+  const m: MeasureResult = { headingPages: new Map(), prevEndPages: new Map(), nextStartPages: new Map(), tableStartPages: new Map(), tablePartStartPages: new Map(), tableEndPages: new Map() };
   let page = 1, y = 0;
   let chain: string[] = [];
   for (const b of blocks) {
@@ -200,7 +219,18 @@ function fakeMeasure(blocks: Block[]): Promise<MeasureResult> {
       chain.push(b.id);
       continue;
     }
-    if (b.type === "table") {
+    if (b.type === "image-table") {
+      const imageH = b.content.image.h;
+      if (y + imageH > PAGE) { page++; y = 0; }
+      m.tableStartPages.set(b.id, page);
+      for (const id of chain) m.nextStartPages.set(id, page);
+      y += imageH;
+      if (b.content.autoTableBreak || y >= PAGE) { page++; y = 0; }
+      m.tablePartStartPages.set(b.id, page);
+      y += b.content.table.h;
+      while (y > PAGE) { page++; y -= PAGE; }
+      m.tableEndPages.set(b.id, page);
+    } else if (b.type === "table") {
       m.tableStartPages.set(b.id, page);
       for (const id of chain) m.nextStartPages.set(id, page);
       y += h;
@@ -274,10 +304,86 @@ describe("runPaginationLoop (sekvenční)", () => {
       return {
         headingPages: new Map(), prevEndPages: new Map(), nextStartPages: new Map(),
         tableStartPages: new Map([[table.id, 1]]),
+        tablePartStartPages: new Map([[table.id, 1]]),
         tableEndPages: new Map([[table.id, calls === 1 ? 1 : 2]]),
       };
     });
     expect(calls).toBe(2);
     expect(res.remaining).toEqual([{ id: table.id, type: "image-table", text: "Tabulka" }]);
+  });
+});
+
+describe("image-table escalation", () => {
+  function imageTable(imageH: number, tableH: number) {
+    return blk("image-table", { image: { h: imageH, url: "image", alt: "caption" }, table: { h: tableH, rows: [["a"]] } });
+  }
+
+  it("Step A moves the whole block before its heading chain when it fits", async () => {
+    const table = imageTable(30, 40);
+    const blocks = list(blk("text", { h: 40 }), blk("heading2", { h: 5 }), blk("heading3", { h: 5 }), table);
+    const res = await runPaginationLoop(blocks, fakeMeasure);
+    expect(res.blocks.map((b) => b.type)).toEqual(["text", "pagebreak", "heading2", "heading3", "image-table"]);
+    expect(res.blocks.at(-1)?.content.autoTableBreak).toBeUndefined();
+    expect(res.inserted).toBe(1);
+    expect(res.remaining).toEqual([]);
+    expect(res.tooLongTables).toBe(0);
+  });
+
+  it("A → B reverts the whole-block break and keeps just the internal break", async () => {
+    const table = imageTable(70, 50);
+    const states: Block[][] = [];
+    const res = await runPaginationLoop(list(blk("text", { h: 10 }), blk("heading2", { h: 5 }), blk("heading3", { h: 5 }), table), async (current) => {
+      states.push(current);
+      return fakeMeasure(current);
+    });
+    expect(states[1].map((b) => b.type)).toEqual(["text", "pagebreak", "heading2", "heading3", "image-table"]);
+    expect(states[2].some((b) => b.type === "pagebreak")).toBe(false);
+    expect(res.blocks.at(-1)?.content.autoTableBreak).toBe(true);
+    const m = await fakeMeasure(res.blocks);
+    expect(m.tablePartStartPages.get(table.id)).toBe(m.tableEndPages.get(table.id));
+    expect(res.inserted).toBe(1);
+    expect(res.tooLongTables).toBe(0);
+    expect(res.remaining).toEqual([]);
+  });
+
+  it("A → B → C removes both breaks and reports only the table that exceeds a page", async () => {
+    const table = imageTable(70, 150);
+    const states: Block[][] = [];
+    const res = await runPaginationLoop(list(blk("text", { h: 10 }), table), async (current) => {
+      states.push(current);
+      return fakeMeasure(current);
+    });
+    expect(states[1].some((b) => b.type === "pagebreak")).toBe(true);
+    expect(states[2].at(-1)?.content.autoTableBreak).toBe(true);
+    expect(res.blocks.some((b) => b.type === "pagebreak")).toBe(false);
+    expect(res.blocks.at(-1)?.content).not.toHaveProperty("autoTableBreak");
+    expect(res.tooLongTables).toBe(1);
+    expect(res.inserted).toBe(0);
+    expect(res.remaining).toEqual([{ id: table.id, type: "image-table", text: "Tabulka" }]);
+  });
+
+  it("tries B when the image-table is first or follows a manual break", async () => {
+    for (const prefix of [[], [blk("pagebreak")]]) {
+      const table = imageTable(70, 50);
+      const res = await runPaginationLoop(list(...prefix, table), fakeMeasure);
+      expect(res.blocks.at(-1)?.content.autoTableBreak).toBe(true);
+      expect(res.blocks.filter((b) => b.type === "pagebreak")).toHaveLength(prefix.length);
+      expect(res.tooLongTables).toBe(0);
+      expect(res.remaining).toEqual([]);
+    }
+  });
+
+  it("does not move a table already intact on a later page than its image", async () => {
+    const table = imageTable(100, 50);
+    const res = await runPaginationLoop(list(table), fakeMeasure);
+    expect(res.inserted).toBe(0);
+    expect(res.tooLongTables).toBe(0);
+    expect(res.remaining).toEqual([]);
+  });
+
+  it("ignores the extra flag in Notion HTML and metadata export", () => {
+    const table = imageTable(70, 50);
+    const flagged = { ...table, content: { ...table.content, autoTableBreak: true } };
+    expect(blocksToHtml([flagged])).toBe(blocksToHtml([table]));
   });
 });
