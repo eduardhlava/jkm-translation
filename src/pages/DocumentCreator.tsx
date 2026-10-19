@@ -85,7 +85,7 @@ import DocumentMetadataDialog from "@/components/DocumentMetadata/DocumentMetada
 import NewDocumentDialog, { type CreatedDocument } from "@/components/NewDocumentDialog";
 import { ChevronDown, Plus } from "lucide-react";
 import { DEFAULT_DOCUMENT_METADATA, mergeMetadata, type DocumentMetadata } from "@/components/DocumentMetadata/types";
-import { layoutFingerprint } from "@/lib/pdf/fingerprint";
+import { isPaginationCurrent, layoutFingerprint } from "@/lib/pdf/fingerprint";
 
 type EditorMode = "blocks" | "wysiwyg";
 
@@ -157,6 +157,7 @@ const DocumentCreator = () => {
   const [paginating, setPaginating] = useState(false);
   const [paginatePass, setPaginatePass] = useState(0);
   const [paginatedSnapshot, setPaginatedSnapshot] = useState<string | null>(null);
+  const [pdfPaginationDialogOpen, setPdfPaginationDialogOpen] = useState(false);
 
   const updateDocumentTitle = async (value: string) => {
     if (!activePage) throw new Error("Není vybrán dokument");
@@ -248,17 +249,17 @@ const DocumentCreator = () => {
   );
   const isDirty = activePage !== null && baselineSnapshot !== "" && currentSnapshot !== baselineSnapshot;
 
-  // Fingerprint obsahu relevantního pro layout PDF — náhled PDF je povolen
-  // jen tehdy, když odpovídá stavu po posledním uspořádání stránkování.
+  // Fingerprint obsahu relevantního pro layout PDF — neaktuální stránkování
+  // vyžaduje potvrzení náhledu, ale nikdy nezakazuje jeho otevření.
   // URL obrázků se ignorují (rehydratace permanentních URL layout nemění).
   const fingerprint = useMemo(
     () => layoutFingerprint(blocks, numberHeadings, metadata),
     [blocks, numberHeadings, metadata]
   );
-  const pdfPreviewLocked = paginatedSnapshot === null || fingerprint !== paginatedSnapshot;
+  const paginationCurrent = isPaginationCurrent(fingerprint, paginatedSnapshot);
 
   const arrangePagination = async () => {
-    if (!activePage || paginating) return;
+    if (!activePage || paginating) return null;
     setPaginating(true);
     setPaginatePass(0);
     try {
@@ -282,9 +283,11 @@ const DocumentCreator = () => {
         toast.warning(msg, { description: `Nepodařilo se vyřešit: ${labels.join(", ")}${suffix}` });
       }
       else toast.success(msg);
+      return result.blocks;
     } catch (e) {
       console.error("[paginate] failed", e);
       toast.error("Uspořádání stránkování selhalo", { description: e instanceof Error ? e.message : "" });
+      return null;
     } finally {
       setPaginating(false);
     }
@@ -569,10 +572,10 @@ const DocumentCreator = () => {
   };
 
 
-  const buildPdf = async (): Promise<Blob> => {
+  const buildPdf = async (previewBlocks: Block[] = blocks): Promise<Blob> => {
     const { generateDocumentPdf } = await import("@/lib/pdf/generate");
     const title = (docTitle || activePage?.properties[titleProp] || "dokument").trim();
-    return await generateDocumentPdf(title, blocks, {
+    return await generateDocumentPdf(title, previewBlocks, {
       numberHeadings,
       pageId: activePage?.id,
       metadata,
@@ -604,13 +607,13 @@ const DocumentCreator = () => {
   };
 
 
-  const previewPdf = async () => {
+  const previewPdf = async (previewBlocks: Block[] = blocks) => {
     if (!activePage) return;
     setPdfBuilding(true);
     setShowPdfPreview(true);
     setPdfBlob(null);
     try {
-      const blob = await buildPdf();
+      const blob = await buildPdf(previewBlocks);
       setPdfBlob(blob);
     } catch (e) {
       console.error("[pdf] generation failed", e);
@@ -619,6 +622,18 @@ const DocumentCreator = () => {
     } finally {
       setPdfBuilding(false);
     }
+  };
+
+  const requestPdfPreview = () => {
+    if (paginationCurrent) void previewPdf();
+    else setPdfPaginationDialogOpen(true);
+  };
+
+  const arrangeAndPreviewPdf = async () => {
+    setPdfPaginationDialogOpen(false);
+    const arrangedBlocks = await arrangePagination();
+    // Use the returned blocks: setBlocks has not updated this render's closure yet.
+    if (arrangedBlocks) await previewPdf(arrangedBlocks);
   };
 
   const closePdfPreview = () => {
@@ -957,20 +972,9 @@ const DocumentCreator = () => {
                   {paginating ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <ListOrdered className="w-4 h-4 mr-1" />}
                   {paginating ? `Uspořádávám…${paginatePass > 0 ? ` (průchod ${paginatePass})` : ""}` : "Uspořádat stránkování"}
                 </Button>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="inline-flex">
-                      <Button variant="outline" size="sm" onClick={previewPdf} disabled={saving || pdfPreviewLocked}>
-                        <Eye className="w-4 h-4 mr-1" /> Náhled PDF
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  {pdfPreviewLocked && (
-                    <TooltipContent>
-                      <p className="text-xs">Nejdřív klikněte na „Uspořádat stránkování“</p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
+                <Button variant="outline" size="sm" onClick={requestPdfPreview}>
+                  <Eye className="w-4 h-4 mr-1" /> Náhled PDF
+                </Button>
 
                 <div className="flex flex-col items-end">
                   <Tooltip>
@@ -1103,6 +1107,26 @@ const DocumentCreator = () => {
           </div>
         </div>
       )}
+
+      <AlertDialog open={pdfPaginationDialogOpen} onOpenChange={setPdfPaginationDialogOpen}>
+        <AlertDialogContent className="sm:max-w-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Stránkování nemusí odpovídat</AlertDialogTitle>
+            <AlertDialogDescription>
+              Od posledního uspořádání stránkování došlo ke změnám v dokumentu (nebo stránkování ještě nebylo spuštěno). Konce stránek proto nemusí odpovídat aktuálnímu obsahu. Opravdu chcete vytvořit náhled PDF?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:flex-wrap sm:gap-y-2">
+            <AlertDialogCancel>Zrušit</AlertDialogCancel>
+            <Button onClick={arrangeAndPreviewPdf} disabled={paginating}>
+              Uspořádat a zobrazit náhled
+            </Button>
+            <AlertDialogAction onClick={() => { void previewPdf(); }}>
+              Zobrazit náhled bez úprav
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={overwriteDialog.open} onOpenChange={(open) => !open && setOverwriteDialog({ open: false, targetId: null })}>
         <AlertDialogContent>
