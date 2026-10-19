@@ -308,18 +308,23 @@ function BlockBody({ block, onChange, headingNumber, imageNumber, imageLabelPref
     case "warning":
       return <CalloutBlockEditor block={block} onChange={onChange} />;
     case "pagebreak":
-      return <PageBreakBlock />;
+      return <PageBreakBlock auto={block.content?.auto === true} />;
     case "spacer":
       return <div className="h-8" aria-label="Horizontální mezera" />;
   }
 }
 
-function PageBreakBlock() {
+function PageBreakBlock({ auto }: { auto?: boolean }) {
   return (
     <div className="flex items-center gap-2 py-2 text-xs uppercase tracking-wider text-muted-foreground">
       <div className="h-px flex-1 border-t border-dashed" />
       <SeparatorHorizontal className="h-4 w-4" />
       <span>Konec stránky</span>
+      {auto && (
+        <span className="rounded-full border border-muted-foreground/30 px-1.5 py-0.5 text-[10px] normal-case tracking-normal">
+          auto
+        </span>
+      )}
       <div className="h-px flex-1 border-t border-dashed" />
     </div>
   );
