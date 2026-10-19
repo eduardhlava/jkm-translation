@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { stripAutoBreaks, applyH1Rule, insertBreaksBefore, toPreparedBlocks, applyImageRewrites, KEEP_WITH_NEXT_PT } from "./paginate";
+import { stripAutoBreaks, applyH1Rule, insertBreaksBefore, toPreparedBlocks, applyImageRewrites, revertAutoBreak, KEEP_WITH_NEXT_PT } from "./paginate";
 import type { Block, BlockType } from "@/components/BlockEditor/types";
 
 let seq = 0;
@@ -133,5 +133,49 @@ describe("applyImageRewrites", () => {
   it("bez rewrites vrátí bloky beze změny", () => {
     const blocks = list(blk("image", { url: "old" }));
     expect(applyImageRewrites(blocks, new Map())).toBe(blocks);
+  });
+});
+
+describe("insertBreaksBefore – cíl tabulka", () => {
+  it("řetězec H2→H3→tabulka: konec se vloží před H2", () => {
+    const h2 = blk("heading2", { text: "A" });
+    const h3 = blk("heading3", { text: "B" });
+    const tbl = blk("table", { headerRow: true, rows: [["a"]] });
+    const blocks = list(blk("text", { html: "x" }), h2, h3, tbl);
+    const { blocks: out, inserted, breaksByTarget } = insertBreaksBefore(blocks, new Set([tbl.id]));
+    expect(inserted).toBe(1);
+    expect(out.map((b) => b.type)).toEqual(["text", "pagebreak", "heading2", "heading3", "table"]);
+    expect(breaksByTarget.get(tbl.id)).toBe(out[1].id);
+  });
+
+  it("nevloží konec, když je tabulka první blok nebo za ní už je konec stránky", () => {
+    const tbl1 = blk("table", { headerRow: true, rows: [["a"]] });
+    const first = insertBreaksBefore(list(tbl1), new Set([tbl1.id]));
+    expect(first.inserted).toBe(0);
+    expect(first.blocks.map((b) => b.type)).toEqual(["table"]);
+
+    const tbl2 = blk("table", { headerRow: true, rows: [["a"]] });
+    const afterBreak = insertBreaksBefore(list(blk("pagebreak", {}), tbl2), new Set([tbl2.id]));
+    expect(afterBreak.inserted).toBe(0);
+    expect(afterBreak.blocks.map((b) => b.type)).toEqual(["pagebreak", "table"]);
+  });
+});
+
+describe("revertAutoBreak", () => {
+  it("odebere jen zadaný auto konec a ostatní konce zachová", () => {
+    const auto1 = blk("pagebreak", { auto: true });
+    const auto2 = blk("pagebreak", { auto: true });
+    const manual = blk("pagebreak", {});
+    const blocks = list(blk("text", { html: "a" }), auto1, blk("table", { rows: [["x"]] }), auto2, manual, blk("text", { html: "b" }));
+    const out = revertAutoBreak(blocks, auto1.id);
+    expect(out.map((b) => b.id)).toEqual([blocks[0].id, blocks[2].id, auto2.id, manual.id, blocks[5].id]);
+    expect(out.map((b) => b.order)).toEqual([0, 1, 2, 3, 4]);
+  });
+
+  it("neodstraní ruční konec stránky ani cizí blok se stejným id typu", () => {
+    const manual = blk("pagebreak", {});
+    const blocks = list(manual, blk("text", { html: "a" }));
+    const out = revertAutoBreak(blocks, manual.id);
+    expect(out).toHaveLength(2);
   });
 });

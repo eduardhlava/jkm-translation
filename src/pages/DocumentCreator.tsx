@@ -264,10 +264,13 @@ const DocumentCreator = () => {
       const result = await arrange(blocks, { numberHeadings, metadata, pageId: activePage.id });
       setBlocks(result.blocks);
       setPaginatedSnapshot(layoutFingerprint(result.blocks, numberHeadings, metadata));
+      const tooLongNote = result.tooLongTables > 0
+        ? ` (${result.tooLongTables} ${result.tooLongTables === 1 ? "tabulka je delší" : result.tooLongTables < 5 ? "tabulky jsou delší" : "tabulek je delších"} než stránka – ponechány rozdělené)`
+        : "";
       toast.success(
         result.inserted > 0
-          ? `Stránkování uspořádáno – vloženo ${result.inserted} konců stránky`
-          : "Stránkování je v pořádku, nic nebylo potřeba měnit",
+          ? `Stránkování uspořádáno – vloženo ${result.inserted} konců stránky${tooLongNote}`
+          : `Stránkování je v pořádku, nic nebylo potřeba měnit${tooLongNote}`,
       );
     } catch (e) {
       console.error("[paginate] failed", e);

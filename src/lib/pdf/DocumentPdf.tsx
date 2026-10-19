@@ -320,6 +320,24 @@ export interface MeasureContext {
   // callout, první řádek tabulky, první odstavec textu…). Když nextStart >
   // headingPage, blok odskočil na další stránku a nadpis zůstal osiřelý.
   nextStartPages: Map<string, number>;
+  // Pravidlo pro tabulky: stránka prvního a posledního řádku tabulky
+  // (u image-table začátek = obrázek, konec = poslední řádek tabulky).
+  // Když endPage > startPage, tabulka se láme přes stránky.
+  tableStartPages: Map<string, number>;
+  tableEndPages: Map<string, number>;
+}
+
+/** Neviditelná značka zaznamenávající číslo stránky. */
+function PageMarker({ onPage }: { onPage: (pageNumber: number) => void }) {
+  return (
+    <Text
+      style={{ height: 0, fontSize: 0 }}
+      render={({ pageNumber }) => {
+        onPage(pageNumber);
+        return "";
+      }}
+    />
+  );
 }
 
 /** Neviditelná značka zaznamenávající stránku začátku bloku pro dané nadpisy. */
@@ -581,7 +599,7 @@ function TextBlock({ block, startMarker }: { block: Block; startMarker?: JSX.Ele
   return body;
 }
 
-function ImageBlock({ block, captionOverride, startMarker }: { block: Block; captionOverride?: string; startMarker?: JSX.Element }) {
+function ImageBlock({ block, captionOverride, startMarker, measure, measureStartId }: { block: Block; captionOverride?: string; startMarker?: JSX.Element; measure?: MeasureContext; measureStartId?: string }) {
   const url = block.content?.url;
   const alt = block.content?.alt;
   if (!url) return null;
@@ -589,6 +607,9 @@ function ImageBlock({ block, captionOverride, startMarker }: { block: Block; cap
   return (
     <View wrap={false} style={styles.imageBlock}>
       {startMarker}
+      {measure && measureStartId && (
+        <PageMarker onPage={(p) => measure.tableStartPages.set(measureStartId, p)} />
+      )}
       {/* eslint-disable-next-line jsx-a11y/alt-text */}
       <Image src={url} style={[styles.image, { width: "98%" }] as any} />
       {caption ? <Text style={styles.caption}>{caption}</Text> : null}
@@ -596,7 +617,7 @@ function ImageBlock({ block, captionOverride, startMarker }: { block: Block; cap
   );
 }
 
-function TableBlock({ block, startMarker }: { block: Block; startMarker?: JSX.Element }) {
+function TableBlock({ block, startMarker, measure, measureStartId, measureEndId }: { block: Block; startMarker?: JSX.Element; measure?: MeasureContext; measureStartId?: string; measureEndId?: string }) {
   const rows: string[][] = block.content?.rows ?? [];
   const headerRow = !!block.content?.headerRow;
   const colWidths: number[] | undefined = block.content?.colWidths;
@@ -604,6 +625,7 @@ function TableBlock({ block, startMarker }: { block: Block; startMarker?: JSX.El
   if (rows.length === 0) return null;
   const cols = rows[0]?.length ?? 0;
   const hasWidths = !!colWidths && colWidths.length === cols && cols > 0;
+  const lastRi = rows.length - 1;
   return (
     <View style={styles.table}>
       {rows.map((row, ri) => {
@@ -611,6 +633,12 @@ function TableBlock({ block, startMarker }: { block: Block; startMarker?: JSX.El
         return (
           <View key={ri} style={[styles.tr, rowBg ? { backgroundColor: rowBg } : {}] as any} wrap={false}>
             {ri === 0 ? startMarker : null}
+            {measure && measureStartId && ri === 0 && (
+              <PageMarker onPage={(p) => measure.tableStartPages.set(measureStartId, p)} />
+            )}
+            {measure && measureEndId && ri === lastRi && (
+              <PageMarker onPage={(p) => measure.tableEndPages.set(measureEndId, p)} />
+            )}
             {row.map((cell, ci) => {
               const wStyle = hasWidths && colWidths
                 ? { width: `${colWidths[ci]}%`, flexGrow: 0, flexShrink: 0, flexBasis: `${colWidths[ci]}%` }
@@ -685,11 +713,11 @@ function BlockNode({ block, collector, number, imageCaption, measure, measureNex
     case "heading4": return <Heading block={block} level={4} number={number} measure={measure} />;
     case "text":     return <TextBlock block={block} startMarker={startMarker} />;
     case "image":    return withPictogram(block, <ImageBlock block={block} captionOverride={imageCaption} startMarker={startMarker} />);
-    case "table":    return withPictogram(block, <TableBlock block={block} startMarker={startMarker} />);
+    case "table":    return withPictogram(block, <TableBlock block={block} startMarker={startMarker} measure={measure} measureStartId={block.id} measureEndId={block.id} />);
     case "image-table": return withPictogram(block, (
       <>
-        <ImageBlock block={{ ...block, type: "image", content: block.content?.image ?? {} } as Block} captionOverride={imageCaption} startMarker={startMarker} />
-        <TableBlock block={{ ...block, type: "table", content: block.content?.table ?? { headerRow: true, rows: [] } } as Block} />
+        <ImageBlock block={{ ...block, type: "image", content: block.content?.image ?? {} } as Block} captionOverride={imageCaption} startMarker={startMarker} measure={measure} measureStartId={block.id} />
+        <TableBlock block={{ ...block, type: "table", content: block.content?.table ?? { headerRow: true, rows: [] } } as Block} measure={measure} measureEndId={block.id} />
       </>
     ));
     case "alert":
