@@ -315,6 +315,24 @@ export interface MeasureContext {
   keepWithNextPt: number;
   headingPages: Map<string, number>;
   prevEndPages: Map<string, number>;
+  // Pro každý nadpis řetězce H2/H3/H4: stránka, kde skutečně ZAČÍNÁ první
+  // nezalomitelná jednotka prvního obsahového bloku za řetězcem (obrázek,
+  // callout, první řádek tabulky, první odstavec textu…). Když nextStart >
+  // headingPage, blok odskočil na další stránku a nadpis zůstal osiřelý.
+  nextStartPages: Map<string, number>;
+}
+
+/** Neviditelná značka zaznamenávající stránku začátku bloku pro dané nadpisy. */
+function StartMarker({ ids, measure }: { ids: string[]; measure: MeasureContext }) {
+  return (
+    <Text
+      style={{ height: 0, fontSize: 0 }}
+      render={({ pageNumber }) => {
+        for (const id of ids) measure.nextStartPages.set(id, pageNumber);
+        return "";
+      }}
+    />
+  );
 }
 
 function Heading({ block, level, collector, number, measure }: { block: Block; level: 1 | 2 | 3 | 4; collector?: PageMap; number?: string; measure?: MeasureContext }) {
