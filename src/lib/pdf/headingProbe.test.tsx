@@ -6,6 +6,7 @@ import type { Block } from "@/components/BlockEditor/types";
 
 // Real renderer regression: a breakable paragraph must not defeat the 3-line
 // reservation. Local font paths let the renderer run without network requests.
+Font.clear();
 Font.register({ family: "NotoSans", fonts: [
   { src: resolve("src/assets/fonts/NotoSans-Regular.ttf"), fontWeight: "normal" },
   { src: resolve("src/assets/fonts/NotoSans-Bold.ttf"), fontWeight: "bold" },
