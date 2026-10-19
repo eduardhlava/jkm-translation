@@ -66,7 +66,7 @@ describe("real DocumentPdf portrait image safety", () => {
     const blocks: Block[] = [
       ...fixture(5).filter((b) => b.type === "spacer"),
       { id: "before", type: "text", template: "default", order: 5, content: { html: "<p>Paragraph before portrait.</p>" } },
-      { id: "portrait", type, template: "default", order: 6, content: type === "image" ? image : { image, table: { rows: [["One row"]] } } },
+      { id: "portrait", type, template: "default", order: 6, content: type === "image" ? image : { image, autoTableBreak: true, table: { rows: [["One row"]] } } },
       { id: "after", type: "text", template: "default", order: 7, content: { html: "<p>Paragraph after portrait.</p>" } },
     ];
     let layout: LayoutNode | undefined;
@@ -98,7 +98,6 @@ describe("real DocumentPdf portrait image safety", () => {
       // The image and caption live inside one unbreakable view within the body.
       expect(parentBox.top + parentBox.height).toBeLessThanOrEqual(842 - 60);
       expect(parentBox.height).toBeGreaterThan(imageBox.height);
-      console.log(paragraphs.map(({node,page}) => ({page, box: node.box, children: node.children})));
       const bodyParagraphs = paragraphs.filter(({ node }) => node.box && Math.abs(node.box.height - 15.75) < 0.1);
       expect(bodyParagraphs.map(({ page }) => page)).toEqual([1, type === "image" ? 2 : 3]);
       // Pages use independent coordinate systems, so compare flow within each.
