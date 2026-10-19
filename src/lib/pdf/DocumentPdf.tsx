@@ -323,8 +323,8 @@ function Heading({ block, level, collector, number, measure }: { block: Block; l
   const text = block.content?.text ?? "";
   const prefixed = number ? `${number}  ${text}` : text;
   const keepWithNext = measure && level >= 2;
-  return (
-    <View wrap={false} style={wrapStyleMap[level]} {...(keepWithNext ? { minPresenceAhead: measure.keepWithNextPt } : {})}>
+  const inner = (
+    <View wrap={false} style={wrapStyleMap[level]}>
       <Text style={styleMap[level]}>{prefixed}</Text>
       {collector && level <= 3 && (
         <Text
@@ -344,6 +344,19 @@ function Heading({ block, level, collector, number, measure }: { block: Block; l
           }}
         />
       )}
+    </View>
+  );
+  if (!keepWithNext) return inner;
+  // minPresenceAhead se v naší struktuře (sourozenci v jedné <Page>) spolehlivě
+  // neuplatní, proto měříme sondou: nadpis + neviditelná sonda vysoká
+  // keepWithNextPt s kompenzačním záporným marginem v nezalomitelném
+  // kontejneru. Když se pod nadpis nevejde keepWithNextPt prostoru, react-pdf
+  // přesune celý kontejner na další stránku a my porušení poznáme podle
+  // rozdílu stránek (headingPage > prevEndPage).
+  return (
+    <View wrap={false}>
+      {inner}
+      <View style={{ height: measure.keepWithNextPt, marginBottom: -measure.keepWithNextPt }} />
     </View>
   );
 }
