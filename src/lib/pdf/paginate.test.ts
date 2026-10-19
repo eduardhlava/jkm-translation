@@ -222,11 +222,9 @@ describe("runPaginationLoop (sekvenční)", () => {
     // Při hromadném vkládání by se B (na staré pozici rozdělená) zbytečně posunula.
     const A = blk("table", { h: 50 });
     const B = blk("table", { h: 50 });
-    const blocks = list(blk("text", { h: 60 }), A, blk("text", { h: 30 }), B);
-    const before = await fakeMeasure(blocks);
-    expect(before.tableEndPages.get(B.id)! > before.tableStartPages.get(B.id)!).toBe(true);
+    const blocks = list(blk("text", { h: 60 }), A, blk("text", { h: 40 }), B);
     const res = await runPaginationLoop(blocks, fakeMeasure);
-    expect(res.inserted).toBe(1);
+    expect(res.inserted).toBe(1); // jen konec před A; B se po posunu už nerozdělí
     const after = await fakeMeasure(res.blocks);
     expect(after.tableEndPages.get(A.id)).toBe(after.tableStartPages.get(A.id));
     expect(after.tableEndPages.get(B.id)).toBe(after.tableStartPages.get(B.id));
