@@ -16,6 +16,9 @@ import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
  *    v naší struktuře ukázal jako nespolehlivý, ověřeno empiricky).
  *  - Řetězce nadpisů (H2→H3→H4 bez obsahu mezi nimi) se řeší vložením konce
  *    stránky před PRVNÍ nadpis řetězce.
+ *  - Tabulka (ani tabulková část image-table) se nesmí lámat přes stránky –
+ *    jinak se před ni vloží konec stránky. Tabulka delší než stránka se
+ *    nepřesouvá (vložený konec se revertuje a tabulka se označí jako tooLong).
  *  - Nikdy nevkládáme konec stránky za jiný konec stránky ani jako první blok.
  *
  * Automatické konce stránky jsou běžné `pagebreak` bloky s content.auto = true;
