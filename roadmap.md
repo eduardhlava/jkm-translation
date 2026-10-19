@@ -9,3 +9,4 @@
 - [x] Constrain pictogram cell text in editor and PDF.
 - [x] Render the electrical-danger lightning symbol in PDF.
 - [x] Verify adding a spacer and generating/downloading PDF in the authenticated editor; visually inspect all four PDF pages. Table overflow and wrong electrical symbol are corrected; no additional PDF layout issues found.
+- [x] Automatic pagination ("Uspořádat stránkování"): paginate.tsx with H1 rule, keep-with-next via react-pdf probe measurement (minPresenceAhead proven unreliable empirically), heading chains, max 6 iterations; PDF preview gated by layout fingerprint; 10 unit tests pass; build OK.
