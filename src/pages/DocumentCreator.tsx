@@ -85,6 +85,7 @@ import DocumentMetadataDialog from "@/components/DocumentMetadata/DocumentMetada
 import NewDocumentDialog, { type CreatedDocument } from "@/components/NewDocumentDialog";
 import { ChevronDown, Plus } from "lucide-react";
 import { DEFAULT_DOCUMENT_METADATA, mergeMetadata, type DocumentMetadata } from "@/components/DocumentMetadata/types";
+import { layoutFingerprint } from "@/lib/pdf/fingerprint";
 
 type EditorMode = "blocks" | "wysiwyg";
 
