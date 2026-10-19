@@ -271,8 +271,16 @@ const DocumentCreator = () => {
         : "";
       const msg = result.inserted > 0
         ? `Stránkování uspořádáno – vloženo ${result.inserted} konců stránky${tooLongNote}`
-        : `Stránkování je v pořádku, nic nebylo potřeba měnit${tooLongNote}`;
-      if (result.unresolved > 0) toast.warning(`${msg} – ${result.unresolved} míst se nepodařilo automaticky uspořádat`);
+        : result.remaining.length > 0
+          ? `Stránkování zkontrolováno – nebyl vložen žádný konec stránky${tooLongNote}`
+          : `Stránkování je v pořádku, nic nebylo potřeba měnit${tooLongNote}`;
+      if (result.remaining.length > 0) {
+        const labels = result.remaining.slice(0, 3).map(({ text }) =>
+          text.length > 80 ? `${text.slice(0, 80)}…` : text || "Nadpis"
+        );
+        const suffix = result.remaining.length > 3 ? ", …" : "";
+        toast.warning(msg, { description: `Nepodařilo se vyřešit: ${labels.join(", ")}${suffix}` });
+      }
       else toast.success(msg);
     } catch (e) {
       console.error("[paginate] failed", e);

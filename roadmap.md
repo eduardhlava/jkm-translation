@@ -1,4 +1,5 @@
 # Tasks
+- [x] Correct the outer-container keep-with-next probe; final measurement reports all remaining violations with the v3 marker and warning toast; 37 tests pass including real DocumentPdf pagination regression; preview build OK.
 - [x] Correct the editable document header to use the page title with shared validated Notion rename handling; verified real rename, matching settings, empty-name and failed-write rollback in preview, then confirmed the original title after fresh reload.
 - [x] Add table-cell B/I/U shortcuts and rich-content round trips; verified shortcut toggles, saved reload, native Notion annotations without local cache, indices/pictograms/breaks and downloaded PDF; restored original Notion content and saved row.
 - [x] Separate document page name from printed heading in metadata; verified real rename, unchanged printed metadata, empty-name validation and failed-write rollback in the authenticated preview; restored the original Notion title.
