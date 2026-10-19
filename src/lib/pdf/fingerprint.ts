@@ -1,6 +1,11 @@
 import type { Block } from "@/components/BlockEditor/types";
 import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
 
+/** A stale or missing pagination snapshot prompts confirmation, not a disabled preview. */
+export function isPaginationCurrent(fingerprint: string, paginatedSnapshot: string | null): boolean {
+  return paginatedSnapshot !== null && fingerprint === paginatedSnapshot;
+}
+
 /**
  * Fingerprint obsahu relevantního pro layout PDF. URL obrázků se záměrně
  * ignorují (nahrazují se konstantou) – rehydratace dočasných Notion URL na

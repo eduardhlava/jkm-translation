@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { layoutFingerprint } from "./fingerprint";
+import { isPaginationCurrent, layoutFingerprint } from "./fingerprint";
 import type { Block } from "@/components/BlockEditor/types";
 
 const img = (url: string): Block => ({
@@ -27,6 +27,25 @@ const text = (): Block => ({
 });
 
 describe("layoutFingerprint", () => {
+  it("requires preview confirmation when pagination has never run", () => {
+    expect(isPaginationCurrent(layoutFingerprint([text()], true, undefined), null)).toBe(false);
+  });
+
+  it("allows direct preview for the last paginated layout", () => {
+    const snapshot = layoutFingerprint([text()], true, undefined);
+    expect(isPaginationCurrent(layoutFingerprint([text()], true, undefined), snapshot)).toBe(true);
+  });
+
+  it("requires preview confirmation after content changes", () => {
+    const snapshot = layoutFingerprint([text()], true, undefined);
+    expect(isPaginationCurrent(layoutFingerprint([{ ...text(), content: { html: "changed" } }], true, undefined), snapshot)).toBe(false);
+  });
+
+  it("keeps direct preview available after image URL rehydration", () => {
+    const snapshot = layoutFingerprint([img("temporary"), imgTable("temporary")], true, undefined);
+    expect(isPaginationCurrent(layoutFingerprint([img("permanent"), imgTable("permanent")], true, undefined), snapshot)).toBe(true);
+  });
+
   it("ignoruje změnu URL obrázku (rehydratace nezamkne náhled)", () => {
     const a = layoutFingerprint([img("https://docasna-url/1"), text()], true, undefined);
     const b = layoutFingerprint([img("https://permanentni-url/1"), text()], true, undefined);

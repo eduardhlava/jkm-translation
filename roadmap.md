@@ -1,4 +1,5 @@
 # Tasks
+- [ ] Make PDF preview always clickable, confirm stale pagination, and verify all preview choices and pagination-then-preview.
 - [x] Show the heading number in the block header (badge next to the heading-level label) and prefix the collapsed preview with it; nothing extra when numbering is off or a heading is unlisted; 48 tests pass, build OK, verified in the authenticated preview with numbering on and off.
 - [x] Implement image-table escalation with separate table-part measurement, internal automatic breaks, editor badge, export compatibility and v5 marker; all 48 tests pass including A→B→C mocks and a real ~511pt image + 15-row table rendered intact on page 2; automatic preview build OK.
 - [x] Allow pictogram text and table wrappers to split across PDF pages; retain first-paragraph start markers and inner non-wrapping units, marker v4; 39 tests pass including real PDF text/table splits, build OK; optional paragraph-size heuristic omitted.
