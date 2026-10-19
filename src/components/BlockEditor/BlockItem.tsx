@@ -173,11 +173,6 @@ function BlockHeader({
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
-        {block.type.startsWith("heading") && headingNumber && (
-          <span className="shrink-0 rounded-[3px] border border-muted-foreground/30 bg-muted/60 px-1.5 py-0.5 font-mono text-xs font-semibold tabular-nums text-muted-foreground">
-            {headingNumber}
-          </span>
-        )}
         {block.type.startsWith("heading") ? (
           <Select
             value={block.type}
@@ -204,11 +199,12 @@ function BlockHeader({
             auto: tabulka na nové stránce
           </span>
         )}
-        {collapsed && preview && (
-          <span className="ml-2 truncate text-xs text-muted-foreground/80">
+        {(collapsed || block.type.startsWith("heading")) && preview && (
+          <span className={`ml-2 min-w-0 truncate text-xs ${block.type.startsWith("heading") ? "font-semibold text-foreground" : "text-muted-foreground/80"}`}>
             {`— ${block.type.startsWith("heading") && headingNumber ? `${headingNumber} ` : ""}${preview}`}
           </span>
         )}
+
       </div>
       <div className="flex items-center gap-10">
         {block.type.startsWith("heading") && (
