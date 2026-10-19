@@ -155,6 +155,7 @@ const DocumentCreator = () => {
   const [exportMap, setExportMap] = useState<Record<string, string | null>>({});
   const [newDocOpen, setNewDocOpen] = useState(false);
   const [paginating, setPaginating] = useState(false);
+  const [paginatePass, setPaginatePass] = useState(0);
   const [paginatedSnapshot, setPaginatedSnapshot] = useState<string | null>(null);
 
   const updateDocumentTitle = async (value: string) => {
@@ -259,19 +260,20 @@ const DocumentCreator = () => {
   const arrangePagination = async () => {
     if (!activePage || paginating) return;
     setPaginating(true);
+    setPaginatePass(0);
     try {
       const { arrangePagination: arrange } = await import("@/lib/pdf/paginate");
-      const result = await arrange(blocks, { numberHeadings, metadata, pageId: activePage.id });
+      const result = await arrange(blocks, { numberHeadings, metadata, pageId: activePage.id, onProgress: setPaginatePass });
       setBlocks(result.blocks);
       setPaginatedSnapshot(layoutFingerprint(result.blocks, numberHeadings, metadata));
       const tooLongNote = result.tooLongTables > 0
         ? ` (${result.tooLongTables} ${result.tooLongTables === 1 ? "tabulka je delší" : result.tooLongTables < 5 ? "tabulky jsou delší" : "tabulek je delších"} než stránka – ponechány rozdělené)`
         : "";
-      toast.success(
-        result.inserted > 0
-          ? `Stránkování uspořádáno – vloženo ${result.inserted} konců stránky${tooLongNote}`
-          : `Stránkování je v pořádku, nic nebylo potřeba měnit${tooLongNote}`,
-      );
+      const msg = result.inserted > 0
+        ? `Stránkování uspořádáno – vloženo ${result.inserted} konců stránky${tooLongNote}`
+        : `Stránkování je v pořádku, nic nebylo potřeba měnit${tooLongNote}`;
+      if (result.unresolved > 0) toast.warning(`${msg} – ${result.unresolved} míst se nepodařilo automaticky uspořádat`);
+      else toast.success(msg);
     } catch (e) {
       console.error("[paginate] failed", e);
       toast.error("Uspořádání stránkování selhalo", { description: e instanceof Error ? e.message : "" });
@@ -945,7 +947,7 @@ const DocumentCreator = () => {
                 </DropdownMenu>
                 <Button variant="outline" size="sm" onClick={arrangePagination} disabled={paginating || saving}>
                   {paginating ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <ListOrdered className="w-4 h-4 mr-1" />}
-                  {paginating ? "Uspořádávám…" : "Uspořádat stránkování"}
+                  {paginating ? `Uspořádávám…${paginatePass > 0 ? ` (průchod ${paginatePass})` : ""}` : "Uspořádat stránkování"}
                 </Button>
                 <Tooltip>
                   <TooltipTrigger asChild>

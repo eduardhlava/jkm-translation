@@ -179,3 +179,75 @@ describe("revertAutoBreak", () => {
     expect(out).toHaveLength(2);
   });
 });
+
+import { runPaginationLoop, type MeasureResult } from "./paginate";
+
+/** Jednoduchý simulovaný layout: stránka 100 jednotek, výška v content.h. */
+function fakeMeasure(blocks: Block[]): Promise<MeasureResult> {
+  const PAGE = 100;
+  const m: MeasureResult = { headingPages: new Map(), prevEndPages: new Map(), nextStartPages: new Map(), tableStartPages: new Map(), tableEndPages: new Map() };
+  let page = 1, y = 0;
+  let chain: string[] = [];
+  for (const b of blocks) {
+    if (b.type === "pagebreak") { if (y > 0) { page++; y = 0; } continue; }
+    const h = b.content.h ?? 10;
+    const isH = b.type.startsWith("heading");
+    if (isH) {
+      m.prevEndPages.set(b.id, page);
+      if (y + h > PAGE) { page++; y = 0; }
+      m.headingPages.set(b.id, page);
+      y += h;
+      chain.push(b.id);
+      continue;
+    }
+    if (b.type === "table") {
+      m.tableStartPages.set(b.id, page);
+      for (const id of chain) m.nextStartPages.set(id, page);
+      y += h;
+      while (y > PAGE) { page++; y -= PAGE; }
+      m.tableEndPages.set(b.id, page);
+    } else {
+      if (y + h > PAGE) { page++; y = 0; } // nezalomitelný blok
+      for (const id of chain) m.nextStartPages.set(id, page);
+      y += h;
+    }
+    chain = [];
+  }
+  return Promise.resolve(m);
+}
+
+describe("runPaginationLoop (sekvenční)", () => {
+  it("posun po prvním konci odstraní pozdější falešné porušení a vyřeší skutečná", async () => {
+    // t1 60, tabulka A 50 (rozdělená 1/2), t2 30, tabulka B 50.
+    // Při hromadném vkládání by se B (na staré pozici rozdělená) zbytečně posunula.
+    const A = blk("table", { h: 50 });
+    const B = blk("table", { h: 40 });
+    const blocks = list(blk("text", { h: 60 }), A, blk("text", { h: 55 }), B);
+    const res = await runPaginationLoop(blocks, fakeMeasure);
+    expect(res.inserted).toBe(1); // jen konec před A; B se po posunu už nerozdělí
+    const after = await fakeMeasure(res.blocks);
+    expect(after.tableEndPages.get(A.id)).toBe(after.tableStartPages.get(A.id));
+    expect(after.tableEndPages.get(B.id)).toBe(after.tableStartPages.get(B.id));
+    expect(res.unresolved).toBe(0);
+  });
+
+  it("tabulka delší než stránka se revertuje a označí tooLong", async () => {
+    const T = blk("table", { h: 150 });
+    const res = await runPaginationLoop(list(blk("text", { h: 50 }), T), fakeMeasure);
+    expect(res.inserted).toBe(0);
+    expect(res.tooLongTables).toBe(1);
+    expect(res.blocks.some((b) => b.type === "pagebreak")).toBe(false);
+  });
+
+  it("nadpis s obrázkem, který odskočí, se přesune s ním", async () => {
+    const h = blk("heading2", { h: 5 });
+    const res = await runPaginationLoop(list(blk("text", { h: 80 }), h, blk("image", { h: 40 })), fakeMeasure);
+    expect(res.blocks.map((b) => b.type)).toEqual(["text", "pagebreak", "heading2", "image"]);
+  });
+
+  it("při dosažení limitu vrátí počet nevyřešených", async () => {
+    const blocks = list(blk("text", { h: 60 }), blk("table", { h: 50 }), blk("text", { h: 60 }), blk("table", { h: 50 }));
+    const res = await runPaginationLoop(blocks, fakeMeasure, { maxIterations: 1 });
+    expect(res.unresolved).toBeGreaterThan(0);
+  });
+});

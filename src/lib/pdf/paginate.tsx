@@ -1,7 +1,7 @@
 import { pdf } from "@react-pdf/renderer";
 import type { Block } from "@/components/BlockEditor/types";
 import { DocumentPdf } from "./DocumentPdf";
-import { inlineImages, inlineMetadataAssets } from "./generate";
+import { inlineImages, inlineMetadataAssets, loadLogoDataUrl } from "./generate";
 import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
 
 /**
@@ -29,7 +29,7 @@ import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
 // Body text: 10.5pt × lineHeight 1.5 = 15.75pt na řádek → 3 řádky ≈ 47.25pt
 export const KEEP_WITH_NEXT_PT = 3 * 10.5 * 1.5;
 
-const MAX_ITERATIONS = 10;
+const MAX_ITERATIONS = 80;
 
 const KEEP_WITH_NEXT_TYPES = new Set(["heading2", "heading3", "heading4"]);
 
@@ -143,117 +143,147 @@ export function applyImageRewrites(blocks: Block[], rewrites: Map<string, string
   });
 }
 
+export interface MeasureResult {
+  headingPages: Map<string, number>;
+  prevEndPages: Map<string, number>;
+  nextStartPages: Map<string, number>;
+  tableStartPages: Map<string, number>;
+  tableEndPages: Map<string, number>;
+}
+
+export type MeasureFn = (blocks: Block[]) => Promise<MeasureResult>;
+
 /**
- * Uspořádá stránkování dokumentu: odstraní staré automatické konce stránky,
- * aplikuje pravidlo H1 a iterativně měří reálný layout react-pdf, dokud
- * nezmizí všechna porušení keep-with-next (max MAX_ITERATIONS průchodů).
- *
- * Porušení keep-with-next nastává, když:
- *  - se pod nadpis H2/H3/H4 nevejde KEEP_WITH_NEXT_PT prostoru (sonda), NEBO
- *  - první obsahový blok za řetězcem nadpisů je nezalomitelný (obrázek,
- *    image-table, callout, text s piktogramem, spacer, první řádek tabulky)
- *    a odskočí na další stránku, takže nadpis zůstane na spodku stránky sám
- *    (nextStartPage > headingPage).
+ * Najde porušení v POŘADÍ DOKUMENTU (nadpis keep-with-next nebo rozdělená
+ * tabulka). Vrací id bloků s porušením seřazené podle pořadí.
  */
+export function findViolations(blocks: Block[], m: MeasureResult, tooLong: Set<string>): string[] {
+  const out: string[] = [];
+  for (const b of blocks) {
+    if (KEEP_WITH_NEXT_TYPES.has(b.type)) {
+      const hp = m.headingPages.get(b.id);
+      const pe = m.prevEndPages.get(b.id);
+      const ns = m.nextStartPages.get(b.id);
+      if (hp !== undefined && ((pe !== undefined && hp > pe) || (ns !== undefined && ns > hp))) out.push(b.id);
+      continue;
+    }
+    if ((b.type === "table" || b.type === "image-table") && !tooLong.has(b.id)) {
+      const s = m.tableStartPages.get(b.id);
+      const e = m.tableEndPages.get(b.id);
+      if (s !== undefined && e !== undefined && e > s) out.push(b.id);
+    }
+  }
+  return out;
+}
+
+/**
+ * Sekvenční smyčka: v každém průchodu se změří layout a vyřeší se jen PRVNÍ
+ * porušení v pořadí dokumentu (vložení konce posune vše za ním, takže další
+ * porušení by byla měřena na zastaralém layoutu). Obsah před vloženým koncem
+ * se nemění, takže výsledek je přesný.
+ */
+export async function runPaginationLoop(
+  start: Block[],
+  measure: MeasureFn,
+  opts: { maxIterations?: number; onProgress?: (pass: number) => void } = {},
+): Promise<{ blocks: Block[]; inserted: number; tooLongTables: number; unresolved: number; passes: number }> {
+  const max = opts.maxIterations ?? MAX_ITERATIONS;
+  let current = start;
+  let inserted = 0;
+  const tooLong = new Set<string>();
+  let pending: { tableId: string; breakId: string } | null = null;
+  let passes = 0;
+  let unresolved = 0;
+
+  for (;;) {
+    if (passes >= max) {
+      // Bezpečnostní limit – změř ještě jednou, kolik porušení zbylo.
+      const m = await measure(current);
+      unresolved = findViolations(current, m, tooLong).length;
+      break;
+    }
+    passes++;
+    opts.onProgress?.(passes);
+    const m = await measure(current);
+
+    if (pending) {
+      const { tableId, breakId } = pending;
+      pending = null;
+      const s = m.tableStartPages.get(tableId);
+      const e = m.tableEndPages.get(tableId);
+      if (s !== undefined && e !== undefined && e > s) {
+        current = revertAutoBreak(current, breakId);
+        inserted--;
+        tooLong.add(tableId);
+        continue; // přeměřit po revertu
+      }
+    }
+
+    const violations = findViolations(current, m, tooLong);
+    if (violations.length === 0) break;
+
+    let handled = false;
+    for (const id of violations) {
+      const res = insertBreaksBefore(current, new Set([id]));
+      if (res.inserted === 0) {
+        // Nelze vložit (první blok / za koncem stránky) – tabulku už nezkoušet.
+        const tgt = current.find((b) => b.id === id);
+        if (tgt && (tgt.type === "table" || tgt.type === "image-table")) tooLong.add(id);
+        continue;
+      }
+      inserted += res.inserted;
+      const tgt = current.find((b) => b.id === id);
+      const brk = res.breaksByTarget.get(id);
+      if (tgt && brk && (tgt.type === "table" || tgt.type === "image-table")) pending = { tableId: id, breakId: brk };
+      current = res.blocks;
+      handled = true;
+      break;
+    }
+    if (!handled) {
+      unresolved = violations.filter((id) => !tooLong.has(id)).length;
+      break;
+    }
+  }
+  return { blocks: current, inserted, tooLongTables: tooLong.size, unresolved, passes };
+}
+
 export async function arrangePagination(
   blocks: Block[],
-  options: ArrangeOptions = {},
-): Promise<{ blocks: Block[]; inserted: number; tooLongTables: number }> {
-  const { numberHeadings, metadata, pageId } = options;
+  options: ArrangeOptions & { onProgress?: (pass: number) => void } = {},
+): Promise<{ blocks: Block[]; inserted: number; tooLongTables: number; unresolved: number }> {
+  const { numberHeadings, metadata, pageId, onProgress } = options;
 
-  let current = stripAutoBreaks(blocks);
-  const h1 = applyH1Rule(current);
-  current = h1.blocks;
-  let inserted = h1.inserted;
+  const h1 = applyH1Rule(stripAutoBreaks(blocks));
 
-  // Obrázky inline JEDNOU před smyčkou – iterace jen vkládají konce stránky,
-  // takže se inline verze mapují podle id (šetří síťové požadavky i
-  // refresh-image volání). Měření musí používat stejné inline obrázky jako
-  // reálné PDF, jinak by se lišily výšky obrázků a tím i stránkování.
-  const [{ blocks: preparedBase, rewrites }, preparedMetadata] = await Promise.all([
-    inlineImages(current, pageId),
+  // Obrázky, metadata i logo inline JEDNOU před smyčkou.
+  const [{ blocks: preparedBase, rewrites }, preparedMetadata, logoDataUrl] = await Promise.all([
+    inlineImages(h1.blocks, pageId),
     inlineMetadataAssets(metadata, pageId),
+    loadLogoDataUrl(),
   ]);
 
-  // Tabulky, u kterých se i po vloženém konci stránky ukázalo, že jsou delší
-  // než stránka – konec se revertuje (vytvořil by jen prázdné místo) a
-  // tabulka se v tomto běhu už nezkouší znovu.
-  const tooLong = new Set<string>();
-  // Tabulky s čerstvě vloženým koncem stránky: id tabulky → id konce.
-  const tableBreaks = new Map<string, string>();
-
-  for (let iter = 0; iter < MAX_ITERATIONS; iter++) {
-    const prepared = toPreparedBlocks(current, preparedBase);
-
-    const headingPages = new Map<string, number>();
-    const prevEndPages = new Map<string, number>();
-    const nextStartPages = new Map<string, number>();
-    const tableStartPages = new Map<string, number>();
-    const tableEndPages = new Map<string, number>();
+  const measure: MeasureFn = async (current) => {
+    const m: MeasureResult = {
+      headingPages: new Map(), prevEndPages: new Map(), nextStartPages: new Map(),
+      tableStartPages: new Map(), tableEndPages: new Map(),
+    };
     await pdf(
       <DocumentPdf
         title=""
-        blocks={prepared}
+        blocks={toPreparedBlocks(current, preparedBase)}
         includeToc
         pageMap={new Map()}
         numberHeadings={numberHeadings}
         metadata={preparedMetadata}
-        measure={{ keepWithNextPt: KEEP_WITH_NEXT_PT, headingPages, prevEndPages, nextStartPages, tableStartPages, tableEndPages }}
+        logoDataUrl={logoDataUrl ?? undefined}
+        measure={{ keepWithNextPt: KEEP_WITH_NEXT_PT, ...m }}
       />,
     ).toBlob();
+    return m;
+  };
 
-    // Revert příliš dlouhých tabulek: konec byl vložen, ale tabulka se stále
-    // láme → je delší než stránka, konec odebereme a označíme jako tooLong.
-    let reverted = false;
-    for (const [tableId, breakId] of tableBreaks) {
-      const s = tableStartPages.get(tableId);
-      const e = tableEndPages.get(tableId);
-      if (s !== undefined && e !== undefined && e > s) {
-        current = revertAutoBreak(current, breakId);
-        tooLong.add(tableId);
-        reverted = true;
-      }
-      tableBreaks.delete(tableId);
-    }
-
-    const violations = new Set<string>();
-    for (const b of prepared) {
-      if (KEEP_WITH_NEXT_TYPES.has(b.type)) {
-        const headingPage = headingPages.get(b.id);
-        const prevEndPage = prevEndPages.get(b.id);
-        if (headingPage !== undefined && prevEndPage !== undefined && headingPage > prevEndPage) {
-          violations.add(b.id);
-          continue;
-        }
-        const nextStartPage = nextStartPages.get(b.id);
-        if (headingPage !== undefined && nextStartPage !== undefined && nextStartPage > headingPage) {
-          violations.add(b.id);
-        }
-        continue;
-      }
-      // Pravidlo pro tabulky: tabulka (nebo tabulková část image-table) se
-      // nesmí lámat přes stránky.
-      if ((b.type === "table" || b.type === "image-table") && !tooLong.has(b.id)) {
-        const s = tableStartPages.get(b.id);
-        const e = tableEndPages.get(b.id);
-        if (s !== undefined && e !== undefined && e > s) violations.add(b.id);
-      }
-    }
-
-    if (violations.size === 0) {
-      if (reverted) continue; // po revertu přeměřit
-      break;
-    }
-    const res = insertBreaksBefore(current, violations);
-    inserted += res.inserted;
-    for (const [targetId, breakId] of res.breaksByTarget) {
-      const tgt = current.find((b) => b.id === targetId);
-      if (tgt && (tgt.type === "table" || tgt.type === "image-table")) {
-        tableBreaks.set(targetId, breakId);
-      }
-    }
-    current = res.blocks;
-  }
-
-  return { blocks: applyImageRewrites(current, rewrites), inserted, tooLongTables: tooLong.size };
+  const res = await runPaginationLoop(h1.blocks, measure, { onProgress });
+  const inserted = h1.inserted + res.inserted;
+  console.info("[paginate]", { passes: res.passes, inserted, tooLong: res.tooLongTables, unresolved: res.unresolved });
+  return { blocks: applyImageRewrites(res.blocks, rewrites), inserted, tooLongTables: res.tooLongTables, unresolved: res.unresolved };
 }
