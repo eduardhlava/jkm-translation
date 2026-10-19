@@ -262,7 +262,7 @@ const DocumentCreator = () => {
       const { arrangePagination: arrange } = await import("@/lib/pdf/paginate");
       const result = await arrange(blocks, { numberHeadings, metadata, pageId: activePage.id });
       setBlocks(result.blocks);
-      setPaginatedSnapshot(JSON.stringify({ blocks: result.blocks, numberHeadings, metadata }));
+      setPaginatedSnapshot(layoutFingerprint(result.blocks, numberHeadings, metadata));
       toast.success(
         result.inserted > 0
           ? `Stránkování uspořádáno – vloženo ${result.inserted} konců stránky`
