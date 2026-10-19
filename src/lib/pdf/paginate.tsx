@@ -103,9 +103,40 @@ export interface ArrangeOptions {
 }
 
 /**
+ * Namapuje aktuální bloky na jejich připravené (inline) verze podle id.
+ * Nově vložené automatické konce stránky v prepared neexistují a projdou
+ * beze změny.
+ */
+export function toPreparedBlocks(current: Block[], prepared: Block[]): Block[] {
+  const byId = new Map(prepared.map((b) => [b.id, b]));
+  return current.map((b) => byId.get(b.id) ?? b);
+}
+
+/** Aplikuje rehydratované (permanentní) URL obrázků na vracené bloky. */
+export function applyImageRewrites(blocks: Block[], rewrites: Map<string, string>): Block[] {
+  if (rewrites.size === 0) return blocks;
+  return blocks.map((b) => {
+    if (b.type === "image" && b.content?.url && rewrites.has(b.content.url)) {
+      return { ...b, content: { ...b.content, url: rewrites.get(b.content.url) } };
+    }
+    if (b.type === "image-table" && b.content?.image?.url && rewrites.has(b.content.image.url)) {
+      return { ...b, content: { ...b.content, image: { ...b.content.image, url: rewrites.get(b.content.image.url) } } };
+    }
+    return b;
+  });
+}
+
+/**
  * Uspořádá stránkování dokumentu: odstraní staré automatické konce stránky,
  * aplikuje pravidlo H1 a iterativně měří reálný layout react-pdf, dokud
  * nezmizí všechna porušení keep-with-next (max MAX_ITERATIONS průchodů).
+ *
+ * Porušení keep-with-next nastává, když:
+ *  - se pod nadpis H2/H3/H4 nevejde KEEP_WITH_NEXT_PT prostoru (sonda), NEBO
+ *  - první obsahový blok za řetězcem nadpisů je nezalomitelný (obrázek,
+ *    image-table, callout, text s piktogramem, spacer, první řádek tabulky)
+ *    a odskočí na další stránku, takže nadpis zůstane na spodku stránky sám
+ *    (nextStartPage > headingPage).
  */
 export async function arrangePagination(
   blocks: Block[],
@@ -118,16 +149,21 @@ export async function arrangePagination(
   current = h1.blocks;
   let inserted = h1.inserted;
 
+  // Obrázky inline JEDNOU před smyčkou – iterace jen vkládají konce stránky,
+  // takže se inline verze mapují podle id (šetří síťové požadavky i
+  // refresh-image volání). Měření musí používat stejné inline obrázky jako
+  // reálné PDF, jinak by se lišily výšky obrázků a tím i stránkování.
+  const [{ blocks: preparedBase, rewrites }, preparedMetadata] = await Promise.all([
+    inlineImages(current, pageId),
+    inlineMetadataAssets(metadata, pageId),
+  ]);
+
   for (let iter = 0; iter < MAX_ITERATIONS; iter++) {
-    // Měření musí používat stejné inline obrázky jako reálné PDF, jinak by
-    // se lišily výšky obrázků a tím i stránkování.
-    const [{ blocks: prepared }, preparedMetadata] = await Promise.all([
-      inlineImages(current, pageId),
-      inlineMetadataAssets(metadata, pageId),
-    ]);
+    const prepared = toPreparedBlocks(current, preparedBase);
 
     const headingPages = new Map<string, number>();
     const prevEndPages = new Map<string, number>();
+    const nextStartPages = new Map<string, number>();
     await pdf(
       <DocumentPdf
         title=""
@@ -136,7 +172,7 @@ export async function arrangePagination(
         pageMap={new Map()}
         numberHeadings={numberHeadings}
         metadata={preparedMetadata}
-        measure={{ keepWithNextPt: KEEP_WITH_NEXT_PT, headingPages, prevEndPages }}
+        measure={{ keepWithNextPt: KEEP_WITH_NEXT_PT, headingPages, prevEndPages, nextStartPages }}
       />,
     ).toBlob();
 
@@ -147,6 +183,11 @@ export async function arrangePagination(
       const prevEndPage = prevEndPages.get(b.id);
       if (headingPage !== undefined && prevEndPage !== undefined && headingPage > prevEndPage) {
         violations.add(b.id);
+        continue;
+      }
+      const nextStartPage = nextStartPages.get(b.id);
+      if (headingPage !== undefined && nextStartPage !== undefined && nextStartPage > headingPage) {
+        violations.add(b.id);
       }
     }
 
@@ -156,5 +197,5 @@ export async function arrangePagination(
     current = res.blocks;
   }
 
-  return { blocks: current, inserted };
+  return { blocks: applyImageRewrites(current, rewrites), inserted };
 }
