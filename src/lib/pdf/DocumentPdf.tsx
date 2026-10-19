@@ -596,7 +596,7 @@ function ImageBlock({ block, captionOverride, startMarker }: { block: Block; cap
   );
 }
 
-function TableBlock({ block }: { block: Block }) {
+function TableBlock({ block, startMarker }: { block: Block; startMarker?: JSX.Element }) {
   const rows: string[][] = block.content?.rows ?? [];
   const headerRow = !!block.content?.headerRow;
   const colWidths: number[] | undefined = block.content?.colWidths;
@@ -610,6 +610,7 @@ function TableBlock({ block }: { block: Block }) {
         const rowBg = rowColors[ri] ?? null;
         return (
           <View key={ri} style={[styles.tr, rowBg ? { backgroundColor: rowBg } : {}] as any} wrap={false}>
+            {ri === 0 ? startMarker : null}
             {row.map((cell, ci) => {
               const wStyle = hasWidths && colWidths
                 ? { width: `${colWidths[ci]}%`, flexGrow: 0, flexShrink: 0, flexBasis: `${colWidths[ci]}%` }
@@ -641,7 +642,7 @@ function TableBlock({ block }: { block: Block }) {
   );
 }
 
-function CalloutBlock({ block }: { block: Block }) {
+function CalloutBlock({ block, startMarker }: { block: Block; startMarker?: JSX.Element }) {
   const cfg = calloutCfg[block.type as keyof typeof calloutCfg];
   return (
     <View
@@ -651,6 +652,7 @@ function CalloutBlock({ block }: { block: Block }) {
       ] as any}
       wrap={false}
     >
+      {startMarker}
       <Text style={styles.calloutIcon}>{cfg.icon}</Text>
       <Text style={styles.calloutText}>{block.content?.text ?? ""}</Text>
     </View>
