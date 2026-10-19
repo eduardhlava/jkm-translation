@@ -98,6 +98,7 @@ describe("real DocumentPdf portrait image safety", () => {
       // The image and caption live inside one unbreakable view within the body.
       expect(parentBox.top + parentBox.height).toBeLessThanOrEqual(842 - 60);
       expect(parentBox.height).toBeGreaterThan(imageBox.height);
+      console.log(paragraphs.map(({node,page}) => ({page, box: node.box, children: node.children})));
       const bodyParagraphs = paragraphs.filter(({ node }) => node.box && Math.abs(node.box.height - 15.75) < 0.1);
       expect(bodyParagraphs.map(({ page }) => page)).toEqual([1, type === "image" ? 2 : 3]);
       // Pages use independent coordinate systems, so compare flow within each.
