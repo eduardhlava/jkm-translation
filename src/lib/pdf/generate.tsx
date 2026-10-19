@@ -17,6 +17,11 @@ function arrayBufferToBase64(buf: ArrayBuffer): string {
   return btoa(binary);
 }
 
+/** Logo titulní strany jako data URL (stejně jako ve finálním PDF). */
+export function loadLogoDataUrl(): Promise<string | null> {
+  return urlToDataUrl(jkLogo);
+}
+
 async function urlToDataUrl(url: string): Promise<string | null> {
   try {
     const res = await fetch(url);
