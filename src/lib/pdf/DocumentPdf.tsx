@@ -778,9 +778,10 @@ export interface DocumentPdfProps {
   numberHeadings?: boolean;
   metadata?: DocumentMetadata;
   logoDataUrl?: string;
+  measure?: MeasureContext; // pagination measurement mode (no visual change)
 }
 
-export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collector, numberHeadings, metadata: metadataProp, logoDataUrl }: DocumentPdfProps) {
+export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collector, numberHeadings, metadata: metadataProp, logoDataUrl, measure }: DocumentPdfProps) {
   // Metadata mohou přijít neúplná (starší dokumenty, marker z Notion duplikátu),
   // proto je vždy sloučíme s výchozími hodnotami – jinak by render spadl.
   const metadata = metadataProp ? mergeMetadata(metadataProp) : undefined;
@@ -844,7 +845,18 @@ export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collect
         <Footer footerVersion={footerVersion} />
         {!showToc && !metadata && <Text style={styles.docTitle}>{title}</Text>}
         {ordered.map((b) => (
-          <BlockNode key={b.id} block={b} collector={collector} number={numbers?.get(b.id)} imageCaption={captionFor(b)} />
+          <Fragment key={b.id}>
+            {measure && (b.type === "heading2" || b.type === "heading3" || b.type === "heading4") && (
+              <Text
+                style={{ height: 0, fontSize: 0 }}
+                render={({ pageNumber }) => {
+                  measure.prevEndPages.set(b.id, pageNumber);
+                  return "";
+                }}
+              />
+            )}
+            <BlockNode block={b} collector={collector} number={numbers?.get(b.id)} imageCaption={captionFor(b)} measure={measure} />
+          </Fragment>
         ))}
       </Page>
     </Document>
