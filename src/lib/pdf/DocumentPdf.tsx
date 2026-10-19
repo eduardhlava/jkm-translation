@@ -320,6 +320,24 @@ export interface MeasureContext {
   // callout, první řádek tabulky, první odstavec textu…). Když nextStart >
   // headingPage, blok odskočil na další stránku a nadpis zůstal osiřelý.
   nextStartPages: Map<string, number>;
+  // Pravidlo pro tabulky: stránka prvního a posledního řádku tabulky
+  // (u image-table začátek = obrázek, konec = poslední řádek tabulky).
+  // Když endPage > startPage, tabulka se láme přes stránky.
+  tableStartPages: Map<string, number>;
+  tableEndPages: Map<string, number>;
+}
+
+/** Neviditelná značka zaznamenávající číslo stránky. */
+function PageMarker({ onPage }: { onPage: (pageNumber: number) => void }) {
+  return (
+    <Text
+      style={{ height: 0, fontSize: 0 }}
+      render={({ pageNumber }) => {
+        onPage(pageNumber);
+        return "";
+      }}
+    />
+  );
 }
 
 /** Neviditelná značka zaznamenávající stránku začátku bloku pro dané nadpisy. */
@@ -581,7 +599,7 @@ function TextBlock({ block, startMarker }: { block: Block; startMarker?: JSX.Ele
   return body;
 }
 
-function ImageBlock({ block, captionOverride, startMarker }: { block: Block; captionOverride?: string; startMarker?: JSX.Element }) {
+function ImageBlock({ block, captionOverride, startMarker, measure, measureStartId }: { block: Block; captionOverride?: string; startMarker?: JSX.Element; measure?: MeasureContext; measureStartId?: string }) {
   const url = block.content?.url;
   const alt = block.content?.alt;
   if (!url) return null;
@@ -589,6 +607,9 @@ function ImageBlock({ block, captionOverride, startMarker }: { block: Block; cap
   return (
     <View wrap={false} style={styles.imageBlock}>
       {startMarker}
+      {measure && measureStartId && (
+        <PageMarker onPage={(p) => measure.tableStartPages.set(measureStartId, p)} />
+      )}
       {/* eslint-disable-next-line jsx-a11y/alt-text */}
       <Image src={url} style={[styles.image, { width: "98%" }] as any} />
       {caption ? <Text style={styles.caption}>{caption}</Text> : null}
