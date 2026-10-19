@@ -101,8 +101,8 @@ const styles = StyleSheet.create({
   calloutText: { flex: 1 },
   table: { borderWidth: 1, borderColor: "#d1d5db", marginVertical: 6, flexShrink: 0 },
   tr: { flexDirection: "row", flexShrink: 0 },
-  td: { flex: 1, minWidth: 0, padding: 5, borderRightWidth: 1, borderBottomWidth: 1, borderColor: "#d1d5db", fontSize: 10 },
-  cellIcon: { width: 16, height: 16, flexShrink: 0 },
+  td: { flex: 1, minWidth: 0, padding: 3.5, borderRightWidth: 1, borderBottomWidth: 1, borderColor: "#d1d5db", fontSize: 9 },
+  cellIcon: { width: 14, height: 14, flexShrink: 0 },
   cellText: { flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 0 },
   th: { backgroundColor: "#f3f4f6", fontFamily: "NotoSans", fontWeight: "bold" },
   footer: {
@@ -665,7 +665,7 @@ function TableBlock({ block, startMarker, measure, measureStartId, measurePartSt
               if (cellPic !== "none") {
                 return (
                   <View key={ci} style={[cellStyle, { flexDirection: "row", alignItems: "center", gap: 4 }] as any}>
-                    <View style={styles.cellIcon}><PictogramSvg kind={cellPic} size={16} /></View>
+                    <View style={styles.cellIcon}><PictogramSvg kind={cellPic} size={14} /></View>
                     {cellText ? <Text style={styles.cellText}>{formattedText}</Text> : null}
                   </View>
                 );
