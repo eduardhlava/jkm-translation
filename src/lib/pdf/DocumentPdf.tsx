@@ -617,7 +617,7 @@ function ImageBlock({ block, captionOverride, startMarker, measure, measureStart
   );
 }
 
-function TableBlock({ block, startMarker }: { block: Block; startMarker?: JSX.Element }) {
+function TableBlock({ block, startMarker, measure, measureStartId, measureEndId }: { block: Block; startMarker?: JSX.Element; measure?: MeasureContext; measureStartId?: string; measureEndId?: string }) {
   const rows: string[][] = block.content?.rows ?? [];
   const headerRow = !!block.content?.headerRow;
   const colWidths: number[] | undefined = block.content?.colWidths;
@@ -625,6 +625,7 @@ function TableBlock({ block, startMarker }: { block: Block; startMarker?: JSX.El
   if (rows.length === 0) return null;
   const cols = rows[0]?.length ?? 0;
   const hasWidths = !!colWidths && colWidths.length === cols && cols > 0;
+  const lastRi = rows.length - 1;
   return (
     <View style={styles.table}>
       {rows.map((row, ri) => {
@@ -632,6 +633,12 @@ function TableBlock({ block, startMarker }: { block: Block; startMarker?: JSX.El
         return (
           <View key={ri} style={[styles.tr, rowBg ? { backgroundColor: rowBg } : {}] as any} wrap={false}>
             {ri === 0 ? startMarker : null}
+            {measure && measureStartId && ri === 0 && (
+              <PageMarker onPage={(p) => measure.tableStartPages.set(measureStartId, p)} />
+            )}
+            {measure && measureEndId && ri === lastRi && (
+              <PageMarker onPage={(p) => measure.tableEndPages.set(measureEndId, p)} />
+            )}
             {row.map((cell, ci) => {
               const wStyle = hasWidths && colWidths
                 ? { width: `${colWidths[ci]}%`, flexGrow: 0, flexShrink: 0, flexBasis: `${colWidths[ci]}%` }
