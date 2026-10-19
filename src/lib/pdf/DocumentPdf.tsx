@@ -473,7 +473,7 @@ function PictogramSvg({ kind, size = 26 }: { kind: Pictogram; size?: number }) {
 }
 
 
-function TextBlock({ block }: { block: Block }) {
+function TextBlock({ block, startMarker }: { block: Block; startMarker?: JSX.Element }) {
   const defaultPStyle = { ...styles.p } as any;
   const defaultLiStyle = { ...styles.li } as any;
 
@@ -543,18 +543,28 @@ function TextBlock({ block }: { block: Block }) {
   };
 
   let body: JSX.Element;
+  // Značku začátku vložíme DO prvního odstavce (první nezalomitelná jednotka),
+  // aby zaznamenala stránku, kde text skutečně začíná.
+  const withMarker = (children: (JSX.Element | null)[]): (JSX.Element | null)[] => {
+    if (!startMarker) return children;
+    const idx = children.findIndex((c) => c !== null);
+    if (idx < 0) return children;
+    const first = children[idx]!;
+    const clone = cloneElement(first, { key: first.key ?? "first" }, startMarker, first.props.children);
+    return [...children.slice(0, idx), clone, ...children.slice(idx + 1)];
+  };
   if (!root || root.children.length === 0) {
     const paragraphs = parseInline(block.content?.html ?? "");
     body = (
       <View style={styles.textBlock}>
-        {paragraphs.map((runs, i) =>
+        {withMarker(paragraphs.map((runs, i) =>
           runs.length ? <View key={i} style={styles.paragraphWrap}><Text style={defaultPStyle}><RunsText runs={runs} /></Text></View> : null
-        )}
+        ))}
       </View>
     );
   } else {
     renderRootChildren(root);
-    body = <View style={styles.textBlock}>{nodes}</View>;
+    body = <View style={styles.textBlock}>{withMarker(nodes)}</View>;
   }
 
   const pictogram = block.content?.pictogram;
