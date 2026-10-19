@@ -63,6 +63,7 @@ import {
   ExternalLink,
   Eye,
   FileText,
+  ListOrdered,
   Loader2,
   LogOut,
   RefreshCw,
@@ -152,6 +153,8 @@ const DocumentCreator = () => {
   const [backDialogOpen, setBackDialogOpen] = useState(false);
   const [exportMap, setExportMap] = useState<Record<string, string | null>>({});
   const [newDocOpen, setNewDocOpen] = useState(false);
+  const [paginating, setPaginating] = useState(false);
+  const [paginatedSnapshot, setPaginatedSnapshot] = useState<string | null>(null);
 
   const updateDocumentTitle = async (value: string) => {
     if (!activePage) throw new Error("Není vybrán dokument");
