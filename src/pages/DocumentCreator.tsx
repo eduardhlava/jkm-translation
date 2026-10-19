@@ -245,6 +245,35 @@ const DocumentCreator = () => {
   );
   const isDirty = activePage !== null && baselineSnapshot !== "" && currentSnapshot !== baselineSnapshot;
 
+  // Fingerprint obsahu relevantního pro layout PDF — náhled PDF je povolen
+  // jen tehdy, když odpovídá stavu po posledním uspořádání stránkování.
+  const layoutFingerprint = useMemo(
+    () => JSON.stringify({ blocks, numberHeadings, metadata }),
+    [blocks, numberHeadings, metadata]
+  );
+  const pdfPreviewLocked = paginatedSnapshot === null || layoutFingerprint !== paginatedSnapshot;
+
+  const arrangePagination = async () => {
+    if (!activePage || paginating) return;
+    setPaginating(true);
+    try {
+      const { arrangePagination: arrange } = await import("@/lib/pdf/paginate");
+      const result = await arrange(blocks, { numberHeadings, metadata, pageId: activePage.id });
+      setBlocks(result.blocks);
+      setPaginatedSnapshot(JSON.stringify({ blocks: result.blocks, numberHeadings, metadata }));
+      toast.success(
+        result.inserted > 0
+          ? `Stránkování uspořádáno – vloženo ${result.inserted} konců stránky`
+          : "Stránkování je v pořádku, nic nebylo potřeba měnit",
+      );
+    } catch (e) {
+      console.error("[paginate] failed", e);
+      toast.error("Uspořádání stránkování selhalo", { description: e instanceof Error ? e.message : "" });
+    } finally {
+      setPaginating(false);
+    }
+  };
+
 
 
   const editor = useEditor({
