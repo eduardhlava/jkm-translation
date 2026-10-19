@@ -173,6 +173,11 @@ function BlockHeader({
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
+        {block.type.startsWith("heading") && headingNumber && (
+          <span className="shrink-0 rounded-[3px] border border-muted-foreground/30 bg-muted/60 px-1.5 py-0.5 font-mono text-xs font-semibold tabular-nums text-muted-foreground">
+            {headingNumber}
+          </span>
+        )}
         {block.type.startsWith("heading") ? (
           <Select
             value={block.type}
@@ -192,11 +197,6 @@ function BlockHeader({
         ) : (
           <span className="text-xs font-medium text-muted-foreground shrink-0">
             {BLOCK_TYPE_LABELS[block.type]}
-          </span>
-        )}
-        {block.type.startsWith("heading") && headingNumber && (
-          <span className="shrink-0 rounded-full border border-muted-foreground/30 px-1.5 py-0.5 font-mono text-xs font-semibold tabular-nums text-muted-foreground">
-            {headingNumber}
           </span>
         )}
         {block.type === "image-table" && block.content?.autoTableBreak === true && (
