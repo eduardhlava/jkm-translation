@@ -672,26 +672,33 @@ function withPictogram(block: Block, node: JSX.Element) {
   );
 }
 
-function BlockNode({ block, collector, number, imageCaption, measure }: { block: Block; collector?: PageMap; number?: string; imageCaption?: string; measure?: MeasureContext }) {
+function BlockNode({ block, collector, number, imageCaption, measure, measureNextFor }: { block: Block; collector?: PageMap; number?: string; imageCaption?: string; measure?: MeasureContext; measureNextFor?: string[] }) {
+  // Značka začátku první nezalomitelné jednotky bloku – pro detekci osiřelých
+  // nadpisů před nezalomitelným blokem (obrázek, callout, tabulka…).
+  const startMarker = measure && measureNextFor && measureNextFor.length > 0
+    ? <StartMarker ids={measureNextFor} measure={measure} />
+    : undefined;
   switch (block.type) {
     case "heading1": return <Heading block={block} level={1} collector={collector} number={number} />;
     case "heading2": return <Heading block={block} level={2} collector={collector} number={number} measure={measure} />;
     case "heading3": return <Heading block={block} level={3} collector={collector} number={number} measure={measure} />;
     case "heading4": return <Heading block={block} level={4} number={number} measure={measure} />;
-    case "text":     return <TextBlock block={block} />;
-    case "image":    return withPictogram(block, <ImageBlock block={block} captionOverride={imageCaption} />);
-    case "table":    return withPictogram(block, <TableBlock block={block} />);
+    case "text":     return <TextBlock block={block} startMarker={startMarker} />;
+    case "image":    return withPictogram(block, <ImageBlock block={block} captionOverride={imageCaption} startMarker={startMarker} />);
+    case "table":    return withPictogram(block, <TableBlock block={block} startMarker={startMarker} />);
     case "image-table": return withPictogram(block, (
       <>
-        <ImageBlock block={{ ...block, type: "image", content: block.content?.image ?? {} } as Block} captionOverride={imageCaption} />
+        <ImageBlock block={{ ...block, type: "image", content: block.content?.image ?? {} } as Block} captionOverride={imageCaption} startMarker={startMarker} />
         <TableBlock block={{ ...block, type: "table", content: block.content?.table ?? { headerRow: true, rows: [] } } as Block} />
       </>
     ));
     case "alert":
     case "info":
-    case "warning":  return <CalloutBlock block={block} />;
+    case "warning":  return <CalloutBlock block={block} startMarker={startMarker} />;
     case "pagebreak": return <View break />;
-    case "spacer": return <View wrap={false} style={styles.spacer} />;
+    case "spacer": return startMarker
+      ? <View wrap={false}>{startMarker}<View style={styles.spacer} /></View>
+      : <View wrap={false} style={styles.spacer} />;
     default: return null;
 
   }
