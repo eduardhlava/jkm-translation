@@ -54,6 +54,8 @@ interface Props {
   onDelete: (id: string) => void;
   headingNumber?: string;
   imageNumber?: number;
+  /** HTML of the directly following text block (for the wrap preview). */
+  nextTextHtml?: string;
   imageLabelPrefix?: string;
 }
 
@@ -95,7 +97,7 @@ function blockPreview(block: Block): string {
   }
 }
 
-export default function BlockItem({ block, collapsed, onToggleCollapsed, onChange, onDelete, headingNumber, imageNumber, imageLabelPrefix }: Props) {
+export default function BlockItem({ block, collapsed, onToggleCollapsed, onChange, onDelete, headingNumber, imageNumber, imageLabelPrefix, nextTextHtml }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -124,7 +126,7 @@ export default function BlockItem({ block, collapsed, onToggleCollapsed, onChang
       />
       {!collapsed && (
         <div className="p-3">
-          <BlockBody block={block} onChange={onChange} headingNumber={headingNumber} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} />
+          <BlockBody block={block} onChange={onChange} headingNumber={headingNumber} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} nextTextHtml={nextTextHtml} />
         </div>
       )}
     </div>
@@ -280,7 +282,7 @@ function setContent(block: Block, patch: any, onChange: Props["onChange"]) {
   onChange(block.id, { content: { ...block.content, ...patch } });
 }
 
-function BlockBody({ block, onChange, headingNumber, imageNumber, imageLabelPrefix }: { block: Block; onChange: Props["onChange"]; headingNumber?: string; imageNumber?: number; imageLabelPrefix?: string }) {
+function BlockBody({ block, onChange, headingNumber, imageNumber, imageLabelPrefix, nextTextHtml }: { block: Block; onChange: Props["onChange"]; headingNumber?: string; imageNumber?: number; imageLabelPrefix?: string; nextTextHtml?: string }) {
   switch (block.type) {
     case "heading1":
     case "heading2":
@@ -309,7 +311,7 @@ function BlockBody({ block, onChange, headingNumber, imageNumber, imageLabelPref
     case "text":
       return <TextBlockEditor block={block} onChange={onChange} />;
     case "image":
-      return <ImageBlockEditor block={block} onChange={onChange} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} />;
+      return <ImageBlockEditor block={block} onChange={onChange} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} nextTextHtml={nextTextHtml} />;
     case "table":
       return <TableBlockEditor block={block} onChange={onChange} />;
     case "image-table":
@@ -815,7 +817,15 @@ function PictogramRow({ value, onChange, children }: { value?: Pictogram; onChan
   );
 }
 
-function ImageBlockEditor({ block, onChange, hidePictogram, imageNumber, imageLabelPrefix }: { block: Block; onChange: Props["onChange"]; hidePictogram?: boolean; imageNumber?: number; imageLabelPrefix?: string }) {
+function htmlToPlainText(html: string): string {
+  const doc = new DOMParser().parseFromString(`<div>${html}</div>`, "text/html");
+  return (doc.body.textContent ?? "").replace(/\s+/g, " ").trim();
+}
+
+function ImageBlockEditor({ block, onChange, hidePictogram, imageNumber, imageLabelPrefix, sizeOnly, nextTextHtml }: { block: Block; onChange: Props["onChange"]; hidePictogram?: boolean; imageNumber?: number; imageLabelPrefix?: string; sizeOnly?: boolean; nextTextHtml?: string }) {
+  const size: "full" | "half" = block.content.size === "half" ? "half" : "full";
+  const position: "left" | "right" | "center" = sizeOnly ? "center" : (block.content.position === "right" || block.content.position === "center" ? block.content.position : "left");
+  const wraps = size === "half" && position !== "center" && nextTextHtml !== undefined;
   const [pickerOpen, setPickerOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
 
@@ -854,8 +864,45 @@ function ImageBlockEditor({ block, onChange, hidePictogram, imageNumber, imageLa
               Vybrat v Notion
             </Button>
           </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Label className="text-xs text-muted-foreground">Velikost</Label>
+              <Select value={size} onValueChange={(v) => setContent(block, sizeOnly ? { size: v } : { size: v, position: block.content.position ?? "left" }, onChange)}>
+                <SelectTrigger className="h-8 w-[140px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="full">Plná šířka</SelectItem>
+                  <SelectItem value="half">Půl stránky</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {!sizeOnly && size === "half" && (
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-muted-foreground">Umístění obrázku</Label>
+                <Select value={position} onValueChange={(v) => setContent(block, { position: v }, onChange)}>
+                  <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="left">Vlevo</SelectItem>
+                    <SelectItem value="right">Vpravo</SelectItem>
+                    <SelectItem value="center">Střed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
           {block.content.url && (
-            <img src={block.content.url} alt={block.content.alt} className="max-h-64 rounded border" />
+            <div className="overflow-hidden">
+              <img
+                src={block.content.url}
+                alt={block.content.alt}
+                className={`rounded border ${size === "half" ? "w-1/2 object-contain" : "max-h-64"} ${size === "half" && position === "center" ? "mx-auto block" : ""} ${wraps ? (position === "left" ? "float-left mr-3 mb-1" : "float-right ml-3 mb-1") : ""}`}
+              />
+              {wraps && (
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  <span className="font-medium">Obtékající text (náhled): </span>
+                  {htmlToPlainText(nextTextHtml ?? "") || "…"}
+                </p>
+              )}
+            </div>
           )}
           <div className="space-y-1">
             <Input
@@ -1253,6 +1300,7 @@ function ImageTableBlockEditor({ block, onChange, imageNumber, imageLabelPrefix 
               block={{ ...block, type: "image", content: imageContent } as Block}
               onChange={handleSub("image")}
               hidePictogram
+              sizeOnly
               imageNumber={imageNumber}
               imageLabelPrefix={imageLabelPrefix}
             />
