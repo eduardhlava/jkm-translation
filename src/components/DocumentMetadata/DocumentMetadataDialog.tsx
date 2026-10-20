@@ -19,9 +19,11 @@ interface Props {
   value: DocumentMetadata;
   documentTitle: string;
   onChange: (next: DocumentMetadata, title: string) => Promise<void>;
+  numberHeadings?: boolean;
+  onNumberHeadingsChange?: (v: boolean) => void;
 }
 
-export default function DocumentMetadataDialog({ open, onOpenChange, value, documentTitle, onChange }: Props) {
+export default function DocumentMetadataDialog({ open, onOpenChange, value, documentTitle, onChange, numberHeadings, onNumberHeadingsChange }: Props) {
   const [draft, setDraft] = useState<DocumentMetadata>(value);
   const [title, setTitle] = useState(documentTitle);
   const [saving, setSaving] = useState(false);
@@ -223,6 +225,15 @@ export default function DocumentMetadataDialog({ open, onOpenChange, value, docu
             </div>
             <Switch checked={draft.showToc} onCheckedChange={(v) => update({ showToc: v })} />
           </label>
+          {onNumberHeadingsChange && (
+            <label className="flex items-center justify-between gap-3 rounded-md border p-3">
+              <div>
+                <div className="text-sm font-medium">Automaticky číslovat nadpisy (H1–H4)</div>
+                <div className="text-xs text-muted-foreground">Čísla nadpisů v editoru i v PDF</div>
+              </div>
+              <Switch checked={!!numberHeadings} onCheckedChange={onNumberHeadingsChange} />
+            </label>
+          )}
         </div>
 
         <DialogFooter className="gap-2 sm:gap-2">

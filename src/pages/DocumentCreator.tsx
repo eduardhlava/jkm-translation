@@ -85,6 +85,7 @@ import DocumentMetadataDialog from "@/components/DocumentMetadata/DocumentMetada
 import NewDocumentDialog, { type CreatedDocument } from "@/components/NewDocumentDialog";
 import { ChevronDown, Plus } from "lucide-react";
 import { DEFAULT_DOCUMENT_METADATA, mergeMetadata, type DocumentMetadata } from "@/components/DocumentMetadata/types";
+import AppVersionLink from "@/components/AppVersionLink";
 import { isPaginationCurrent, layoutFingerprint } from "@/lib/pdf/fingerprint";
 
 type EditorMode = "blocks" | "wysiwyg";
@@ -1025,13 +1026,7 @@ const DocumentCreator = () => {
             )}
             {mode === "blocks" && (
               <div className="flex-shrink-0 flex items-center justify-between gap-2 border-t bg-muted/30 px-4 py-2">
-                <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
-                  <Checkbox
-                    checked={numberHeadings}
-                    onCheckedChange={(v) => setNumberHeadings(v === true)}
-                  />
-                  Automaticky číslovat nadpisy (H1–H4)
-                </label>
+                <AppVersionLink />
                 <div className="flex items-center gap-2">
                 <input
                   ref={fileInputRef}
@@ -1148,6 +1143,8 @@ const DocumentCreator = () => {
         onOpenChange={setMetadataOpen}
         value={metadata}
         documentTitle={activePage?.properties[titleProp] ?? docTitle}
+        numberHeadings={numberHeadings}
+        onNumberHeadingsChange={setNumberHeadings}
         onChange={async (next, title) => {
           await updateDocumentTitle(title);
           setMetadata(next);
