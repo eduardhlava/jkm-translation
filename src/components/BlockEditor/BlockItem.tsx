@@ -1,6 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Trash2, AlertTriangle, Info, AlertCircle, Loader2, Upload, Plus, Minus, ChevronDown, ChevronRight, List, ListMinus, ListOrdered, Link, ImageIcon, AlignLeft, AlignCenter, AlignRight, SeparatorHorizontal, Pencil, MoreVertical, Superscript, Subscript, RemoveFormatting, ClipboardType, Highlighter, Combine, Split } from "lucide-react";
+import { GripVertical, Trash2, AlertTriangle, Info, AlertCircle, Loader2, Upload, Plus, Minus, ChevronDown, ChevronRight, List, ListMinus, ListOrdered, Link, ImageIcon, AlignLeft, AlignCenter, AlignRight, SeparatorHorizontal, Pencil, MoreVertical, Superscript, Subscript, RemoveFormatting, ClipboardType, Highlighter, Combine, Split, MoreHorizontal } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -790,56 +790,51 @@ function ImageBlockEditor({ block, onChange, hidePictogram, imageNumber, imageLa
     imageNumber !== undefined ? `${imageLabelPrefix ?? "Obrázek č. "}${imageNumber}` : undefined;
 
   const picto = pictogramOverride ?? (hidePictogram ? undefined : { value: block.content.pictogram as Pictogram | undefined, onChange: (v: Pictogram) => setContent(block, { pictogram: v }, onChange) });
-  const fieldCls = "h-9 w-full text-sm";
+  const fieldCls = "h-8 text-sm";
+  const labelCls = "text-[11px] leading-none text-muted-foreground";
 
   return (
-    <div className="space-y-3">
-      {/* 1. Zdroj obrázku */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Button type="button" variant="outline" size="sm" className="h-9" onClick={() => setUploadOpen(true)}>
+    <div className="space-y-2">
+      {/* 1. Zdroj obrázku + nastavení v jednom řádku */}
+      <div className="flex flex-wrap items-end gap-2">
+        <Button type="button" variant="outline" size="sm" className="h-8 shrink-0" onClick={() => setUploadOpen(true)}>
           <Upload className="w-4 h-4 mr-1" />
           Nahrát obrázek
         </Button>
-        <Button type="button" variant="outline" size="sm" className="h-9" onClick={() => setPickerOpen(true)}>
+        <Button type="button" variant="outline" size="sm" className="h-8 shrink-0" onClick={() => setPickerOpen(true)}>
           <ImageIcon className="w-4 h-4 mr-1" />
           Vybrat v Notion
         </Button>
-      </div>
-
-      {/* 2. Nastavení */}
-      <div className="rounded-md border border-border/70 bg-background/50 p-3">
-        <div className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Nastavení</div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {picto && (
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Piktogram</Label>
-              <PictogramSelect value={picto.value} onChange={picto.onChange} className={fieldCls} />
-            </div>
-          )}
+        <div className="h-8 w-px shrink-0 bg-border" aria-hidden />
+        {picto && (
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Velikost</Label>
-            <Select value={size} onValueChange={(v) => setContent(block, sizeOnly ? { size: v } : { size: v, position: block.content.position ?? "left" }, onChange)}>
-              <SelectTrigger className={fieldCls}><SelectValue /></SelectTrigger>
+            <Label className={labelCls}>Piktogram</Label>
+            <PictogramSelect value={picto.value} onChange={picto.onChange} className={`${fieldCls} w-[160px]`} />
+          </div>
+        )}
+        <div className="space-y-1">
+          <Label className={labelCls}>Velikost</Label>
+          <Select value={size} onValueChange={(v) => setContent(block, sizeOnly ? { size: v } : { size: v, position: block.content.position ?? "left" }, onChange)}>
+            <SelectTrigger className={`${fieldCls} w-[150px]`}><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="full">Plná šířka</SelectItem>
+              <SelectItem value="half">Půl stránky</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {!sizeOnly && size === "half" && (
+          <div className="space-y-1">
+            <Label className={labelCls}>Umístění</Label>
+            <Select value={position} onValueChange={(v) => setContent(block, { position: v }, onChange)}>
+              <SelectTrigger className={`${fieldCls} w-[150px]`}><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="full">Plná šířka</SelectItem>
-                <SelectItem value="half">Půl stránky</SelectItem>
+                <SelectItem value="left">Vlevo</SelectItem>
+                <SelectItem value="right">Vpravo</SelectItem>
+                <SelectItem value="center">Střed</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          {!sizeOnly && size === "half" && (
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Umístění obrázku</Label>
-              <Select value={position} onValueChange={(v) => setContent(block, { position: v }, onChange)}>
-                <SelectTrigger className={fieldCls}><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="left">Vlevo</SelectItem>
-                  <SelectItem value="right">Vpravo</SelectItem>
-                  <SelectItem value="center">Střed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
       {/* 3. Náhled */}
@@ -1170,11 +1165,11 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                                 <PopoverTrigger asChild>
                                   <button
                                     type="button"
-                                    title="Piktogram v buňce"
-                                    aria-label="Piktogram v buňce"
+                                    title="Možnosti buňky"
+                                    aria-label="Možnosti buňky"
                                     className="shrink-0 mr-1 rounded p-0.5 text-muted-foreground opacity-0 group-hover/cell:opacity-100 focus:opacity-100 data-[state=open]:opacity-100 hover:bg-muted"
                                   >
-                                    <ImageIcon className="w-3.5 h-3.5" />
+                                    <MoreHorizontal className="w-3.5 h-3.5" />
                                   </button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-2" align="end">
