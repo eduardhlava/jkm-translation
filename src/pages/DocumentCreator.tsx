@@ -888,6 +888,9 @@ const DocumentCreator = () => {
                 </TableBody>
               </table>
             </div>
+            <div className="border-t border-brand/20 bg-muted/40 px-4 py-2">
+              <AppVersionLink />
+            </div>
           </Card>
         )}
 
