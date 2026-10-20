@@ -54,6 +54,8 @@ interface Props {
   onToggleCollapsed?: () => void;
   onChange: (id: string, patch: Partial<Block>) => void;
   onDelete: (id: string) => void;
+  /** Rozdělí blok "Obrázek + Tabulka" na samostatný obrázek a tabulku. */
+  onSplit?: (id: string) => void;
   headingNumber?: string;
   imageNumber?: number;
   /** HTML of the directly following text block (for the wrap preview). */
@@ -99,7 +101,7 @@ function blockPreview(block: Block): string {
   }
 }
 
-export default function BlockItem({ block, collapsed, onToggleCollapsed, onChange, onDelete, headingNumber, imageNumber, imageLabelPrefix, nextTextHtml }: Props) {
+export default function BlockItem({ block, collapsed, onToggleCollapsed, onChange, onDelete, onSplit, headingNumber, imageNumber, imageLabelPrefix, nextTextHtml }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -121,6 +123,7 @@ export default function BlockItem({ block, collapsed, onToggleCollapsed, onChang
         onToggleCollapsed={onToggleCollapsed}
         onChange={onChange}
         onDelete={onDelete}
+        onSplit={onSplit}
         preview={preview}
         headingNumber={headingNumber}
         attributes={attributes}
@@ -142,6 +145,7 @@ function BlockHeader({
   onToggleCollapsed,
   onChange,
   onDelete,
+  onSplit,
   preview,
   headingNumber,
   attributes,
@@ -152,12 +156,14 @@ function BlockHeader({
   onToggleCollapsed?: () => void;
   onChange: Props["onChange"];
   onDelete: Props["onDelete"];
+  onSplit?: Props["onSplit"];
   preview: string;
   headingNumber?: string;
   attributes: any;
   listeners: any;
 }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [splitOpen, setSplitOpen] = useState(false);
   return (
     <div className={`flex items-center justify-between border-b border-muted-foreground/30 px-2 py-1 ${block.type === "image" || block.type === "image-table" ? "bg-success/10" : "bg-muted/30"}`}>
       <div className="flex items-center gap-1 min-w-0 flex-1 flex-wrap">
@@ -243,6 +249,39 @@ function BlockHeader({
                 : "Nadpis je číslován a zahrnut do obsahu"}
             </TooltipContent>
           </Tooltip>
+        )}
+        {block.type === "image-table" && onSplit && (
+          <AlertDialog open={splitOpen} onOpenChange={setSplitOpen}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                    aria-label="Rozdělit na dva bloky"
+                  >
+                    <Split className="w-4 h-4" />
+                  </Button>
+                </AlertDialogTrigger>
+              </TooltipTrigger>
+              <TooltipContent side="top">Rozdělit na dva bloky</TooltipContent>
+            </Tooltip>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Rozdělit blok?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Blok Obrázek + Tabulka se rozdělí na samostatný blok Obrázek a pod ním samostatný blok Tabulka. Obsah i nastavení zůstanou zachovány.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Zrušit</AlertDialogCancel>
+                <AlertDialogAction onClick={() => onSplit(block.id)}>
+                  Rozdělit
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
         <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
           <AlertDialogTrigger asChild>
