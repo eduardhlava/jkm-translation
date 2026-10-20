@@ -123,6 +123,7 @@ export default function BlockItem({ block, collapsed, onToggleCollapsed, onChang
         onToggleCollapsed={onToggleCollapsed}
         onChange={onChange}
         onDelete={onDelete}
+        onSplit={onSplit}
         preview={preview}
         headingNumber={headingNumber}
         attributes={attributes}
@@ -248,6 +249,39 @@ function BlockHeader({
                 : "Nadpis je číslován a zahrnut do obsahu"}
             </TooltipContent>
           </Tooltip>
+        )}
+        {block.type === "image-table" && onSplit && (
+          <AlertDialog open={splitOpen} onOpenChange={setSplitOpen}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                    aria-label="Rozdělit na dva bloky"
+                  >
+                    <Split className="w-4 h-4" />
+                  </Button>
+                </AlertDialogTrigger>
+              </TooltipTrigger>
+              <TooltipContent side="top">Rozdělit na dva bloky</TooltipContent>
+            </Tooltip>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Rozdělit blok?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Blok Obrázek + Tabulka se rozdělí na samostatný blok Obrázek a pod ním samostatný blok Tabulka. Obsah i nastavení zůstanou zachovány.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Zrušit</AlertDialogCancel>
+                <AlertDialogAction onClick={() => onSplit(block.id)}>
+                  Rozdělit
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
         <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
           <AlertDialogTrigger asChild>

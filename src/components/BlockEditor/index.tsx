@@ -22,6 +22,7 @@ import AddBlockMenu from "./AddBlockMenu";
 import { createBlock, type Block, type BlockType } from "./types";
 import { computeHeadingNumbers } from "./headingNumbers";
 import { computeImageNumbers } from "./imageNumbers";
+import { splitImageTableBlock } from "./splitImageTable";
 
 interface Props {
   blocks: Block[];
@@ -84,6 +85,15 @@ export default function BlockEditor({ blocks, onChange, numberHeadings, imageLab
 
   const deleteBlock = (id: string) => {
     reorder(sorted.filter((b) => b.id !== id));
+  };
+
+  const splitBlock = (id: string) => {
+    const idx = sorted.findIndex((b) => b.id === id);
+    if (idx < 0 || sorted[idx].type !== "image-table") return;
+    const [image, table] = splitImageTableBlock(sorted[idx]);
+    const next = [...sorted];
+    next.splice(idx, 1, image, table);
+    reorder(next);
   };
 
   const toggleCollapsed = (id: string) =>
@@ -167,6 +177,7 @@ export default function BlockEditor({ blocks, onChange, numberHeadings, imageLab
                   onToggleCollapsed={() => toggleCollapsed(b.id)}
                   onChange={updateBlock}
                   onDelete={deleteBlock}
+                  onSplit={splitBlock}
                   headingNumber={numbersMap?.get(b.id)}
                   imageNumber={imageNumbersMap.get(b.id)}
                   imageLabelPrefix={imageLabelPrefix}
