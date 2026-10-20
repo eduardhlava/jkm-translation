@@ -1100,6 +1100,10 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                         </Popover>
                       </td>
                       {row.map((cell, ci) => {
+                        if (coveredBy(merges, ri, ci)) return null;
+                        const anchor = mergeAt(merges, ri, ci);
+                        const span = anchor?.span ?? 1;
+                        const canMergeRight = ci + span < cols;
                         const isHeaderCell = !!block.content.headerRow && ri === 0;
                         const bgCls = rowBg
                           ? "bg-transparent"
@@ -1108,7 +1112,7 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                             : "bg-background";
                         const parsed = parseCellPictogram(cell);
                         return (
-                          <td key={ci} className="border border-muted-foreground/50 p-0 relative group/cell">
+                          <td key={ci} colSpan={span} className="border border-muted-foreground/50 p-0 relative group/cell">
                             <div className="flex min-w-0 items-center">
                               {parsed.pictogram !== "none" && (
                                 <span className="pl-1 shrink-0">
