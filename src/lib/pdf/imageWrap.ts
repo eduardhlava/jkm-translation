@@ -197,12 +197,16 @@ function unitsToHtml(units: Unit[]): string {
  * Every character ends up in exactly one part.
  */
 export function splitTextForWrap(html: string, availHeightPt: number, widthPt = SIDE_TEXT_WIDTH_PT): { side: string; rest: string } {
+  // Safety reserve: one line, so the side column never noticeably exceeds the image.
+  const r = splitCore(html, availHeightPt - BASE_FONT * LINE_HEIGHT, widthPt);
+  return { side: r.side, rest: r.rest };
+}
+
+function splitCore(html: string, avail: number, widthPt: number): { side: string; rest: string; used: number } {
   const units = toUnits(html);
   const side: Unit[] = [];
   const rest: Unit[] = [];
   let used = 0;
-  // Safety reserve: one line, so the side column never noticeably exceeds the image.
-  const avail = availHeightPt - BASE_FONT * LINE_HEIGHT;
   let full = false;
   for (const u of units) {
     if (full) { rest.push(u); continue; }
@@ -221,5 +225,38 @@ export function splitTextForWrap(html: string, availHeightPt: number, widthPt = 
       rest.push({ ...u, el: slicePreserving(u.el, cut + 1, false) }); // skip the space/newline at cut
     } else rest.push(u);
   }
-  return { side: unitsToHtml(side), rest: unitsToHtml(rest) };
+  return { side: unitsToHtml(side), rest: unitsToHtml(rest), used };
+}
+
+/** Width a block pictogram takes inside the side column (icon + gap). */
+export const SIDE_PICTO_PT = 34;
+
+/** Consecutive text blocks after a wrapping half-width image (stops at the first non-text block). */
+export function wrapChain(blocks: Block[], imageIndex: number): Block[] {
+  if (!wrapsNextText(blocks[imageIndex], blocks[imageIndex + 1])) return [];
+  const out: Block[] = [];
+  for (let i = imageIndex + 1; i < blocks.length && blocks[i].type === "text"; i++) out.push(blocks[i]);
+  return out;
+}
+
+export interface WrapPart { block: Block; side: string; rest: string }
+
+/**
+ * Fill the side column with consecutive text blocks while there is room.
+ * Blocks fully beside the image have rest ""; the block where room runs out is
+ * split; later blocks have side "" (rendered below at full width). Every
+ * character of every block appears in exactly one part.
+ */
+export function splitBlocksForWrap(blocks: Block[], availHeightPt: number, widthPt = SIDE_TEXT_WIDTH_PT): WrapPart[] {
+  let left = availHeightPt - BASE_FONT * LINE_HEIGHT;
+  let full = false;
+  return blocks.map((b) => {
+    const html = b.content?.html ?? "";
+    if (full) return { block: b, side: "", rest: html };
+    const picto = b.content?.pictogram && b.content.pictogram !== "none";
+    const r = splitCore(html, left, widthPt - (picto ? SIDE_PICTO_PT : 0));
+    left -= r.used;
+    if (r.rest || left <= 0) full = true;
+    return { block: b, side: r.side, rest: r.rest };
+  });
 }
