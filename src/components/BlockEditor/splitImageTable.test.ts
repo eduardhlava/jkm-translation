@@ -47,7 +47,7 @@ describe("splitImageTableBlock", () => {
     expect(table.content.merges).toEqual([{ r: 1, c: 0, span: 2 }]);
     expect(table.content.colWidths).toEqual([30, 70]);
     expect(table.content.rowColors).toEqual({ 1: "green" });
-    expect(table.content.rows[1][0]).toBe("[[pic:recycling]] materiál");
+    expect(table.content.rows[1][1]).toBe("[[pic:recycling]] materiál");
     expect(table.content.pictogram).toBeUndefined();
   });
 
