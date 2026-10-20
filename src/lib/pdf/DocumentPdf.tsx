@@ -59,6 +59,7 @@ Font.registerHyphenationCallback((word) => [word]);
 // within the 732pt A4 body, and never flex-shrink the surrounding block containers.
 const MAX_IMAGE_HEIGHT_PT = 640;
 
+
 // ---------- Styles ----------
 const styles = StyleSheet.create({
   page: {
@@ -542,6 +543,7 @@ function TextBlock({ block, startMarker }: { block: Block; startMarker?: JSX.Ele
       if (tag === "UL" || tag === "OL") {
         flushInline();
         const items = Array.from(el.children).filter((c) => c.tagName.toUpperCase() === "LI");
+        const listStart = parseInt(el.getAttribute("start") ?? "1", 10) || 1;
         items.forEach((li, i) => {
           const runs = renderInlineNode(li);
           const s = parseStyleAttr(li);
@@ -549,7 +551,7 @@ function TextBlock({ block, startMarker }: { block: Block; startMarker?: JSX.Ele
           const contentStyle = { ...styles.liContent, ...(s.textAlign ? { textAlign: s.textAlign } : {}), ...(s.fontSize ? { fontSize: s.fontSize } : {}) } as any;
           nodes.push(
             <View key={key++} style={liStyle}>
-              <Text style={styles.liBullet}>{tag === "OL" ? `${i + 1}.` : "•"}</Text>
+              <Text style={styles.liBullet}>{tag === "OL" ? `${listStart + i}.` : "•"}</Text>
               <Text style={contentStyle}><RunsText runs={runs} /></Text>
             </View>
           );
@@ -610,11 +612,13 @@ function TextBlock({ block, startMarker }: { block: Block; startMarker?: JSX.Ele
   return body;
 }
 
-function ImageBlock({ block, captionOverride, startMarker, measure, measureStartId }: { block: Block; captionOverride?: string; startMarker?: JSX.Element; measure?: MeasureContext; measureStartId?: string }) {
+function ImageBlock({ block, captionOverride, startMarker, measure, measureStartId, inColumn }: { block: Block; captionOverride?: string; startMarker?: JSX.Element; measure?: MeasureContext; measureStartId?: string; inColumn?: boolean }) {
   const url = block.content?.url;
   const alt = block.content?.alt;
   if (!url) return null;
   const caption = captionOverride !== undefined ? captionOverride : alt;
+  // "half" → 50 % of the content width (centered) unless placed in a wrap column.
+  const half = !inColumn && block.content?.size === "half";
   return (
     <View wrap={false} style={styles.imageBlock}>
       {startMarker}
@@ -622,8 +626,8 @@ function ImageBlock({ block, captionOverride, startMarker, measure, measureStart
         <PageMarker onPage={(p) => measure.tableStartPages.set(measureStartId, p)} />
       )}
       {/* eslint-disable-next-line jsx-a11y/alt-text */}
-      <Image src={url} style={[styles.image, { width: "98%", maxHeight: MAX_IMAGE_HEIGHT_PT }]} />
-      {caption ? <Text style={styles.caption}>{caption}</Text> : null}
+      <Image src={url} style={[styles.image, { width: half ? "49%" : "98%", maxHeight: MAX_IMAGE_HEIGHT_PT }]} />
+      {caption ? <Text style={[styles.caption, half ? { width: "50%" } : {}]}>{caption}</Text> : null}
     </View>
   );
 }
@@ -748,6 +752,37 @@ function BlockNode({ block, collector, number, imageCaption, measure, measureNex
   }
 }
 
+
+/**
+ * Half-width left/right image + the directly following text block: an
+ * unbreakable row (image column, gap, side text) followed by the rest of the
+ * text at full width. The consumed text block is not rendered again.
+ */
+function WrappedImageText({ image, text, caption, measure, measureNextFor }: { image: Block; text: Block; caption?: string; measure?: MeasureContext; measureNextFor?: string[] }) {
+  const startMarker = measure && measureNextFor && measureNextFor.length > 0
+    ? <StartMarker ids={measureNextFor} measure={measure} />
+    : undefined;
+  const right = imagePositionOf(image.content) === "right";
+  const sideH = sideImageHeight(image.content?.url, caption, MAX_IMAGE_HEIGHT_PT);
+  const { side, rest } = splitTextForWrap(text.content?.html ?? "", sideH);
+  const plain = (html: string): Block => ({ ...text, content: { ...text.content, html, pictogram: "none" } });
+  const row = (
+    <View style={{ flexShrink: 0 }}>
+      <View wrap={false} style={{ flexDirection: right ? "row-reverse" : "row", alignItems: "flex-start", flexShrink: 0 }}>
+        <View style={{ width: HALF_COLUMN_PT, flexShrink: 0 }}>
+          <ImageBlock block={image} captionOverride={caption} startMarker={startMarker} inColumn />
+        </View>
+        <View style={{ width: WRAP_GAP_PT, flexShrink: 0 }} />
+        <View style={{ width: SIDE_TEXT_WIDTH_PT, paddingTop: 10, flexShrink: 0 }}>
+          {side ? <TextBlock block={plain(side)} /> : null}
+        </View>
+      </View>
+      {rest ? <TextBlock block={plain(rest)} /> : null}
+    </View>
+  );
+  const pic = image.content?.pictogram && image.content.pictogram !== "none" ? image : text;
+  return withPictogram(pic, row);
+}
 
 // ---------- TOC ----------
 function Toc({ entries, pageMap, numbers }: { entries: HeadingEntry[]; pageMap: PageMap; numbers?: Map<string, string> }) {
@@ -943,7 +978,9 @@ export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collect
           // Řetězec nadpisů H2/H3/H4 bez obsahu mezi nimi – první obsahový
           // blok za řetězcem dostane značku začátku pro všechny jeho nadpisy.
           let headingChain: string[] = [];
-          return ordered.map((b) => {
+          const consumed = new Set<string>();
+          return ordered.map((b, bi) => {
+            if (consumed.has(b.id)) return null;
             const isKeepHeading = b.type === "heading2" || b.type === "heading3" || b.type === "heading4";
             const nextFor = !isKeepHeading && b.type !== "heading1" && b.type !== "pagebreak" && headingChain.length > 0
               ? headingChain
@@ -959,7 +996,13 @@ export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collect
                     }}
                   />
                 )}
-                <BlockNode block={b} collector={collector} number={numbers?.get(b.id)} imageCaption={captionFor(b)} measure={measure} measureNextFor={nextFor} />
+                {wrapsNextText(b, ordered[bi + 1]) ? (() => {
+                  const textBlock = ordered[bi + 1];
+                  consumed.add(textBlock.id);
+                  return <WrappedImageText image={b} text={textBlock} caption={captionFor(b)} measure={measure} measureNextFor={nextFor} />;
+                })() : (
+                  <BlockNode block={b} collector={collector} number={numbers?.get(b.id)} imageCaption={captionFor(b)} measure={measure} measureNextFor={nextFor} />
+                )}
               </Fragment>
             );
             headingChain = isKeepHeading ? [...headingChain, b.id] : [];
