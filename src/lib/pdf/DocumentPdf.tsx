@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, Image, Link, StyleSheet, Font, Svg, Polygon, Path, Circle } from "@react-pdf/renderer";
+import { Document, Page, Text, View, Image, Link, StyleSheet, Font, Svg, Path } from "@react-pdf/renderer";
 import { Fragment, cloneElement } from "react";
 import { cellTextToHtml } from "@/components/BlockEditor/cellFormatting";
 import { parseCellPictogram, type Block, type Pictogram } from "@/components/BlockEditor/types";
