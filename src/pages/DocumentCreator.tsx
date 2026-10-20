@@ -812,12 +812,14 @@ const DocumentCreator = () => {
             <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 260px)" }}>
               <table className="w-full caption-bottom text-sm bg-card">
                 <TableHeader className="bg-muted/70 [&_tr]:border-b-0 [&>tr>th]:sticky [&>tr>th]:top-0 [&>tr>th]:z-20 [&>tr>th]:bg-muted">
-                  <TableRow>
+                  <TableRow className="h-9">
                     {tableHeaders.map((h) => (
-                      <TableHead key={h}>{h === titleProp ? "Označení dokumentu (jméno souboru)" : capitalizeHeader(h)}</TableHead>
+                      <TableHead key={h} className="h-9 px-3 py-1 text-xs">
+                        {h === titleProp ? "Označení dokumentu (jméno souboru)" : capitalizeHeader(h)}
+                      </TableHead>
                     ))}
-                    <TableHead className="text-right">Akce</TableHead>
-                    <TableHead className="text-right w-16">Notion</TableHead>
+                    <TableHead className="h-9 px-3 py-1 text-right text-xs">Akce</TableHead>
+                    <TableHead className="h-9 w-16 px-3 py-1 text-right text-xs">Notion</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -838,20 +840,20 @@ const DocumentCreator = () => {
                             );
                             const fileName = fileNameKey ? it.properties[fileNameKey] : "";
                             return (
-                              <TableCell key={h} className="font-medium">
-                                <div className="font-bold">{value}</div>
-                                {fileName && <div className="text-xs text-muted-foreground">({fileName})</div>}
+                              <TableCell key={h} className="px-3 py-1.5 font-medium">
+                                <div className="font-bold leading-tight">{value}</div>
+                                {fileName && <div className="text-xs leading-tight text-muted-foreground">({fileName})</div>}
                               </TableCell>
                             );
                           }
                           return (
-                            <TableCell key={h} className="text-muted-foreground">
+                            <TableCell key={h} className="px-3 py-1.5 text-muted-foreground">
                               {value}
                             </TableCell>
                           );
                         })}
-                        <TableCell className="text-right">
-                          <Button size="sm" onClick={() => loadContent(it)} disabled={loadingContent}>
+                        <TableCell className="px-3 py-1.5 text-right">
+                          <Button size="sm" className="h-7 px-2.5" onClick={() => loadContent(it)} disabled={loadingContent}>
                             {loadingId === it.id ? (
                               <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Načítám…</>
                             ) : (
