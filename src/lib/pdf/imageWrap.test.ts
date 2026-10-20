@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { splitTextForWrap, wrapsNextText } from "./imageWrap";
+import { splitTextForWrap, wrapsNextText, splitBlocksForWrap, wrapChain } from "./imageWrap";
 import { blocksToHtml } from "@/components/BlockEditor/serialize";
 import { parseDocumentHtml, parseDocumentJson } from "@/components/BlockEditor/importJson";
 import type { Block } from "@/components/BlockEditor/types";
@@ -78,7 +78,6 @@ describe("image size/position persistence", () => {
 });
 
 describe("splitBlocksForWrap / wrapChain", () => {
-  const { splitBlocksForWrap, wrapChain } = require("./imageWrap") as typeof import("./imageWrap");
   const t = (id: string, html: string): Block => ({ id, type: "text", template: "default", order: 0, content: { html } });
   const img: Block = { id: "i", type: "image", template: "default", order: 0, content: { url: "x", alt: "", size: "half", position: "left" } };
   const all = (parts: { side: string; rest: string }[]) => parts.map((p) => `${plain(p.side)} ${plain(p.rest)}`.trim());
