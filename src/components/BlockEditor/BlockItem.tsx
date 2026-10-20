@@ -101,7 +101,7 @@ function blockPreview(block: Block): string {
   }
 }
 
-export default function BlockItem({ block, collapsed, onToggleCollapsed, onChange, onDelete, headingNumber, imageNumber, imageLabelPrefix, nextTextHtml }: Props) {
+export default function BlockItem({ block, collapsed, onToggleCollapsed, onChange, onDelete, onSplit, headingNumber, imageNumber, imageLabelPrefix, nextTextHtml }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -144,6 +144,7 @@ function BlockHeader({
   onToggleCollapsed,
   onChange,
   onDelete,
+  onSplit,
   preview,
   headingNumber,
   attributes,
@@ -154,12 +155,14 @@ function BlockHeader({
   onToggleCollapsed?: () => void;
   onChange: Props["onChange"];
   onDelete: Props["onDelete"];
+  onSplit?: Props["onSplit"];
   preview: string;
   headingNumber?: string;
   attributes: any;
   listeners: any;
 }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [splitOpen, setSplitOpen] = useState(false);
   return (
     <div className={`flex items-center justify-between border-b border-muted-foreground/30 px-2 py-1 ${block.type === "image" || block.type === "image-table" ? "bg-success/10" : "bg-muted/30"}`}>
       <div className="flex items-center gap-1 min-w-0 flex-1 flex-wrap">
