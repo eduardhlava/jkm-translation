@@ -170,7 +170,11 @@ export default function BlockEditor({ blocks, onChange, numberHeadings, imageLab
                   headingNumber={numbersMap?.get(b.id)}
                   imageNumber={imageNumbersMap.get(b.id)}
                   imageLabelPrefix={imageLabelPrefix}
-                  nextTextHtml={sorted[i + 1]?.type === "text" ? (sorted[i + 1].content?.html ?? "") : undefined}
+                  nextTextHtml={(() => {
+                    const htmls: string[] = [];
+                    for (let j = i + 1; j < sorted.length && sorted[j].type === "text"; j++) htmls.push(sorted[j].content?.html ?? "");
+                    return htmls.length ? htmls.map((h) => `<p>${h}</p>`).join("") : undefined;
+                  })()}
                 />
                 <div className="group relative flex h-2 items-center justify-center">
                   <div className="opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
