@@ -861,7 +861,7 @@ const DocumentCreator = () => {
                             )}
                           </Button>
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="px-3 py-1.5 text-right">
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <a
