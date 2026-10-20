@@ -24,6 +24,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BLOCK_TYPE_LABELS, buildCellValue, parseCellPictogram, type Block, type Pictogram } from "./types";
 import TableCellEditor from "./TableCellEditor";
+import PictogramIcon from "./PictogramIcon";
 
 const PICTOGRAM_LABELS: Record<string, string> = {
   alert: "Výstraha",
@@ -664,7 +665,7 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
             <SelectItem value="alert">Výstraha</SelectItem>
             <SelectItem value="alert-electric">Výstraha – elektrické nebezpečí</SelectItem>
             <SelectItem value="info">Informace</SelectItem>
-
+            <SelectItem value="recycling">Recyklace</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -693,100 +694,6 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
     </div>
   );
 }
-
-function PictogramIcon({ kind, size = 28 }: { kind: Pictogram; size?: number }) {
-  const color = "currentColor";
-  const fill = "white";
-  const strokeWidth = 2;
-
-  const symbol = (() => {
-    switch (kind) {
-      case "alert":
-        return (
-          <>
-            <line x1="12" y1="9" x2="12" y2="15" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
-            <circle cx="12" cy="18" r="1.2" fill={color} />
-          </>
-        );
-      case "alert-electric":
-        return (
-          <path
-            d="M14 8 L9 15 L12 15 L10 20 L16 13 L13 13 L15 8 Z"
-            fill={color}
-          />
-        );
-      case "info":
-        return (
-          <>
-            <circle cx="12" cy="8" r="1.2" fill={color} />
-            <line x1="12" y1="11" x2="12" y2="17" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
-          </>
-        );
-      case "recycling":
-        return (
-          <>
-            <path d="M12 4 Q15 8 17 12" stroke={color} strokeWidth={strokeWidth} fill="none" strokeLinecap="round" />
-            <polygon points="17,12 15.45,10.84 16.64,10.10" fill={color} />
-            <path d="M17 12 Q12 14 7 12" stroke={color} strokeWidth={strokeWidth} fill="none" strokeLinecap="round" />
-            <polygon points="7,12 8.80,11.30 8.80,12.70" fill={color} />
-            <path d="M7 12 Q9 8 12 4" stroke={color} strokeWidth={strokeWidth} fill="none" strokeLinecap="round" />
-            <polygon points="12,4 11.64,5.90 10.45,5.16" fill={color} />
-          </>
-        );
-      default:
-        return null;
-    }
-  })();
-
-
-  const shape = (() => {
-    switch (kind) {
-      case "alert":
-      case "alert-electric":
-        return (
-          <polygon
-            points="12,2 22,21 2,21"
-            fill={fill}
-            stroke={color}
-            strokeWidth={strokeWidth}
-            strokeLinejoin="round"
-          />
-        );
-      case "info":
-        return (
-          <circle
-            cx="12"
-            cy="12"
-            r="10"
-            fill={fill}
-            stroke={color}
-            strokeWidth={strokeWidth}
-          />
-        );
-      case "recycling":
-        return (
-          <circle
-            cx="12"
-            cy="12"
-            r="10"
-            fill={fill}
-            stroke={color}
-            strokeWidth={strokeWidth}
-          />
-        );
-      default:
-        return null;
-    }
-  })();
-
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" className="text-foreground" fill="none">
-      {shape}
-      {symbol}
-    </svg>
-  );
-}
-
 
 function PictogramSelect({ value, onChange }: { value?: Pictogram; onChange: (v: Pictogram) => void }) {
   return (

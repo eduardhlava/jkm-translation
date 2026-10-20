@@ -6,6 +6,7 @@ import notoRegular from "@/assets/fonts/NotoSans-Regular.ttf?url";
 import notoBold from "@/assets/fonts/NotoSans-Bold.ttf?url";
 import notoItalic from "@/assets/fonts/NotoSans-Italic.ttf?url";
 import notoBoldItalic from "@/assets/fonts/NotoSans-BoldItalic.ttf?url";
+import { PICTOGRAM_PATHS } from "@/components/BlockEditor/pictogramPaths";
 import { HALF_COLUMN_PT, SIDE_TEXT_WIDTH_PT, WRAP_GAP_PT, imagePositionOf, sideImageHeight, splitTextForWrap, wrapsNextText } from "./imageWrap";
 import { DOCUMENT_LANGUAGES, mergeMetadata, type DocumentMetadata } from "@/components/DocumentMetadata/types";
 
@@ -440,65 +441,11 @@ function parseStyleAttr(el: Element): { textAlign?: "left" | "center" | "right" 
 }
 
 function PictogramSvg({ kind, size = 26 }: { kind: Pictogram; size?: number }) {
-  const color = "#000000";
-  const fill = "#ffffff";
-  const strokeWidth = 2;
-
-  const renderSymbol = () => {
-    switch (kind) {
-      case "alert":
-        return (
-          <>
-            <Path d="M12 9 L12 15" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
-            <Circle cx={12} cy={18} r={1.2} fill={color} />
-          </>
-        );
-      case "alert-electric":
-        return <Path d="M14 8 L9 15 L12 15 L10 20 L16 13 L13 13 L15 8 Z" fill={color} />;
-      case "info":
-        return (
-          <>
-            <Circle cx={12} cy={8} r={1.2} fill={color} />
-            <Path d="M12 11 L12 17" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
-          </>
-        );
-      case "recycling":
-        return (
-          <>
-            <Path d="M12 4 Q15 8 17 12" stroke={color} strokeWidth={strokeWidth} fill="none" strokeLinecap="round" />
-            <Polygon points="17,12 15.45,10.84 16.64,10.10" fill={color} />
-            <Path d="M17 12 Q12 14 7 12" stroke={color} strokeWidth={strokeWidth} fill="none" strokeLinecap="round" />
-            <Polygon points="7,12 8.80,11.30 8.80,12.70" fill={color} />
-            <Path d="M7 12 Q9 8 12 4" stroke={color} strokeWidth={strokeWidth} fill="none" strokeLinecap="round" />
-            <Polygon points="12,4 11.64,5.90 10.45,5.16" fill={color} />
-          </>
-        );
-      default:
-        return null;
-    }
-  };
-
-  const renderShape = () => {
-    switch (kind) {
-      case "alert":
-      case "alert-electric":
-        return (
-          <Polygon points="12,2 22,21 2,21" fill={fill} stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" />
-        );
-      case "info":
-      case "recycling":
-        return (
-          <Circle cx={12} cy={12} r={10} fill={fill} stroke={color} strokeWidth={strokeWidth} />
-        );
-      default:
-        return null;
-    }
-  };
-
+  const d = PICTOGRAM_PATHS[kind as keyof typeof PICTOGRAM_PATHS];
+  if (!d) return null;
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
-      {renderShape()}
-      {renderSymbol()}
+      <Path d={d} fill="#333333" fillRule="evenodd" />
     </Svg>
   );
 }
