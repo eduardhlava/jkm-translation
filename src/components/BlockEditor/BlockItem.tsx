@@ -54,6 +54,8 @@ interface Props {
   onToggleCollapsed?: () => void;
   onChange: (id: string, patch: Partial<Block>) => void;
   onDelete: (id: string) => void;
+  /** Rozdělí blok "Obrázek + Tabulka" na samostatný obrázek a tabulku. */
+  onSplit?: (id: string) => void;
   headingNumber?: string;
   imageNumber?: number;
   /** HTML of the directly following text block (for the wrap preview). */
