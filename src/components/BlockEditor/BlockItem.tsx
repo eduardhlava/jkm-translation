@@ -1163,6 +1163,32 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                                       ×
                                     </button>
                                   </div>
+                                  {(canMergeRight || anchor) && (
+                                    <div className="mt-2 flex flex-col gap-1 border-t border-border pt-2">
+                                      {canMergeRight && (
+                                        <button
+                                          type="button"
+                                          onClick={() => mergeRight(ri, ci)}
+                                          title="Sloučit s buňkou vpravo"
+                                          aria-label="Sloučit s buňkou vpravo"
+                                          className="flex items-center gap-2 rounded px-2 py-1 text-xs hover:bg-muted"
+                                        >
+                                          <Combine className="w-3.5 h-3.5" /> Sloučit s buňkou vpravo
+                                        </button>
+                                      )}
+                                      {anchor && (
+                                        <button
+                                          type="button"
+                                          onClick={() => unmerge(ri, ci)}
+                                          title="Zrušit sloučení"
+                                          aria-label="Zrušit sloučení"
+                                          className="flex items-center gap-2 rounded px-2 py-1 text-xs hover:bg-muted"
+                                        >
+                                          <Split className="w-3.5 h-3.5" /> Zrušit sloučení
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
                                 </PopoverContent>
                               </Popover>
                             </div>
