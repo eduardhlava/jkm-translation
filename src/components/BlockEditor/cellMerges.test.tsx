@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { pdf } from "@react-pdf/renderer";
+import { Font, pdf } from "@react-pdf/renderer";
+import { resolve } from "node:path";
+
+// Local font paths let the real renderer run without network requests.
+Font.clear();
+Font.register({ family: "Helvetica", src: resolve("src/assets/fonts/NotoSans-Regular.ttf") });
+Font.register({ family: "NotoSans", fonts: [
+  { src: resolve("src/assets/fonts/NotoSans-Regular.ttf"), fontWeight: "normal" },
+  { src: resolve("src/assets/fonts/NotoSans-Bold.ttf"), fontWeight: "bold" },
+] });
 import {
   coveredBy,
   mergeAt,
