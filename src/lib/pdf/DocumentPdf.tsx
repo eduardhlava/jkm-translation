@@ -1,6 +1,7 @@
 import { Document, Page, Text, View, Image, Link, StyleSheet, Font, Svg, Path } from "@react-pdf/renderer";
 import { Fragment, cloneElement } from "react";
 import { cellTextToHtml } from "@/components/BlockEditor/cellFormatting";
+import { coveredBy, mergeAt, normalizeMerges } from "@/components/BlockEditor/cellMerges";
 import { parseCellPictogram, type Block, type Pictogram } from "@/components/BlockEditor/types";
 import notoRegular from "@/assets/fonts/NotoSans-Regular.ttf?url";
 import notoBold from "@/assets/fonts/NotoSans-Bold.ttf?url";
@@ -588,6 +589,7 @@ function TableBlock({ block, startMarker, measure, measureStartId, measurePartSt
   if (rows.length === 0) return null;
   const cols = rows[0]?.length ?? 0;
   const hasWidths = !!colWidths && colWidths.length === cols && cols > 0;
+  const merges = normalizeMerges(block.content?.merges, rows);
   const lastRi = rows.length - 1;
   return (
     <View style={styles.table}>
@@ -606,9 +608,14 @@ function TableBlock({ block, startMarker, measure, measureStartId, measurePartSt
               <PageMarker onPage={(p) => measure.tableEndPages.set(measureEndId, p)} />
             )}
             {row.map((cell, ci) => {
+              if (coveredBy(merges, ri, ci)) return null;
+              const span = mergeAt(merges, ri, ci)?.span ?? 1;
               const wStyle = hasWidths && colWidths
-                ? { width: `${colWidths[ci]}%`, flexGrow: 0, flexShrink: 0, flexBasis: `${colWidths[ci]}%` }
-                : { flex: 1 };
+                ? (() => {
+                    const w = colWidths.slice(ci, ci + span).reduce((a, b) => a + b, 0);
+                    return { width: `${w}%`, flexGrow: 0, flexShrink: 0, flexBasis: `${w}%` };
+                  })()
+                : { flex: span };
               const isHeader = headerRow && ri === 0 && !rowBg;
               const { pictogram: cellPic, text: cellText } = parseCellPictogram(cell ?? "");
               const paragraphs = parseInline(cellTextToHtml(cellText));

@@ -1,6 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Trash2, AlertTriangle, Info, AlertCircle, Loader2, Upload, Plus, Minus, ChevronDown, ChevronRight, List, ListMinus, ListOrdered, Link, ImageIcon, AlignLeft, AlignCenter, AlignRight, SeparatorHorizontal, Pencil, MoreVertical, Superscript, Subscript, RemoveFormatting, ClipboardType, Highlighter } from "lucide-react";
+import { GripVertical, Trash2, AlertTriangle, Info, AlertCircle, Loader2, Upload, Plus, Minus, ChevronDown, ChevronRight, List, ListMinus, ListOrdered, Link, ImageIcon, AlignLeft, AlignCenter, AlignRight, SeparatorHorizontal, Pencil, MoreVertical, Superscript, Subscript, RemoveFormatting, ClipboardType, Highlighter, Combine, Split } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -25,6 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BLOCK_TYPE_LABELS, buildCellValue, parseCellPictogram, type Block, type Pictogram } from "./types";
 import TableCellEditor from "./TableCellEditor";
 import PictogramIcon from "./PictogramIcon";
+import { coveredBy, mergeAt, mergeCellsRight, normalizeMerges, remapDeleteColumn, remapDeleteRow, remapInsertColumn, unmergeCell } from "./cellMerges";
 
 const PICTOGRAM_LABELS: Record<string, string> = {
   alert: "Výstraha",
@@ -853,6 +854,7 @@ function defaultColWidths(cols: number, narrowFirstCol?: boolean): number[] {
 function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { block: Block; onChange: Props["onChange"]; narrowFirstCol?: boolean; hidePictogram?: boolean }) {
   const rows: string[][] = block.content.rows ?? [];
   const cols = rows[0]?.length ?? 0;
+  const merges = normalizeMerges(block.content.merges, rows);
   const storedWidths: number[] | undefined = block.content.colWidths;
   const widths: number[] =
     storedWidths && storedWidths.length === cols
@@ -876,12 +878,14 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
   const removeRow = () => rows.length > 1 && setContent(block, {
     rows: rows.slice(0, -1),
     rowColors: rowColors.slice(0, -1),
+    merges: remapDeleteRow(merges, rows.length - 1),
   }, onChange);
   const deleteRowAt = (idx: number) => {
     if (rows.length <= 1) return;
     setContent(block, {
       rows: rows.filter((_, i) => i !== idx),
       rowColors: rowColors.length ? rowColors.filter((_, i) => i !== idx) : rowColors,
+      merges: remapDeleteRow(merges, idx),
     }, onChange);
   };
   const setRowColor = (idx: number, color: string | null) => {
@@ -892,14 +896,14 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
   const addCol = () =>
     setContent(
       block,
-      { rows: rows.map((r) => [...r, ""]), colWidths: defaultColWidths(cols + 1, narrowFirstCol) },
+      { rows: rows.map((r) => [...r, ""]), colWidths: defaultColWidths(cols + 1, narrowFirstCol), merges: remapInsertColumn(merges, cols) },
       onChange,
     );
   const removeCol = () => {
     if (cols <= 1) return;
     setContent(
       block,
-      { rows: rows.map((r) => r.slice(0, -1)), colWidths: defaultColWidths(cols - 1, narrowFirstCol) },
+      { rows: rows.map((r) => r.slice(0, -1)), colWidths: defaultColWidths(cols - 1, narrowFirstCol), merges: remapDeleteColumn(merges, cols - 1) },
       onChange,
     );
   };
@@ -907,9 +911,18 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
     if (cols <= 1) return;
     setContent(
       block,
-      { rows: rows.map((r) => r.filter((_, i) => i !== idx)), colWidths: defaultColWidths(cols - 1, narrowFirstCol) },
+      { rows: rows.map((r) => r.filter((_, i) => i !== idx)), colWidths: defaultColWidths(cols - 1, narrowFirstCol), merges: remapDeleteColumn(merges, idx) },
       onChange,
     );
+  };
+
+  const mergeRight = (r: number, c: number) => {
+    const next = mergeCellsRight(rows, merges, r, c);
+    setContent(block, { rows: next.rows, merges: next.merges }, onChange);
+  };
+  const unmerge = (r: number, c: number) => {
+    const next = unmergeCell(rows, merges, r, c);
+    setContent(block, { rows: next.rows, merges: next.merges }, onChange);
   };
 
   const startResize = (idx: number) => (e: React.MouseEvent) => {
@@ -1087,6 +1100,10 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                         </Popover>
                       </td>
                       {row.map((cell, ci) => {
+                        if (coveredBy(merges, ri, ci)) return null;
+                        const anchor = mergeAt(merges, ri, ci);
+                        const span = anchor?.span ?? 1;
+                        const canMergeRight = ci + span < cols;
                         const isHeaderCell = !!block.content.headerRow && ri === 0;
                         const bgCls = rowBg
                           ? "bg-transparent"
@@ -1095,7 +1112,7 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                             : "bg-background";
                         const parsed = parseCellPictogram(cell);
                         return (
-                          <td key={ci} className="border border-muted-foreground/50 p-0 relative group/cell">
+                          <td key={ci} colSpan={span} className="border border-muted-foreground/50 p-0 relative group/cell">
                             <div className="flex min-w-0 items-center">
                               {parsed.pictogram !== "none" && (
                                 <span className="pl-1 shrink-0">
@@ -1146,6 +1163,32 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                                       ×
                                     </button>
                                   </div>
+                                  {(canMergeRight || anchor) && (
+                                    <div className="mt-2 flex flex-col gap-1 border-t border-border pt-2">
+                                      {canMergeRight && (
+                                        <button
+                                          type="button"
+                                          onClick={() => mergeRight(ri, ci)}
+                                          title="Sloučit s buňkou vpravo"
+                                          aria-label="Sloučit s buňkou vpravo"
+                                          className="flex items-center gap-2 rounded px-2 py-1 text-xs hover:bg-muted"
+                                        >
+                                          <Combine className="w-3.5 h-3.5" /> Sloučit s buňkou vpravo
+                                        </button>
+                                      )}
+                                      {anchor && (
+                                        <button
+                                          type="button"
+                                          onClick={() => unmerge(ri, ci)}
+                                          title="Zrušit sloučení"
+                                          aria-label="Zrušit sloučení"
+                                          className="flex items-center gap-2 rounded px-2 py-1 text-xs hover:bg-muted"
+                                        >
+                                          <Split className="w-3.5 h-3.5" /> Zrušit sloučení
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
                                 </PopoverContent>
                               </Popover>
                             </div>

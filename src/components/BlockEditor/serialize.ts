@@ -1,6 +1,7 @@
 import { type Block } from "./types";
 import { cellPlainText, cellTextToHtml, cellToExportHtml } from "./cellFormatting";
 import { parseCellPictogram } from "./types";
+import { normalizeMerges } from "./cellMerges";
 import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
 
 // ---------- Round-trip metadata markers ----------
@@ -37,11 +38,14 @@ function serializeBlockMeta(b: Block): Record<string, unknown> {
       }
       if (c.pictogram && c.pictogram !== "none") meta.pic = c.pictogram;
       break;
-    case "table":
+    case "table": {
       meta.hdr = c.headerRow !== false;
       meta.indexedCells = indexedCells(c.rows ?? []);
+      const mg = normalizeMerges(c.merges, c.rows ?? []);
+      if (mg.length) meta.mg = mg;
       if (c.pictogram && c.pictogram !== "none") meta.pic = c.pictogram;
       break;
+    }
     case "image-table": {
       // autoTableBreak is transient PDF layout, never Notion metadata/content.
       const img = c.image ?? {};
@@ -50,6 +54,8 @@ function serializeBlockMeta(b: Block): Record<string, unknown> {
       if (img.size === "half") meta.isz = "half";
       meta.hdr = tbl.headerRow !== false;
       meta.indexedCells = indexedCells(tbl.rows ?? []);
+      const tmg = normalizeMerges(tbl.merges, tbl.rows ?? []);
+      if (tmg.length) meta.tmg = tmg;
       if (c.pictogram && c.pictogram !== "none") meta.pic = c.pictogram;
       break;
     }
