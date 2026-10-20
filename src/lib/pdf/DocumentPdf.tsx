@@ -1,6 +1,7 @@
 import { Document, Page, Text, View, Image, Link, StyleSheet, Font, Svg, Path } from "@react-pdf/renderer";
 import { Fragment, cloneElement } from "react";
 import { cellTextToHtml } from "@/components/BlockEditor/cellFormatting";
+import { coveredBy, mergeAt, normalizeMerges } from "@/components/BlockEditor/cellMerges";
 import { parseCellPictogram, type Block, type Pictogram } from "@/components/BlockEditor/types";
 import notoRegular from "@/assets/fonts/NotoSans-Regular.ttf?url";
 import notoBold from "@/assets/fonts/NotoSans-Bold.ttf?url";
