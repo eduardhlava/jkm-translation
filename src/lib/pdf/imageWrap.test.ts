@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { splitTextForWrap, wrapsNextText } from "./imageWrap";
+import { splitTextForWrap, wrapsNextText, splitBlocksForWrap, wrapChain } from "./imageWrap";
 import { blocksToHtml } from "@/components/BlockEditor/serialize";
 import { parseDocumentHtml, parseDocumentJson } from "@/components/BlockEditor/importJson";
 import type { Block } from "@/components/BlockEditor/types";
@@ -74,5 +74,35 @@ describe("image size/position persistence", () => {
     expect(blocks[1].content.size).toBeUndefined();
     expect(blocks[2].content.position).toBe("left");
     expect(blocks[3].content.image.size).toBe("half");
+  });
+});
+
+describe("splitBlocksForWrap / wrapChain", () => {
+  const t = (id: string, html: string): Block => ({ id, type: "text", template: "default", order: 0, content: { html } });
+  const img: Block = { id: "i", type: "image", template: "default", order: 0, content: { url: "x", alt: "", size: "half", position: "left" } };
+  const all = (parts: { side: string; rest: string }[]) => parts.map((p) => `${plain(p.side)} ${plain(p.rest)}`.trim());
+
+  it("three short blocks all fit beside the image", () => {
+    const blocks = [t("a", "<p>Jedna.</p>"), t("b", "<p>Dvě.</p>"), t("c", "<p>Tři.</p>")];
+    const parts = splitBlocksForWrap(blocks, 300);
+    expect(parts.map((p) => plain(p.side))).toEqual(["Jedna.", "Dvě.", "Tři."]);
+    expect(parts.every((p) => p.rest === "")).toBe(true);
+  });
+
+  it("long second block is split, third goes fully below; nothing lost or duplicated", () => {
+    const blocks = [t("a", "<p>Úvod.</p>"), t("b", `<p>${words}</p>`), t("c", "<p>Třetí blok.</p>")];
+    const parts = splitBlocksForWrap(blocks, 200);
+    expect(plain(parts[0].side)).toBe("Úvod.");
+    expect(parts[1].side).not.toBe("");
+    expect(parts[1].rest).not.toBe("");
+    expect(parts[2].side).toBe("");
+    expect(plain(parts[2].rest)).toBe("Třetí blok.");
+    expect(all(parts)).toEqual(blocks.map((b) => plain(b.content.html)));
+  });
+
+  it("chain stops at a heading", () => {
+    const h: Block = { id: "h", type: "heading2", template: "default", order: 0, content: { text: "H" } };
+    const chain = wrapChain([img, t("a", "x"), t("b", "y"), h, t("c", "z")], 0);
+    expect(chain.map((b) => b.id)).toEqual(["a", "b"]);
   });
 });

@@ -695,10 +695,10 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
   );
 }
 
-function PictogramSelect({ value, onChange }: { value?: Pictogram; onChange: (v: Pictogram) => void }) {
+function PictogramSelect({ value, onChange, className }: { value?: Pictogram; onChange: (v: Pictogram) => void; className?: string }) {
   return (
     <Select value={value ?? "none"} onValueChange={(v) => onChange(v as Pictogram)}>
-      <SelectTrigger className="h-7 w-[200px] text-xs">
+      <SelectTrigger className={className ?? "h-7 w-[200px] text-xs"}>
         <SelectValue placeholder="Piktogram" />
       </SelectTrigger>
       <SelectContent>
@@ -729,7 +729,7 @@ function htmlToPlainText(html: string): string {
   return (doc.body.textContent ?? "").replace(/\s+/g, " ").trim();
 }
 
-function ImageBlockEditor({ block, onChange, hidePictogram, imageNumber, imageLabelPrefix, sizeOnly, nextTextHtml }: { block: Block; onChange: Props["onChange"]; hidePictogram?: boolean; imageNumber?: number; imageLabelPrefix?: string; sizeOnly?: boolean; nextTextHtml?: string }) {
+function ImageBlockEditor({ block, onChange, hidePictogram, imageNumber, imageLabelPrefix, sizeOnly, nextTextHtml, pictogramOverride }: { block: Block; onChange: Props["onChange"]; hidePictogram?: boolean; imageNumber?: number; imageLabelPrefix?: string; sizeOnly?: boolean; nextTextHtml?: string; pictogramOverride?: { value?: Pictogram; onChange: (v: Pictogram) => void } }) {
   const size: "full" | "half" = block.content.size === "half" ? "half" : "full";
   const position: "left" | "right" | "center" = sizeOnly ? "center" : (block.content.position === "right" || block.content.position === "center" ? block.content.position : "left");
   const wraps = size === "half" && position !== "center" && nextTextHtml !== undefined;
@@ -749,92 +749,97 @@ function ImageBlockEditor({ block, onChange, hidePictogram, imageNumber, imageLa
   const captionLabel =
     imageNumber !== undefined ? `${imageLabelPrefix ?? "Obrázek č. "}${imageNumber}` : undefined;
 
+  const picto = pictogramOverride ?? (hidePictogram ? undefined : { value: block.content.pictogram as Pictogram | undefined, onChange: (v: Pictogram) => setContent(block, { pictogram: v }, onChange) });
+  const fieldCls = "h-9 w-full text-sm";
+
   return (
-    <div className="space-y-2">
-      {!hidePictogram && (
-        <div className="flex flex-wrap items-center gap-2">
-          <PictogramSelect
-            value={block.content.pictogram}
-            onChange={(v) => setContent(block, { pictogram: v }, onChange)}
-          />
-        </div>
-      )}
-      <PictogramRow value={hidePictogram ? "none" : block.content.pictogram} onChange={() => {}}>
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={() => setUploadOpen(true)}>
-              <Upload className="w-4 h-4 mr-1" />
-              Nahrát obrázek
-            </Button>
-            <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
-              <ImageIcon className="w-4 h-4 mr-1" />
-              Vybrat v Notion
-            </Button>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2">
-              <Label className="text-xs text-muted-foreground">Velikost</Label>
-              <Select value={size} onValueChange={(v) => setContent(block, sizeOnly ? { size: v } : { size: v, position: block.content.position ?? "left" }, onChange)}>
-                <SelectTrigger className="h-8 w-[140px]"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="full">Plná šířka</SelectItem>
-                  <SelectItem value="half">Půl stránky</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {!sizeOnly && size === "half" && (
-              <div className="flex items-center gap-2">
-                <Label className="text-xs text-muted-foreground">Umístění obrázku</Label>
-                <Select value={position} onValueChange={(v) => setContent(block, { position: v }, onChange)}>
-                  <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="left">Vlevo</SelectItem>
-                    <SelectItem value="right">Vpravo</SelectItem>
-                    <SelectItem value="center">Střed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
-          {block.content.url && (
-            <div className="overflow-hidden">
-              <img
-                src={block.content.url}
-                alt={block.content.alt}
-                className={`rounded border ${size === "half" ? "w-1/2 object-contain" : "max-h-64"} ${size === "half" && position === "center" ? "mx-auto block" : ""} ${wraps ? (position === "left" ? "float-left mr-3 mb-1" : "float-right ml-3 mb-1") : ""}`}
-              />
-              {wraps && (
-                <p className="text-xs leading-relaxed text-muted-foreground">
-                  <span className="font-medium">Obtékající text (náhled): </span>
-                  {htmlToPlainText(nextTextHtml ?? "") || "…"}
-                </p>
-              )}
+    <div className="space-y-3">
+      {/* 1. Zdroj obrázku */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button type="button" variant="outline" size="sm" className="h-9" onClick={() => setUploadOpen(true)}>
+          <Upload className="w-4 h-4 mr-1" />
+          Nahrát obrázek
+        </Button>
+        <Button type="button" variant="outline" size="sm" className="h-9" onClick={() => setPickerOpen(true)}>
+          <ImageIcon className="w-4 h-4 mr-1" />
+          Vybrat v Notion
+        </Button>
+      </div>
+
+      {/* 2. Nastavení */}
+      <div className="rounded-md border border-border/70 bg-background/50 p-3">
+        <div className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Nastavení</div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {picto && (
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Piktogram</Label>
+              <PictogramSelect value={picto.value} onChange={picto.onChange} className={fieldCls} />
             </div>
           )}
           <div className="space-y-1">
-            <Input
-              value={block.content.alt ?? ""}
-              onChange={(e) => setContent(block, { alt: e.target.value }, onChange)}
-              placeholder="Popis obrázku"
+            <Label className="text-xs text-muted-foreground">Velikost</Label>
+            <Select value={size} onValueChange={(v) => setContent(block, sizeOnly ? { size: v } : { size: v, position: block.content.position ?? "left" }, onChange)}>
+              <SelectTrigger className={fieldCls}><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="full">Plná šířka</SelectItem>
+                <SelectItem value="half">Půl stránky</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {!sizeOnly && size === "half" && (
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Umístění obrázku</Label>
+              <Select value={position} onValueChange={(v) => setContent(block, { position: v }, onChange)}>
+                <SelectTrigger className={fieldCls}><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="left">Vlevo</SelectItem>
+                  <SelectItem value="right">Vpravo</SelectItem>
+                  <SelectItem value="center">Střed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 3. Náhled */}
+      <PictogramRow value={picto?.value ?? "none"} onChange={() => {}}>
+        {block.content.url ? (
+          <div className="overflow-hidden">
+            <img
+              src={block.content.url}
+              alt={block.content.alt}
+              className={`rounded border ${size === "half" ? "w-1/2 object-contain" : "max-h-64"} ${size === "half" && position === "center" ? "mx-auto block" : ""} ${wraps ? (position === "left" ? "float-left mr-3 mb-1" : "float-right ml-3 mb-1") : ""}`}
             />
-            {captionLabel && (
-              <Label className="text-xs text-muted-foreground/70 font-normal">
-                Popis obrázku — v PDF: <span className="font-medium text-muted-foreground">{captionLabel}: {block.content.alt || "…"}</span>
-              </Label>
+            {wraps && (
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                <span className="font-medium">Obtékající text (náhled): </span>
+                {htmlToPlainText(nextTextHtml ?? "") || "…"}
+              </p>
             )}
           </div>
-
-        </div>
+        ) : <div />}
       </PictogramRow>
+
+      {/* 4. Popisek */}
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">Název obrázku</Label>
+        <Input
+          value={block.content.alt ?? ""}
+          onChange={(e) => setContent(block, { alt: e.target.value }, onChange)}
+          placeholder="Popis obrázku"
+        />
+        {captionLabel && (
+          <Label className="text-xs text-muted-foreground/70 font-normal">
+            Popis obrázku — v PDF: <span className="font-medium text-muted-foreground">{captionLabel}: {block.content.alt || "…"}</span>
+          </Label>
+        )}
+      </div>
       <NotionImagePicker open={pickerOpen} onOpenChange={setPickerOpen} onInsert={handleInsertFromNotion} />
       <NotionImageUploadDialog open={uploadOpen} onOpenChange={setUploadOpen} onInsert={handleInsertUploaded} />
     </div>
   );
 }
-
-
-
-
 
 function defaultColWidths(cols: number, narrowFirstCol?: boolean): number[] {
   if (cols <= 0) return [];
@@ -1193,13 +1198,6 @@ function ImageTableBlockEditor({ block, onChange, imageNumber, imageLabelPrefix 
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <PictogramSelect
-          value={block.content?.pictogram}
-          onChange={(v) => onChange(block.id, { content: { ...block.content, pictogram: v } })}
-        />
-      </div>
-      <PictogramRow value={block.content?.pictogram} onChange={() => {}}>
         <div className="space-y-4">
           <div>
             <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Obrázek</div>
@@ -1208,6 +1206,7 @@ function ImageTableBlockEditor({ block, onChange, imageNumber, imageLabelPrefix 
               onChange={handleSub("image")}
               hidePictogram
               sizeOnly
+              pictogramOverride={{ value: block.content?.pictogram, onChange: (v) => onChange(block.id, { content: { ...block.content, pictogram: v } }) }}
               imageNumber={imageNumber}
               imageLabelPrefix={imageLabelPrefix}
             />
@@ -1223,7 +1222,6 @@ function ImageTableBlockEditor({ block, onChange, imageNumber, imageLabelPrefix 
             />
           </div>
         </div>
-      </PictogramRow>
     </div>
   );
 }

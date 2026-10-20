@@ -7,7 +7,7 @@ import notoBold from "@/assets/fonts/NotoSans-Bold.ttf?url";
 import notoItalic from "@/assets/fonts/NotoSans-Italic.ttf?url";
 import notoBoldItalic from "@/assets/fonts/NotoSans-BoldItalic.ttf?url";
 import { PICTOGRAM_PATHS } from "@/components/BlockEditor/pictogramPaths";
-import { HALF_COLUMN_PT, SIDE_TEXT_WIDTH_PT, WRAP_GAP_PT, imagePositionOf, sideImageHeight, splitTextForWrap, wrapsNextText } from "./imageWrap";
+import { HALF_COLUMN_PT, SIDE_TEXT_WIDTH_PT, WRAP_GAP_PT, imagePositionOf, sideImageHeight, splitBlocksForWrap, wrapChain, SIDE_PICTO_PT } from "./imageWrap";
 import { DOCUMENT_LANGUAGES, mergeMetadata, type DocumentMetadata } from "@/components/DocumentMetadata/types";
 
 const NOTO_FACES = [
@@ -702,18 +702,29 @@ function BlockNode({ block, collector, number, imageCaption, measure, measureNex
 
 
 /**
- * Half-width left/right image + the directly following text block: an
- * unbreakable row (image column, gap, side text) followed by the rest of the
- * text at full width. The consumed text block is not rendered again.
+ * Half-width left/right image + the consecutive following text blocks: an
+ * unbreakable row (image column, gap, side text filled block by block) followed
+ * by the remaining text at full width. Consumed text blocks are not rendered again.
  */
-function WrappedImageText({ image, text, caption, measure, measureNextFor }: { image: Block; text: Block; caption?: string; measure?: MeasureContext; measureNextFor?: string[] }) {
+function WrappedImageText({ image, texts, caption, measure, measureNextFor }: { image: Block; texts: Block[]; caption?: string; measure?: MeasureContext; measureNextFor?: string[] }) {
   const startMarker = measure && measureNextFor && measureNextFor.length > 0
     ? <StartMarker ids={measureNextFor} measure={measure} />
     : undefined;
   const right = imagePositionOf(image.content) === "right";
   const sideH = sideImageHeight(image.content?.url, caption, MAX_IMAGE_HEIGHT_PT);
-  const { side, rest } = splitTextForWrap(text.content?.html ?? "", sideH);
-  const plain = (html: string): Block => ({ ...text, content: { ...text.content, html, pictogram: "none" } });
+  const parts = splitBlocksForWrap(texts, sideH);
+  const plain = (b: Block, html: string): Block => ({ ...b, content: { ...b.content, html, pictogram: "none" } });
+  const sideNode = (p: (typeof parts)[number], i: number) => {
+    const pic = p.block.content?.pictogram;
+    const body = <TextBlock block={plain(p.block, p.side)} />;
+    if (!pic || pic === "none") return <View key={i} style={{ flexShrink: 0 }}>{body}</View>;
+    return (
+      <View key={i} style={{ flexDirection: "row", flexShrink: 0 }}>
+        <View style={{ width: SIDE_PICTO_PT, paddingTop: 2 }}><PictogramSvg kind={pic} size={26} /></View>
+        <View style={{ width: SIDE_TEXT_WIDTH_PT - SIDE_PICTO_PT }}>{body}</View>
+      </View>
+    );
+  };
   const row = (
     <View style={{ flexShrink: 0 }}>
       <View wrap={false} style={{ flexDirection: right ? "row-reverse" : "row", alignItems: "flex-start", flexShrink: 0 }}>
@@ -722,14 +733,18 @@ function WrappedImageText({ image, text, caption, measure, measureNextFor }: { i
         </View>
         <View style={{ width: WRAP_GAP_PT, flexShrink: 0 }} />
         <View style={{ width: SIDE_TEXT_WIDTH_PT, paddingTop: 10, flexShrink: 0 }}>
-          {side ? <TextBlock block={plain(side)} /> : null}
+          {parts.map((p, i) => (p.side ? sideNode(p, i) : null))}
         </View>
       </View>
-      {rest ? <TextBlock block={plain(rest)} /> : null}
+      {parts.map((p, i) => {
+        if (!p.rest) return null;
+        // A block starting below the image keeps its own pictogram.
+        const node = <TextBlock key={`r${i}`} block={p.side ? plain(p.block, p.rest) : { ...p.block, content: { ...p.block.content, html: p.rest } }} />;
+        return node;
+      })}
     </View>
   );
-  const pic = image.content?.pictogram && image.content.pictogram !== "none" ? image : text;
-  return withPictogram(pic, row);
+  return image.content?.pictogram && image.content.pictogram !== "none" ? withPictogram(image, row) : row;
 }
 
 // ---------- TOC ----------
@@ -944,10 +959,10 @@ export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collect
                     }}
                   />
                 )}
-                {wrapsNextText(b, ordered[bi + 1]) ? (() => {
-                  const textBlock = ordered[bi + 1];
-                  consumed.add(textBlock.id);
-                  return <WrappedImageText image={b} text={textBlock} caption={captionFor(b)} measure={measure} measureNextFor={nextFor} />;
+                {wrapChain(ordered, bi).length > 0 ? (() => {
+                  const texts = wrapChain(ordered, bi);
+                  texts.forEach((t) => consumed.add(t.id));
+                  return <WrappedImageText image={b} texts={texts} caption={captionFor(b)} measure={measure} measureNextFor={nextFor} />;
                 })() : (
                   <BlockNode block={b} collector={collector} number={numbers?.get(b.id)} imageCaption={captionFor(b)} measure={measure} measureNextFor={nextFor} />
                 )}
