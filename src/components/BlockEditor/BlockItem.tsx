@@ -854,6 +854,7 @@ function defaultColWidths(cols: number, narrowFirstCol?: boolean): number[] {
 function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { block: Block; onChange: Props["onChange"]; narrowFirstCol?: boolean; hidePictogram?: boolean }) {
   const rows: string[][] = block.content.rows ?? [];
   const cols = rows[0]?.length ?? 0;
+  const merges = normalizeMerges(block.content.merges, rows);
   const storedWidths: number[] | undefined = block.content.colWidths;
   const widths: number[] =
     storedWidths && storedWidths.length === cols
@@ -877,12 +878,14 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
   const removeRow = () => rows.length > 1 && setContent(block, {
     rows: rows.slice(0, -1),
     rowColors: rowColors.slice(0, -1),
+    merges: remapDeleteRow(merges, rows.length - 1),
   }, onChange);
   const deleteRowAt = (idx: number) => {
     if (rows.length <= 1) return;
     setContent(block, {
       rows: rows.filter((_, i) => i !== idx),
       rowColors: rowColors.length ? rowColors.filter((_, i) => i !== idx) : rowColors,
+      merges: remapDeleteRow(merges, idx),
     }, onChange);
   };
   const setRowColor = (idx: number, color: string | null) => {
@@ -893,14 +896,14 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
   const addCol = () =>
     setContent(
       block,
-      { rows: rows.map((r) => [...r, ""]), colWidths: defaultColWidths(cols + 1, narrowFirstCol) },
+      { rows: rows.map((r) => [...r, ""]), colWidths: defaultColWidths(cols + 1, narrowFirstCol), merges: remapInsertColumn(merges, cols) },
       onChange,
     );
   const removeCol = () => {
     if (cols <= 1) return;
     setContent(
       block,
-      { rows: rows.map((r) => r.slice(0, -1)), colWidths: defaultColWidths(cols - 1, narrowFirstCol) },
+      { rows: rows.map((r) => r.slice(0, -1)), colWidths: defaultColWidths(cols - 1, narrowFirstCol), merges: remapDeleteColumn(merges, cols - 1) },
       onChange,
     );
   };
@@ -908,9 +911,18 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
     if (cols <= 1) return;
     setContent(
       block,
-      { rows: rows.map((r) => r.filter((_, i) => i !== idx)), colWidths: defaultColWidths(cols - 1, narrowFirstCol) },
+      { rows: rows.map((r) => r.filter((_, i) => i !== idx)), colWidths: defaultColWidths(cols - 1, narrowFirstCol), merges: remapDeleteColumn(merges, idx) },
       onChange,
     );
+  };
+
+  const mergeRight = (r: number, c: number) => {
+    const next = mergeCellsRight(rows, merges, r, c);
+    setContent(block, { rows: next.rows, merges: next.merges }, onChange);
+  };
+  const unmerge = (r: number, c: number) => {
+    const next = unmergeCell(rows, merges, r, c);
+    setContent(block, { rows: next.rows, merges: next.merges }, onChange);
   };
 
   const startResize = (idx: number) => (e: React.MouseEvent) => {
