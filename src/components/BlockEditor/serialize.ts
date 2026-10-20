@@ -31,6 +31,10 @@ function serializeBlockMeta(b: Block): Record<string, unknown> {
       break;
     case "image":
       if (Number.isFinite(c.width)) meta.w = c.width;
+      if (c.size === "half") {
+        meta.sz = "half";
+        if (c.position === "right" || c.position === "center") meta.pos = c.position;
+      }
       if (c.pictogram && c.pictogram !== "none") meta.pic = c.pictogram;
       break;
     case "table":
@@ -43,6 +47,7 @@ function serializeBlockMeta(b: Block): Record<string, unknown> {
       const img = c.image ?? {};
       const tbl = c.table ?? {};
       if (Number.isFinite(img.width)) meta.iw = img.width;
+      if (img.size === "half") meta.isz = "half";
       meta.hdr = tbl.headerRow !== false;
       meta.indexedCells = indexedCells(tbl.rows ?? []);
       if (c.pictogram && c.pictogram !== "none") meta.pic = c.pictogram;
