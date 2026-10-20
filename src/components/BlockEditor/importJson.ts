@@ -1,5 +1,6 @@
 import { type Block, type BlockType, emptyContent } from "./types";
 import { cellFromExportHtml, cellPlainText } from "./cellFormatting";
+import { normalizeMerges } from "./cellMerges";
 import { type DocumentMetadata, mergeMetadata } from "@/components/DocumentMetadata/types";
 import { META_BLOCK_PREFIX, META_DOC_PREFIX } from "./serialize";
 
@@ -54,7 +55,8 @@ function normalizeContent(type: BlockType, raw: any): any {
       const rows = Array.isArray(c.rows) ? c.rows.map((r: any) =>
         Array.isArray(r) ? r.map((cell: any) => String(cell ?? "")) : []
       ) : base.rows;
-      return { headerRow: c.headerRow !== false, rows };
+      const merges = normalizeMerges(Array.isArray(c.merges) ? c.merges : undefined, rows);
+      return { headerRow: c.headerRow !== false, rows, ...(merges.length ? { merges } : {}) };
     }
     case "image-table": {
       const img = c.image && typeof c.image === "object" ? c.image : {};
@@ -69,7 +71,10 @@ function normalizeContent(type: BlockType, raw: any): any {
           ...(Number.isFinite(Number(img.width)) ? { width: Number(img.width) } : {}),
           ...(img.size === "half" ? { size: "half" } : {}),
         },
-        table: { headerRow: tbl.headerRow !== false, rows },
+        table: (() => {
+          const merges = normalizeMerges(Array.isArray(tbl.merges) ? tbl.merges : undefined, rows);
+          return { headerRow: tbl.headerRow !== false, rows, ...(merges.length ? { merges } : {}) };
+        })(),
       };
     }
     case "alert":
@@ -186,6 +191,15 @@ function applyBlockMeta(block: Block, meta: any | null): void {
       break;
   }
   const table = block.type === "table" ? c : block.type === "image-table" ? c.table : null;
+  const rawMerges = block.type === "table" ? meta.mg : block.type === "image-table" ? meta.tmg : null;
+  if (table && Array.isArray(rawMerges)) {
+    const valid = normalizeMerges(rawMerges, table.rows ?? []);
+    // Pojistka: zakrytá buňka, do které někdo v Notion psal, sloučení ruší – text se zachová.
+    const kept = valid.filter((m) =>
+      (table.rows[m.r] ?? []).slice(m.c + 1, m.c + m.span).every((cell: string) => !cell || !cell.trim())
+    );
+    if (kept.length) table.merges = kept;
+  }
   if (table && Array.isArray(meta.indexedCells)) {
     for (const entry of meta.indexedCells) {
       if (!Number.isInteger(entry.r) || !Number.isInteger(entry.c) || typeof entry.value !== "string") continue;
