@@ -73,7 +73,10 @@ export interface TableContent {
   rows: string[][]; // rows[r][c]
   pictogram?: Pictogram;
 }
-export interface ImageContent { url: string; alt: string; width?: number; pictogram?: Pictogram }
+export type ImageSize = "full" | "half";
+export type ImagePosition = "left" | "right" | "center";
+/** width = editor-only manual width; PDF follows size/position. */
+export interface ImageContent { url: string; alt: string; width?: number; pictogram?: Pictogram; size?: ImageSize; position?: ImagePosition }
 export interface ImageTableContent { image: ImageContent; table: TableContent; pictogram?: Pictogram; autoTableBreak?: boolean }
 export interface CalloutContent { text: string }
 export interface PageBreakContent {}

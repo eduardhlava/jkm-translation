@@ -6,6 +6,7 @@ import notoRegular from "@/assets/fonts/NotoSans-Regular.ttf?url";
 import notoBold from "@/assets/fonts/NotoSans-Bold.ttf?url";
 import notoItalic from "@/assets/fonts/NotoSans-Italic.ttf?url";
 import notoBoldItalic from "@/assets/fonts/NotoSans-BoldItalic.ttf?url";
+import { HALF_COLUMN_PT, SIDE_TEXT_WIDTH_PT, WRAP_GAP_PT, imagePositionOf, sideImageHeight, splitTextForWrap, wrapsNextText } from "./imageWrap";
 import { DOCUMENT_LANGUAGES, mergeMetadata, type DocumentMetadata } from "@/components/DocumentMetadata/types";
 
 const NOTO_FACES = [

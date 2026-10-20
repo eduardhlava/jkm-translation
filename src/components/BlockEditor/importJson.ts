@@ -48,6 +48,7 @@ function normalizeContent(type: BlockType, raw: any): any {
         url: String(c.url ?? ""),
         alt: String(c.alt ?? ""),
         ...(Number.isFinite(Number(c.width)) ? { width: Number(c.width) } : {}),
+        ...(c.size === "half" ? { size: "half", position: ["left", "right", "center"].includes(c.position) ? c.position : "left" } : {}),
       };
     case "table": {
       const rows = Array.isArray(c.rows) ? c.rows.map((r: any) =>
@@ -66,6 +67,7 @@ function normalizeContent(type: BlockType, raw: any): any {
           url: String(img.url ?? ""),
           alt: String(img.alt ?? ""),
           ...(Number.isFinite(Number(img.width)) ? { width: Number(img.width) } : {}),
+          ...(img.size === "half" ? { size: "half" } : {}),
         },
         table: { headerRow: tbl.headerRow !== false, rows },
       };
@@ -169,12 +171,17 @@ function applyBlockMeta(block: Block, meta: any | null): void {
       break;
     case "image":
       if (Number.isFinite(meta.w)) c.width = meta.w;
+      if (meta.sz === "half") {
+        c.size = "half";
+        c.position = meta.pos === "right" || meta.pos === "center" ? meta.pos : "left";
+      }
       break;
     case "table":
       if (typeof meta.hdr === "boolean") c.headerRow = meta.hdr;
       break;
     case "image-table":
       if (c.image && Number.isFinite(meta.iw)) c.image.width = meta.iw;
+      if (c.image && meta.isz === "half") c.image.size = "half";
       if (c.table && typeof meta.hdr === "boolean") c.table.headerRow = meta.hdr;
       break;
   }
