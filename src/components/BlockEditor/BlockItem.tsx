@@ -35,6 +35,32 @@ const PICTOGRAM_LABELS: Record<string, string> = {
   recycling: "Recyklace",
 };
 
+/** Položky výběru piktogramu – společné pro selecty bloků i menu buňky tabulky. */
+const PICTOGRAM_OPTIONS: { value: Pictogram; label: string }[] = [
+  { value: "none", label: "Bez piktogramu" },
+  { value: "alert", label: PICTOGRAM_LABELS.alert },
+  { value: "alert-electric", label: PICTOGRAM_LABELS["alert-electric"] },
+  { value: "info", label: PICTOGRAM_LABELS.info },
+  { value: "recycling", label: PICTOGRAM_LABELS.recycling },
+];
+
+/**
+ * Náhled položky: ikona + název, svisle na střed, gap-2.
+ * U „Bez piktogramu" je prázdné místo stejné šířky, aby texty položek lícovaly.
+ */
+function PictogramOptionRow({ kind, label, className = "" }: { kind: Pictogram; label: string; className?: string }) {
+  return (
+    <span className={`flex items-center gap-2 ${className}`}>
+      {kind === "none" ? (
+        <span className="h-4 w-4 shrink-0" aria-hidden="true" />
+      ) : (
+        <PictogramIcon kind={kind} size={16} className="shrink-0" />
+      )}
+      <span className="truncate">{label}</span>
+    </span>
+  );
+}
+
 import { supabase } from "@/integrations/supabase/client";
 import NotionImagePicker from "@/components/NotionImagePicker";
 import NotionImageUploadDialog from "@/components/NotionImageUploadDialog";
@@ -695,21 +721,10 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
             </Button>
           </PopoverContent>
         </Popover>
-        <Select
-          value={block.content.pictogram ?? "none"}
-          onValueChange={(v) => onChange(block.id, { content: { ...block.content, pictogram: v } })}
-        >
-          <SelectTrigger className="h-7 w-[200px] text-xs">
-            <SelectValue placeholder="Piktogram" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">Bez piktogramu</SelectItem>
-            <SelectItem value="alert">Výstraha</SelectItem>
-            <SelectItem value="alert-electric">Výstraha – elektrické nebezpečí</SelectItem>
-            <SelectItem value="info">Informace</SelectItem>
-            <SelectItem value="recycling">Recyklace</SelectItem>
-          </SelectContent>
-        </Select>
+        <PictogramSelect
+          value={block.content.pictogram}
+          onChange={(v) => onChange(block.id, { content: { ...block.content, pictogram: v } })}
+        />
       </div>
       <div className="flex items-start gap-2">
         {block.content.pictogram && block.content.pictogram !== "none" && (
@@ -744,11 +759,11 @@ function PictogramSelect({ value, onChange, className }: { value?: Pictogram; on
         <SelectValue placeholder="Piktogram" />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="none">Bez piktogramu</SelectItem>
-        <SelectItem value="alert">Výstraha</SelectItem>
-        <SelectItem value="alert-electric">Výstraha – elektrické nebezpečí</SelectItem>
-        <SelectItem value="info">Informace</SelectItem>
-        <SelectItem value="recycling">Recyklace</SelectItem>
+        {PICTOGRAM_OPTIONS.map((o) => (
+          <SelectItem key={o.value} value={o.value}>
+            <PictogramOptionRow kind={o.value} label={o.label} />
+          </SelectItem>
+        ))}
       </SelectContent>
     </Select>
   );
@@ -1198,29 +1213,23 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                                   </button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-2" align="end">
-                                  <div className="flex items-center gap-1">
-                                    {(["alert", "alert-electric", "info", "recycling"] as Pictogram[]).map((p) => (
+                                  <div className="flex flex-col gap-0.5">
+                                    {PICTOGRAM_OPTIONS.map((o) => (
                                       <button
-                                        key={p}
+                                        key={o.value}
                                         type="button"
-                                        onClick={() => updateCell(ri, ci, buildCellValue(p, parsed.text))}
-                                        title={PICTOGRAM_LABELS[p]}
-                                        aria-label={PICTOGRAM_LABELS[p]}
-                                        className={`rounded p-1 hover:bg-muted ${parsed.pictogram === p ? "bg-muted ring-1 ring-ring" : ""}`}
+                                        onClick={() =>
+                                          updateCell(ri, ci, o.value === "none" ? parsed.text : buildCellValue(o.value, parsed.text))
+                                        }
+                                        title={o.label}
+                                        aria-label={o.label}
+                                        className={`rounded px-2 py-1 text-left text-xs hover:bg-muted ${
+                                          parsed.pictogram === o.value ? "bg-muted ring-1 ring-ring" : ""
+                                        }`}
                                       >
-                                        <PictogramIcon kind={p} size={22} />
+                                        <PictogramOptionRow kind={o.value} label={o.label} />
                                       </button>
                                     ))}
-                                    <div className="w-px h-6 bg-border mx-1" />
-                                    <button
-                                      type="button"
-                                      onClick={() => updateCell(ri, ci, parsed.text)}
-                                      title="Bez piktogramu"
-                                      aria-label="Bez piktogramu"
-                                      className="rounded border border-foreground/30 px-1.5 text-xs leading-5 hover:bg-muted"
-                                    >
-                                      ×
-                                    </button>
                                   </div>
                                   {(canMergeRight || anchor) && (
                                     <div className="mt-2 flex flex-col gap-1 border-t border-border pt-2">
