@@ -75,6 +75,7 @@ import jkLogo from "@/assets/jk-machinery-logo.png";
 import SectionSwitcher, { useSectionAccent } from "@/components/SectionSwitcher";
 import EditorToolbar from "@/components/EditorToolbar";
 import BlockEditor from "@/components/BlockEditor";
+import DocumentEditorContents from "@/components/BlockEditor/DocumentEditorContents";
 import type { Block } from "@/components/BlockEditor/types";
 import { blocksToHtml } from "@/components/BlockEditor/serialize";
 import { parseDocumentJson, SAMPLE_DOCUMENT_JSON, parseDocumentHtml } from "@/components/BlockEditor/importJson";
@@ -1016,8 +1017,8 @@ const DocumentCreator = () => {
                 </div>
               </>
             ) : (
-              <div className="flex-1 min-h-0 overflow-auto bg-muted p-4">
-                <div className="mx-auto max-w-4xl">
+              <DocumentEditorContents key={activePage.id} blocks={blocks} numberHeadings={numberHeadings}>
+                {(highlightedBlockId) => (
                   <BlockEditor
                     blocks={blocks}
                     onChange={setBlocks}
@@ -1026,9 +1027,10 @@ const DocumentCreator = () => {
                     imageLabelUnnumbered={metadata.imageLabelUnnumbered}
                     collapsed={collapsedBlocks}
                     onCollapsedChange={setCollapsedBlocks}
+                    highlightedBlockId={highlightedBlockId}
                   />
-                </div>
-              </div>
+                )}
+              </DocumentEditorContents>
             )}
             {mode === "blocks" && (
               <div className="flex-shrink-0 flex items-center justify-between gap-2 border-t bg-muted/30 px-4 py-2">

@@ -1,4 +1,5 @@
 # Architecture rules
+- Editor contents navigation lives in a UI-only wrapper around BlockEditor with stable block markers and the shared heading-number helper; panel and highlight state never modify document data, collapsed state or pagination fingerprints.
 - PDF content images are height-limited with contained aspect ratio, and block containers never flex-shrink, so oversized unbreakable nodes cannot squeeze neighboring text or images.
 - PDF preview confirms stale layout fingerprints instead of disabling access; pagination-then-preview passes returned blocks directly to generation to avoid stale React state.
 - Pagination measures the real DocumentPdf sequentially; the keep-with-next probe compensates on its outer container, and an unconditional final measurement reports all remaining violations (including too-long tables), so skipped problems cannot appear as success.
