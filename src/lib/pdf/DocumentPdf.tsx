@@ -2,6 +2,7 @@ import { Document, Page, Text, View, Image, Link, StyleSheet, Font, Svg, Path } 
 import { Fragment, cloneElement } from "react";
 import { cellTextToHtml } from "@/components/BlockEditor/cellFormatting";
 import { coveredBy, mergeAt, normalizeMerges } from "@/components/BlockEditor/cellMerges";
+import type { CellMerge } from "@/components/BlockEditor/types";
 import { parseCellPictogram, type Block, type Pictogram } from "@/components/BlockEditor/types";
 import notoRegular from "@/assets/fonts/NotoSans-Regular.ttf?url";
 import notoBold from "@/assets/fonts/NotoSans-Bold.ttf?url";
@@ -593,23 +594,118 @@ function TableBlock({ block, startMarker, measure, measureStartId, measurePartSt
   const hasWidths = !!colWidths && colWidths.length === cols && cols > 0;
   const merges = normalizeMerges(block.content?.merges, rows);
   const lastRi = rows.length - 1;
+  const weight = (c0: number, c1: number) => {
+    let w = 0;
+    for (let c = c0; c < c1; c++) w += hasWidths && colWidths ? colWidths[c] : 1;
+    return w;
+  };
+
+  const markers = (r0: number, r1: number) => (
+    <>
+      {r0 === 0 ? startMarker : null}
+      {measure && measureStartId && r0 === 0 && (
+        <PageMarker onPage={(p) => measure.tableStartPages.set(measureStartId, p)} />
+      )}
+      {measure && measurePartStartId && r0 === 0 && (
+        <PageMarker onPage={(p) => measure.tablePartStartPages.set(measurePartStartId, p)} />
+      )}
+      {measure && measureEndId && r1 === lastRi && (
+        <PageMarker onPage={(p) => measure.tableEndPages.set(measureEndId, p)} />
+      )}
+    </>
+  );
+
+  const renderCell = (ri: number, ci: number, sizeStyle: any, ownBg: boolean, key?: string | number) => {
+    const cell = rows[ri]?.[ci] ?? "";
+    const rowBg = rowColors[ri] ?? null;
+    const isHeader = headerRow && ri === 0 && !rowBg;
+    const { pictogram: cellPic, text: cellText } = parseCellPictogram(cell);
+    const paragraphs = parseInline(cellTextToHtml(cellText));
+    const formattedText = paragraphs.map((runs, i) => <Fragment key={i}>{i > 0 ? "\n" : ""}<RunsText runs={headerRow && ri === 0 ? runs.map((run) => ({ ...run, bold: true })) : runs} /></Fragment>);
+    const cellStyle = [styles.td, sizeStyle, isHeader ? styles.th : {}, ownBg && rowBg ? { backgroundColor: rowBg } : {}, headerRow && ri === 0 ? { fontFamily: "NotoSans", fontWeight: "bold" } : {}] as any;
+    if (cellPic !== "none") {
+      return (
+        <View key={key} style={[cellStyle, { flexDirection: "row", alignItems: "center", gap: 4 }] as any}>
+          <View style={styles.cellIcon}><PictogramSvg kind={cellPic} size={14} /></View>
+          {cellText ? <Text style={styles.cellText}>{formattedText}</Text> : null}
+        </View>
+      );
+    }
+    return <Text key={key} style={cellStyle}>{formattedText}</Text>;
+  };
+
+  // ---- Svislé sloučení (rowspan): react-pdf nemá rowspan, skupina řádků se
+  // rozloží rekurzivně na pásy (vodorovné / svislé řezy, které nekříží sloučení).
+  const rs = (m: { rowSpan?: number }) => m.rowSpan ?? 1;
+  const inRegion = (m: CellMerge, r0: number, r1: number, c0: number, c1: number) =>
+    m.r < r1 && m.r + rs(m) > r0 && m.c < c1 && m.c + m.span > c0;
+  const region = (r0: number, r1: number, c0: number, c1: number, sizeStyle: any, key: string): JSX.Element => {
+    const local = merges.filter((m) => inRegion(m, r0, r1, c0, c1));
+    const whole = local.find((m) => m.r === r0 && m.c === c0 && rs(m) === r1 - r0 && m.span === c1 - c0);
+    if (whole || (r1 - r0 === 1 && c1 - c0 === 1)) return renderCell(r0, c0, { ...sizeStyle, flexGrow: sizeStyle.flexGrow ?? 1 }, true, key);
+    const hCuts = [r0];
+    for (let k = r0 + 1; k < r1; k++) if (!local.some((m) => m.r < k && m.r + rs(m) > k)) hCuts.push(k);
+    hCuts.push(r1);
+    if (hCuts.length > 2) {
+      return (
+        <View key={key} style={[{ flexDirection: "column", flexShrink: 0 }, sizeStyle]}>
+          {hCuts.slice(0, -1).map((a, i) => region(a, hCuts[i + 1], c0, c1, { flexGrow: i === hCuts.length - 2 ? 1 : 0, flexShrink: 0 }, `${key}h${i}`))}
+        </View>
+      );
+    }
+    const vCuts = [c0];
+    for (let k = c0 + 1; k < c1; k++) if (!local.some((m) => m.c < k && m.c + m.span > k)) vCuts.push(k);
+    vCuts.push(c1);
+    if (vCuts.length > 2) {
+      return (
+        <View key={key} style={[{ flexDirection: "row", flexShrink: 0 }, sizeStyle]}>
+          {vCuts.slice(0, -1).map((a, i) => region(r0, r1, a, vCuts[i + 1], { flexGrow: weight(a, vCuts[i + 1]), flexBasis: 0, flexShrink: 0 }, `${key}v${i}`))}
+        </View>
+      );
+    }
+    // Nedělitelné rozložení (vzácné) – vykreslí se bez svislého sloučení.
+    return (
+      <View key={key} style={[{ flexDirection: "column", flexShrink: 0 }, sizeStyle]}>
+        {Array.from({ length: r1 - r0 }, (_, i) => (
+          <View key={i} style={{ flexDirection: "row", flexShrink: 0 }}>
+            {Array.from({ length: c1 - c0 }, (_, j) => renderCell(r0 + i, c0 + j, { flexGrow: weight(c0 + j, c0 + j + 1), flexBasis: 0 }, true, j))}
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+  const units: Array<[number, number]> = [];
+  for (let ri = 0; ri < rows.length; ) {
+    let end = ri;
+    for (let changed = true; changed; ) {
+      changed = false;
+      for (const m of merges) {
+        if (rs(m) > 1 && m.r <= end && m.r + rs(m) - 1 > end && m.r + rs(m) - 1 >= ri) { end = m.r + rs(m) - 1; changed = true; }
+      }
+    }
+    units.push([ri, end]);
+    ri = end + 1;
+  }
+
   return (
     <View style={styles.table}>
-      {rows.map((row, ri) => {
+      {units.map(([r0, r1]) => {
+        if (r1 > r0) {
+          return (
+            <View key={r0} wrap={false} style={{ flexDirection: "column", flexShrink: 0 }}>
+              {markers(r0, r1)}
+              {region(r0, r1 + 1, 0, cols, {}, `g${r0}`)}
+            </View>
+          );
+        }
+        const ri = r0;
+        const row = rows[ri];
         const rowBg = rowColors[ri] ?? null;
         return (
           <View key={ri} style={[styles.tr, rowBg ? { backgroundColor: rowBg } : {}] as any} wrap={false}>
-            {ri === 0 ? startMarker : null}
-            {measure && measureStartId && ri === 0 && (
-              <PageMarker onPage={(p) => measure.tableStartPages.set(measureStartId, p)} />
-            )}
-            {measure && measurePartStartId && ri === 0 && (
-              <PageMarker onPage={(p) => measure.tablePartStartPages.set(measurePartStartId, p)} />
-            )}
-            {measure && measureEndId && ri === lastRi && (
-              <PageMarker onPage={(p) => measure.tableEndPages.set(measureEndId, p)} />
-            )}
-            {row.map((cell, ci) => {
+            {markers(ri, ri)}
+            {row.map((_, ci) => {
               if (coveredBy(merges, ri, ci)) return null;
               const span = mergeAt(merges, ri, ci)?.span ?? 1;
               const wStyle = hasWidths && colWidths
@@ -618,26 +714,8 @@ function TableBlock({ block, startMarker, measure, measureStartId, measurePartSt
                     return { width: `${w}%`, flexGrow: 0, flexShrink: 0, flexBasis: `${w}%` };
                   })()
                 : { flex: span };
-              const isHeader = headerRow && ri === 0 && !rowBg;
-              const { pictogram: cellPic, text: cellText } = parseCellPictogram(cell ?? "");
-              const paragraphs = parseInline(cellTextToHtml(cellText));
-              const formattedText = paragraphs.map((runs, i) => <Fragment key={i}>{i > 0 ? "\n" : ""}<RunsText runs={headerRow && ri === 0 ? runs.map((run) => ({ ...run, bold: true })) : runs} /></Fragment>);
-              const cellStyle = [styles.td, wStyle, isHeader ? styles.th : {}, headerRow && ri === 0 ? { fontFamily: "NotoSans", fontWeight: "bold" } : {}] as any;
-              if (cellPic !== "none") {
-                return (
-                  <View key={ci} style={[cellStyle, { flexDirection: "row", alignItems: "center", gap: 4 }] as any}>
-                    <View style={styles.cellIcon}><PictogramSvg kind={cellPic} size={14} /></View>
-                    {cellText ? <Text style={styles.cellText}>{formattedText}</Text> : null}
-                  </View>
-                );
-              }
-              return (
-                <Text key={ci} style={cellStyle}>
-                  {formattedText}
-                </Text>
-              );
+              return renderCell(ri, ci, wStyle, false, ci);
             })}
-
           </View>
         );
       })}
