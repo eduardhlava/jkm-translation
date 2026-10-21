@@ -26,6 +26,7 @@ export default function DocumentEditorContents({ blocks, numberHeadings, childre
   const contentRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const highlightTimer = useRef<ReturnType<typeof setTimeout>>();
+  const navigationTarget = useRef<HTMLElement | null>(null);
   const items = useMemo(() => buildDocumentContents(blocks, numberHeadings), [blocks, numberHeadings]);
 
   useEffect(() => {
@@ -51,7 +52,21 @@ export default function DocumentEditorContents({ blocks, numberHeadings, childre
       setActiveId(current);
     };
     const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
+    const cancelNavigation = () => { navigationTarget.current = null; };
+    const finishNavigation = () => {
+      const target = navigationTarget.current;
+      navigationTarget.current = null;
+      if (target?.isConnected) {
+        // The collapse toolbar gains its compact pill while scrolling, which
+        // changes its height. Correct that shift after the smooth scroll ends.
+        scroller.scrollTo({ top: scroller.scrollTop + target.getBoundingClientRect().top - scroller.getBoundingClientRect().top - SCROLL_OFFSET, behavior: "instant" });
+      }
+      schedule();
+    };
     scroller.addEventListener("scroll", schedule, { passive: true });
+    scroller.addEventListener("scrollend", finishNavigation);
+    scroller.addEventListener("wheel", cancelNavigation, { passive: true });
+    scroller.addEventListener("touchstart", cancelNavigation, { passive: true });
     window.addEventListener("resize", schedule);
     const observer = new ResizeObserver(schedule);
     observer.observe(content);
@@ -60,6 +75,9 @@ export default function DocumentEditorContents({ blocks, numberHeadings, childre
       cancelAnimationFrame(frame);
       observer.disconnect();
       scroller.removeEventListener("scroll", schedule);
+      scroller.removeEventListener("scrollend", finishNavigation);
+      scroller.removeEventListener("wheel", cancelNavigation);
+      scroller.removeEventListener("touchstart", cancelNavigation);
       window.removeEventListener("resize", schedule);
     };
   }, [items]);
@@ -79,6 +97,7 @@ export default function DocumentEditorContents({ blocks, numberHeadings, childre
     const scroller = scrollRef.current;
     const target = Array.from(contentRef.current?.querySelectorAll<HTMLElement>("[data-editor-block-id]") ?? []).find((el) => el.dataset.editorBlockId === id);
     if (!target || !scroller) return;
+    navigationTarget.current = target;
     // Limit movement to the editor: native scrollIntoView also moves the outer
     // document when the editor fills the viewport, hiding its header.
     scroller.scrollTo({ top: scroller.scrollTop + target.getBoundingClientRect().top - scroller.getBoundingClientRect().top - SCROLL_OFFSET, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
