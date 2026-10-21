@@ -23,7 +23,7 @@ import AddBlockMenu from "./AddBlockMenu";
 import { createBlock, type Block, type BlockType } from "./types";
 import { computeHeadingNumbers } from "./headingNumbers";
 import { computeImageNumbers } from "./imageNumbers";
-import { splitImageTableBlock } from "./splitImageTable";
+import { mergeImageAndTable, splitImageTableBlock } from "./splitImageTable";
 import { pairedImageIds } from "@/lib/pdf/imageWrap";
 
 interface Props {
@@ -97,6 +97,14 @@ export default function BlockEditor({ blocks, onChange, numberHeadings, imageLab
     const [image, table] = splitImageTableBlock(sorted[idx]);
     const next = [...sorted];
     next.splice(idx, 1, image, table);
+    reorder(next);
+  };
+
+  const mergeBlock = (id: string) => {
+    const idx = sorted.findIndex((b) => b.id === id);
+    if (idx < 0 || sorted[idx].type !== "image" || sorted[idx + 1]?.type !== "table") return;
+    const next = [...sorted];
+    next.splice(idx, 2, mergeImageAndTable(sorted[idx], sorted[idx + 1]));
     reorder(next);
   };
 
@@ -265,6 +273,8 @@ export default function BlockEditor({ blocks, onChange, numberHeadings, imageLab
                   onChange={updateBlock}
                   onDelete={deleteBlock}
                   onSplit={splitBlock}
+                  mergeTable={b.type === "image" && sorted[i + 1]?.type === "table" ? sorted[i + 1] : undefined}
+                  onMerge={mergeBlock}
                   headingNumber={numbersMap?.get(b.id)}
                   imageNumber={imageNumbersMap.get(b.id)}
                   imageLabelPrefix={imageLabelPrefix}

@@ -36,3 +36,25 @@ export function splitImageTableBlock(block: Block): [Block, Block] {
   };
   return [image, table];
 }
+
+/**
+ * Opak splitImageTableBlock: spojí blok "image" s blokem "table" pod ním do
+ * jednoho "image-table". Zachová id, template a order obrázku; position se
+ * zahodí (image-table je vždy na střed); tabulka se přenese beze změny.
+ * Blokový piktogram: obrázku, jinak tabulky, jinak žádný.
+ */
+export function mergeImageAndTable(image: Block, table: Block): Block {
+  if (image.type !== "image" || table.type !== "table") {
+    throw new Error("mergeImageAndTable: expected image + table blocks");
+  }
+  const { position: _position, pictogram: imgPic, ...img } = (image.content ?? { url: "", alt: "" }) as ImageTableContent["image"];
+  const { pictogram: tablePic, ...tbl } = (table.content ?? { headerRow: true, rows: [] }) as ImageTableContent["table"];
+  const pictogram = imgPic && imgPic !== "none" ? imgPic : tablePic && tablePic !== "none" ? tablePic : undefined;
+  return {
+    id: image.id,
+    type: "image-table",
+    template: image.template,
+    order: image.order,
+    content: { image: img, table: tbl, ...(pictogram ? { pictogram } : {}) },
+  };
+}
