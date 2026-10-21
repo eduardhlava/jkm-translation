@@ -8,6 +8,13 @@ export interface ChangelogEntry {
 /** Newest first. The first entry defines the current app version. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.14.0",
+    date: "2026-10-21",
+    changes: [
+      "Stránkování: text s piktogramem nezačíná na konci stránky, pokud se pod něj nevejdou aspoň 3 řádky.",
+    ],
+  },
+  {
     version: "1.13.0",
     date: "2026-10-21",
     changes: [
