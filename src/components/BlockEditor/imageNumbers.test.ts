@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { computeImageNumbers, imageLabelWord, isImageNumbered } from "./imageNumbers";
+import { computeImageNumbers, imageNumberedLabel, isImageNumbered } from "./imageNumbers";
+import { mergeMetadata } from "@/components/DocumentMetadata/types";
 import { splitImageTableBlock } from "./splitImageTable";
 import { blocksToHtml } from "./serialize";
 import { parseDocumentHtml, parseDocumentJson } from "./importJson";
