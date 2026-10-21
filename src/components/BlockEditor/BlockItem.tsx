@@ -87,6 +87,7 @@ interface Props {
   imageNumber?: number;
   /** HTML of the directly following text block (for the wrap preview). */
   nextTextHtml?: string;
+  pairedInPdf?: boolean;
   imageLabelPrefix?: string;
   imageLabelUnnumbered?: string;
 }
@@ -129,7 +130,7 @@ function blockPreview(block: Block): string {
   }
 }
 
-export default function BlockItem({ block, collapsed, onToggleCollapsed, onChange, onDelete, onSplit, headingNumber, imageNumber, imageLabelPrefix, imageLabelUnnumbered, nextTextHtml }: Props) {
+export default function BlockItem({ block, collapsed, onToggleCollapsed, onChange, onDelete, onSplit, headingNumber, imageNumber, imageLabelPrefix, imageLabelUnnumbered, nextTextHtml, pairedInPdf }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -159,7 +160,7 @@ export default function BlockItem({ block, collapsed, onToggleCollapsed, onChang
       />
       {!collapsed && (
         <div className="p-3">
-          <BlockBody block={block} onChange={onChange} headingNumber={headingNumber} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} imageLabelUnnumbered={imageLabelUnnumbered} nextTextHtml={nextTextHtml} />
+          <BlockBody block={block} onChange={onChange} headingNumber={headingNumber} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} imageLabelUnnumbered={imageLabelUnnumbered} nextTextHtml={nextTextHtml} pairedInPdf={pairedInPdf} />
         </div>
       )}
     </div>
@@ -351,7 +352,7 @@ function setContent(block: Block, patch: any, onChange: Props["onChange"]) {
   onChange(block.id, { content: { ...block.content, ...patch } });
 }
 
-function BlockBody({ block, onChange, headingNumber, imageNumber, imageLabelPrefix, imageLabelUnnumbered, nextTextHtml }: { block: Block; onChange: Props["onChange"]; headingNumber?: string; imageNumber?: number; imageLabelPrefix?: string; imageLabelUnnumbered?: string; nextTextHtml?: string }) {
+function BlockBody({ block, onChange, headingNumber, imageNumber, imageLabelPrefix, imageLabelUnnumbered, nextTextHtml, pairedInPdf }: { block: Block; onChange: Props["onChange"]; headingNumber?: string; imageNumber?: number; imageLabelPrefix?: string; imageLabelUnnumbered?: string; nextTextHtml?: string; pairedInPdf?: boolean }) {
   switch (block.type) {
     case "heading1":
     case "heading2":
@@ -380,7 +381,7 @@ function BlockBody({ block, onChange, headingNumber, imageNumber, imageLabelPref
     case "text":
       return <TextBlockEditor block={block} onChange={onChange} />;
     case "image":
-      return <ImageBlockEditor block={block} onChange={onChange} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} imageLabelUnnumbered={imageLabelUnnumbered} nextTextHtml={nextTextHtml} />;
+      return <ImageBlockEditor block={block} onChange={onChange} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} imageLabelUnnumbered={imageLabelUnnumbered} nextTextHtml={nextTextHtml} pairedInPdf={pairedInPdf} />;
     case "table":
       return <TableBlockEditor block={block} onChange={onChange} />;
     case "image-table":
@@ -786,7 +787,7 @@ function htmlToPlainText(html: string): string {
   return (doc.body.textContent ?? "").replace(/\s+/g, " ").trim();
 }
 
-function ImageBlockEditor({ block, onChange, hidePictogram, imageNumber, imageLabelPrefix, imageLabelUnnumbered, sizeOnly, nextTextHtml, pictogramOverride }: { block: Block; onChange: Props["onChange"]; hidePictogram?: boolean; imageNumber?: number; imageLabelPrefix?: string; imageLabelUnnumbered?: string; sizeOnly?: boolean; nextTextHtml?: string; pictogramOverride?: { value?: Pictogram; onChange: (v: Pictogram) => void } }) {
+function ImageBlockEditor({ block, onChange, hidePictogram, imageNumber, imageLabelPrefix, imageLabelUnnumbered, sizeOnly, nextTextHtml, pictogramOverride, pairedInPdf }: { pairedInPdf?: boolean; block: Block; onChange: Props["onChange"]; hidePictogram?: boolean; imageNumber?: number; imageLabelPrefix?: string; imageLabelUnnumbered?: string; sizeOnly?: boolean; nextTextHtml?: string; pictogramOverride?: { value?: Pictogram; onChange: (v: Pictogram) => void } }) {
   const size: "full" | "half" = block.content.size === "half" ? "half" : "full";
   const position: "left" | "right" | "center" = sizeOnly ? "center" : (block.content.position === "right" || block.content.position === "center" ? block.content.position : "left");
   const wraps = size === "half" && position !== "center" && nextTextHtml !== undefined;
@@ -868,6 +869,9 @@ function ImageBlockEditor({ block, onChange, hidePictogram, imageNumber, imageLa
               alt={block.content.alt}
               className={`rounded border ${size === "half" ? "w-1/2 object-contain" : "max-h-64"} ${size === "half" && !wraps ? (position === "left" ? "mr-auto block" : position === "right" ? "ml-auto block" : "mx-auto block") : ""} ${wraps ? (position === "left" ? "float-left mr-3 mb-1" : "float-right ml-3 mb-1") : ""}`}
             />
+            {pairedInPdf && (
+              <p className="clear-both text-xs text-muted-foreground">V PDF se zobrazí vedle sousedního obrázku.</p>
+            )}
             {wraps && (
               <p className="text-xs leading-relaxed text-muted-foreground">
                 <span className="font-medium">Obtékající text (náhled): </span>
