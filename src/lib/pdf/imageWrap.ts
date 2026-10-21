@@ -27,6 +27,12 @@ export function imagePositionOf(c: any): ImagePosition {
   return c?.position === "right" || c?.position === "center" ? c.position : "left";
 }
 
+/** Flex alignment of a standalone half-width image (no text wrapping). */
+export function halfAlignOf(c: any): "flex-start" | "flex-end" | "center" {
+  const p = imagePositionOf(c);
+  return p === "left" ? "flex-start" : p === "right" ? "flex-end" : "center";
+}
+
 /** Image block that wraps the directly following text block. */
 export function wrapsNextText(img: Block, next: Block | undefined): boolean {
   if (img.type !== "image" || !next || next.type !== "text") return false;
