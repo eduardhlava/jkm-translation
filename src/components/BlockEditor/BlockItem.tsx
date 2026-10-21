@@ -851,7 +851,7 @@ function ImageBlockEditor({ block, onChange, hidePictogram, imageNumber, imageLa
             <img
               src={block.content.url}
               alt={block.content.alt}
-              className={`rounded border ${size === "half" ? "w-1/2 object-contain" : "max-h-64"} ${size === "half" && position === "center" ? "mx-auto block" : ""} ${wraps ? (position === "left" ? "float-left mr-3 mb-1" : "float-right ml-3 mb-1") : ""}`}
+              className={`rounded border ${size === "half" ? "w-1/2 object-contain" : "max-h-64"} ${size === "half" && !wraps ? (position === "left" ? "mr-auto block" : position === "right" ? "ml-auto block" : "mx-auto block") : ""} ${wraps ? (position === "left" ? "float-left mr-3 mb-1" : "float-right ml-3 mb-1") : ""}`}
             />
             {wraps && (
               <p className="text-xs leading-relaxed text-muted-foreground">

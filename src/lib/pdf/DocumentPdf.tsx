@@ -9,7 +9,7 @@ import notoItalic from "@/assets/fonts/NotoSans-Italic.ttf?url";
 import notoBoldItalic from "@/assets/fonts/NotoSans-BoldItalic.ttf?url";
 import { PICTOGRAM_PATHS } from "@/components/BlockEditor/pictogramPaths";
 import { computeImageNumbers, imageNumberedLabel, isImageNumbered } from "@/components/BlockEditor/imageNumbers";
-import { HALF_COLUMN_PT, SIDE_TEXT_WIDTH_PT, WRAP_GAP_PT, imagePositionOf, sideImageHeight, splitBlocksForWrap, wrapChain, SIDE_PICTO_PT } from "./imageWrap";
+import { HALF_COLUMN_PT, SIDE_TEXT_WIDTH_PT, WRAP_GAP_PT, halfAlignOf, imagePositionOf, sideImageHeight, splitBlocksForWrap, wrapChain, SIDE_PICTO_PT } from "./imageWrap";
 import { DOCUMENT_LANGUAGES, mergeMetadata, type DocumentMetadata } from "@/components/DocumentMetadata/types";
 
 const NOTO_FACES = [
@@ -567,17 +567,18 @@ function ImageBlock({ block, captionOverride, startMarker, measure, measureStart
   const alt = block.content?.alt;
   if (!url) return null;
   const caption = captionOverride !== undefined ? captionOverride : alt;
-  // "half" → 50 % of the content width (centered) unless placed in a wrap column.
+  // "half" → half of the content width, aligned by position (left/right/center)
+  // even without a following text block; in a wrap column the column handles it.
   const half = !inColumn && block.content?.size === "half";
   return (
-    <View wrap={false} style={styles.imageBlock}>
+    <View wrap={false} style={[styles.imageBlock, half ? { alignItems: halfAlignOf(block.content) } : {}]}>
       {startMarker}
       {measure && measureStartId && (
         <PageMarker onPage={(p) => measure.tableStartPages.set(measureStartId, p)} />
       )}
       {/* eslint-disable-next-line jsx-a11y/alt-text */}
-      <Image src={url} style={[styles.image, { width: half ? "49%" : "98%", maxHeight: MAX_IMAGE_HEIGHT_PT }]} />
-      {caption ? <Text style={[styles.caption, half ? { width: "50%" } : {}]}>{caption}</Text> : null}
+      <Image src={url} style={[styles.image, { width: half ? HALF_COLUMN_PT : "98%", maxHeight: MAX_IMAGE_HEIGHT_PT }]} />
+      {caption ? <Text style={[styles.caption, half ? { width: HALF_COLUMN_PT } : {}]}>{caption}</Text> : null}
     </View>
   );
 }

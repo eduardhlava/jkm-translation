@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { splitTextForWrap, wrapsNextText, splitBlocksForWrap, wrapChain } from "./imageWrap";
+import { splitTextForWrap, wrapsNextText, splitBlocksForWrap, wrapChain, halfAlignOf } from "./imageWrap";
 import { blocksToHtml } from "@/components/BlockEditor/serialize";
 import { parseDocumentHtml, parseDocumentJson } from "@/components/BlockEditor/importJson";
 import type { Block } from "@/components/BlockEditor/types";
@@ -104,5 +104,14 @@ describe("splitBlocksForWrap / wrapChain", () => {
     const h: Block = { id: "h", type: "heading2", template: "default", order: 0, content: { text: "H" } };
     const chain = wrapChain([img, t("a", "x"), t("b", "y"), h, t("c", "z")], 0);
     expect(chain.map((b) => b.id)).toEqual(["a", "b"]);
+  });
+});
+
+describe("halfAlignOf", () => {
+  it("maps position to flex alignment for standalone half images", () => {
+    expect(halfAlignOf({ size: "half", position: "left" })).toBe("flex-start");
+    expect(halfAlignOf({ size: "half", position: "right" })).toBe("flex-end");
+    expect(halfAlignOf({ size: "half", position: "center" })).toBe("center");
+    expect(halfAlignOf({ size: "half" })).toBe("flex-start");
   });
 });
