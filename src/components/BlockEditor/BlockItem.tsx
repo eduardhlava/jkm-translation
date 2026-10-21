@@ -771,7 +771,7 @@ function htmlToPlainText(html: string): string {
   return (doc.body.textContent ?? "").replace(/\s+/g, " ").trim();
 }
 
-function ImageBlockEditor({ block, onChange, hidePictogram, imageNumber, imageLabelPrefix, sizeOnly, nextTextHtml, pictogramOverride }: { block: Block; onChange: Props["onChange"]; hidePictogram?: boolean; imageNumber?: number; imageLabelPrefix?: string; sizeOnly?: boolean; nextTextHtml?: string; pictogramOverride?: { value?: Pictogram; onChange: (v: Pictogram) => void } }) {
+function ImageBlockEditor({ block, onChange, hidePictogram, imageNumber, imageLabelPrefix, imageLabelUnnumbered, sizeOnly, nextTextHtml, pictogramOverride }: { block: Block; onChange: Props["onChange"]; hidePictogram?: boolean; imageNumber?: number; imageLabelPrefix?: string; imageLabelUnnumbered?: string; sizeOnly?: boolean; nextTextHtml?: string; pictogramOverride?: { value?: Pictogram; onChange: (v: Pictogram) => void } }) {
   const size: "full" | "half" = block.content.size === "half" ? "half" : "full";
   const position: "left" | "right" | "center" = sizeOnly ? "center" : (block.content.position === "right" || block.content.position === "center" ? block.content.position : "left");
   const wraps = size === "half" && position !== "center" && nextTextHtml !== undefined;
