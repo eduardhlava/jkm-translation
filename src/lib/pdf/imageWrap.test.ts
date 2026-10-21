@@ -115,3 +115,32 @@ describe("halfAlignOf", () => {
     expect(halfAlignOf({ size: "half" })).toBe("flex-start");
   });
 });
+
+import { pairHalfImages } from "./imageWrap";
+describe("pairHalfImages", () => {
+  const img = (id: string, position: string, size = "half"): Block =>
+    ({ id, type: "image", template: "default", order: 0, content: { url: "x", size, position } } as Block);
+  const txt = (id: string): Block => ({ id, type: "text", template: "default", order: 0, content: { html: "a" } } as Block);
+  it("left+right pairs", () => {
+    const p = pairHalfImages([img("a", "left"), img("b", "right")]);
+    expect(p.get(0)?.left.id).toBe("a"); expect(p.get(0)?.right.id).toBe("b");
+  });
+  it("right+left pairs with the left image on the left", () => {
+    const p = pairHalfImages([img("a", "right"), img("b", "left")]);
+    expect(p.get(0)?.left.id).toBe("b"); expect(p.get(0)?.right.id).toBe("a");
+  });
+  it("left+left does not pair", () => {
+    expect(pairHalfImages([img("a", "left"), img("b", "left")]).size).toBe(0);
+  });
+  it("text between does not pair", () => {
+    expect(pairHalfImages([img("a", "left"), txt("t"), img("b", "right")]).size).toBe(0);
+  });
+  it("center or full width does not pair", () => {
+    expect(pairHalfImages([img("a", "center"), img("b", "right")]).size).toBe(0);
+    expect(pairHalfImages([img("a", "left", "full"), img("b", "right")]).size).toBe(0);
+  });
+  it("L,R,L pairs only the first two", () => {
+    const p = pairHalfImages([img("a", "left"), img("b", "right"), img("c", "left")]);
+    expect([...p.keys()]).toEqual([0]);
+  });
+});
