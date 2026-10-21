@@ -26,6 +26,7 @@ import { BLOCK_TYPE_LABELS, buildCellValue, parseCellPictogram, type Block, type
 import TableCellEditor from "./TableCellEditor";
 import PictogramIcon from "./PictogramIcon";
 import { coveredBy, mergeAt, mergeCellsRight, normalizeMerges, remapDeleteColumn, remapDeleteRow, remapInsertColumn, unmergeCell } from "./cellMerges";
+import { imageLabelWord } from "./imageNumbers";
 
 const PICTOGRAM_LABELS: Record<string, string> = {
   alert: "Výstraha",
