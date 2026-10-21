@@ -129,7 +129,7 @@ describe("PDF rowspan render", () => {
     const b = createBlock("table", 0);
     b.content = {
       headerRow: false,
-      rows: [["Sloučeno", "první řádek", "x"], ["", "druhý\nřádek s víc textem", "y"]],
+      rows: [["Slouceno", "prvni", "x"], ["", "druhy radek s vic textem a jeste vic", "y"]],
       merges: [{ r: 0, c: 0, span: 1, rowSpan: 2 }],
       colWidths: [30, 40, 30],
       rowColors: [null, "#fef3c7"],
