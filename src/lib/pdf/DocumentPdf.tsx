@@ -642,7 +642,7 @@ function TableBlock({ block, startMarker, measure, measureStartId, measurePartSt
   const region = (r0: number, r1: number, c0: number, c1: number, sizeStyle: any, key: string): JSX.Element => {
     const local = merges.filter((m) => inRegion(m, r0, r1, c0, c1));
     const whole = local.find((m) => m.r === r0 && m.c === c0 && rs(m) === r1 - r0 && m.span === c1 - c0);
-    if (whole || (r1 - r0 === 1 && c1 - c0 === 1)) return renderCell(r0, c0, { ...sizeStyle, flexGrow: sizeStyle.flexGrow ?? 1 }, true, key);
+    if (whole || (r1 - r0 === 1 && c1 - c0 === 1)) return renderCell(r0, c0, sizeStyle.width ? { ...sizeStyle, flex: undefined } : { ...sizeStyle, flexGrow: sizeStyle.flexGrow ?? 1 }, true, key);
     const hCuts = [r0];
     for (let k = r0 + 1; k < r1; k++) if (!local.some((m) => m.r < k && m.r + rs(m) > k)) hCuts.push(k);
     hCuts.push(r1);
@@ -659,7 +659,7 @@ function TableBlock({ block, startMarker, measure, measureStartId, measurePartSt
     if (vCuts.length > 2) {
       return (
         <View key={key} style={[{ flexDirection: "row", flexShrink: 0 }, sizeStyle]}>
-          {vCuts.slice(0, -1).map((a, i) => region(r0, r1, a, vCuts[i + 1], { flexGrow: weight(a, vCuts[i + 1]), flexBasis: 0, flexShrink: 0 }, `${key}v${i}`))}
+          {vCuts.slice(0, -1).map((a, i) => region(r0, r1, a, vCuts[i + 1], { width: `${(weight(a, vCuts[i + 1]) / weight(c0, c1)) * 100}%`, flexGrow: 0, flexShrink: 0 }, `${key}v${i}`))}
         </View>
       );
     }
@@ -668,7 +668,7 @@ function TableBlock({ block, startMarker, measure, measureStartId, measurePartSt
       <View key={key} style={[{ flexDirection: "column", flexShrink: 0 }, sizeStyle]}>
         {Array.from({ length: r1 - r0 }, (_, i) => (
           <View key={i} style={{ flexDirection: "row", flexShrink: 0 }}>
-            {Array.from({ length: c1 - c0 }, (_, j) => renderCell(r0 + i, c0 + j, { flexGrow: weight(c0 + j, c0 + j + 1), flexBasis: 0 }, true, j))}
+            {Array.from({ length: c1 - c0 }, (_, j) => renderCell(r0 + i, c0 + j, { width: `${(weight(c0 + j, c0 + j + 1) / weight(c0, c1)) * 100}%`, flexGrow: 0, flexShrink: 0 }, true, j))}
           </View>
         ))}
       </View>
