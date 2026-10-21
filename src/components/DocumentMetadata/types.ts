@@ -8,6 +8,7 @@ export interface DocumentMetadata {
   docName: string;
   language: string;
   imageLabelPrefix: string;
+  imageLabelUnnumbered: string;
   coverImageUrl: string;
   coverImageAlt: string;
   disclaimerWarning: DocumentDisclaimer;
@@ -42,6 +43,7 @@ export const DEFAULT_DOCUMENT_METADATA: DocumentMetadata = {
   docName: "",
   language: "cz",
   imageLabelPrefix: "Obrázek č. ",
+  imageLabelUnnumbered: "Obrázek",
   coverImageUrl: "",
   coverImageAlt: "",
   disclaimerWarning: {
