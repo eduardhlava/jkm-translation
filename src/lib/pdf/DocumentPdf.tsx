@@ -8,6 +8,7 @@ import notoBold from "@/assets/fonts/NotoSans-Bold.ttf?url";
 import notoItalic from "@/assets/fonts/NotoSans-Italic.ttf?url";
 import notoBoldItalic from "@/assets/fonts/NotoSans-BoldItalic.ttf?url";
 import { PICTOGRAM_PATHS } from "@/components/BlockEditor/pictogramPaths";
+import { computeImageNumbers, imageLabelWord, isImageNumbered } from "@/components/BlockEditor/imageNumbers";
 import { HALF_COLUMN_PT, SIDE_TEXT_WIDTH_PT, WRAP_GAP_PT, imagePositionOf, sideImageHeight, splitBlocksForWrap, wrapChain, SIDE_PICTO_PT } from "./imageWrap";
 import { DOCUMENT_LANGUAGES, mergeMetadata, type DocumentMetadata } from "@/components/DocumentMetadata/types";
 
@@ -906,22 +907,19 @@ export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collect
     }
   }
 
-  // Sequential image numbering (image + image-table blocks).
-  const imageNumbers = new Map<string, number>();
-  {
-    let n = 0;
-    for (const b of ordered) {
-      if (b.type === "image" || b.type === "image-table") {
-        n += 1;
-        imageNumbers.set(b.id, n);
-      }
-    }
-  }
+  // Sequential image numbering (image + image-table blocks); shared with the
+  // editor so both count the same. Blocks with numbered === false are skipped.
+  const imageNumbers = computeImageNumbers(ordered);
 
   const captionFor = (b: Block): string | undefined => {
+    const alt = b.type === "image-table" ? (b.content?.image?.alt ?? "") : (b.content?.alt ?? "");
+    // Nečíslovaný obrázek: popisek bez čísla ("Obrázek: název"); bez názvu žádný popisek.
+    if (!isImageNumbered(b)) {
+      const name = alt.trim();
+      return name ? `${imageLabelWord(imageLabelPrefix)}: ${name}` : undefined;
+    }
     const n = imageNumbers.get(b.id);
     if (!n) return undefined;
-    const alt = b.type === "image-table" ? (b.content?.image?.alt ?? "") : (b.content?.alt ?? "");
     const label = `${imageLabelPrefix}${n}`;
     return alt ? `${label}: ${alt}` : label;
   };

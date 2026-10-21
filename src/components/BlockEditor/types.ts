@@ -78,8 +78,8 @@ export interface TableContent {
 }
 export type ImageSize = "full" | "half";
 export type ImagePosition = "left" | "right" | "center";
-/** width = editor-only manual width; PDF follows size/position. */
-export interface ImageContent { url: string; alt: string; width?: number; pictogram?: Pictogram; size?: ImageSize; position?: ImagePosition }
+/** width = editor-only manual width; PDF follows size/position. numbered: false vyřadí obrázek z číslování (výchozí = true). */
+export interface ImageContent { url: string; alt: string; width?: number; pictogram?: Pictogram; size?: ImageSize; position?: ImagePosition; numbered?: boolean }
 export interface ImageTableContent { image: ImageContent; table: TableContent; pictogram?: Pictogram; autoTableBreak?: boolean }
 export interface CalloutContent { text: string }
 export interface PageBreakContent {}

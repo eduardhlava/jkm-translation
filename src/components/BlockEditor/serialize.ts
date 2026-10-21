@@ -36,6 +36,7 @@ function serializeBlockMeta(b: Block): Record<string, unknown> {
         meta.sz = "half";
         if (c.position === "right" || c.position === "center") meta.pos = c.position;
       }
+      if (c.numbered === false) meta.nn = false;
       if (c.pictogram && c.pictogram !== "none") meta.pic = c.pictogram;
       break;
     case "table": {
@@ -52,6 +53,7 @@ function serializeBlockMeta(b: Block): Record<string, unknown> {
       const tbl = c.table ?? {};
       if (Number.isFinite(img.width)) meta.iw = img.width;
       if (img.size === "half") meta.isz = "half";
+      if (img.numbered === false) meta.inn = false;
       meta.hdr = tbl.headerRow !== false;
       meta.indexedCells = indexedCells(tbl.rows ?? []);
       const tmg = normalizeMerges(tbl.merges, tbl.rows ?? []);

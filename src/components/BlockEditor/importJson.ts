@@ -50,6 +50,7 @@ function normalizeContent(type: BlockType, raw: any): any {
         alt: String(c.alt ?? ""),
         ...(Number.isFinite(Number(c.width)) ? { width: Number(c.width) } : {}),
         ...(c.size === "half" ? { size: "half", position: ["left", "right", "center"].includes(c.position) ? c.position : "left" } : {}),
+        ...(typeof c.numbered === "boolean" ? { numbered: c.numbered } : {}),
       };
     case "table": {
       const rows = Array.isArray(c.rows) ? c.rows.map((r: any) =>
@@ -70,6 +71,7 @@ function normalizeContent(type: BlockType, raw: any): any {
           alt: String(img.alt ?? ""),
           ...(Number.isFinite(Number(img.width)) ? { width: Number(img.width) } : {}),
           ...(img.size === "half" ? { size: "half" } : {}),
+          ...(typeof img.numbered === "boolean" ? { numbered: img.numbered } : {}),
         },
         table: (() => {
           const merges = normalizeMerges(Array.isArray(tbl.merges) ? tbl.merges : undefined, rows);
@@ -180,6 +182,7 @@ function applyBlockMeta(block: Block, meta: any | null): void {
         c.size = "half";
         c.position = meta.pos === "right" || meta.pos === "center" ? meta.pos : "left";
       }
+      if (meta.nn === false) c.numbered = false;
       break;
     case "table":
       if (typeof meta.hdr === "boolean") c.headerRow = meta.hdr;
@@ -187,6 +190,7 @@ function applyBlockMeta(block: Block, meta: any | null): void {
     case "image-table":
       if (c.image && Number.isFinite(meta.iw)) c.image.width = meta.iw;
       if (c.image && meta.isz === "half") c.image.size = "half";
+      if (c.image && meta.inn === false) c.image.numbered = false;
       if (c.table && typeof meta.hdr === "boolean") c.table.headerRow = meta.hdr;
       break;
   }
