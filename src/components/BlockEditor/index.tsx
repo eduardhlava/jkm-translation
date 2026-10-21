@@ -173,7 +173,7 @@ export default function BlockEditor({ blocks, onChange, numberHeadings, imageLab
               </div>
             )}
             {(() => { const paired = pairedImageIds(sorted); return sorted.map((b, i) => (
-              <div key={b.id} data-editor-block-id={b.id} className={cn("scroll-mt-12 rounded-md transition-shadow duration-500 motion-reduce:transition-none", highlightedBlockId === b.id && "ring-2 ring-primary ring-offset-2 ring-offset-muted")}>
+              <div key={b.id} data-editor-block-id={b.id} className={cn("scroll-mt-12 rounded-lg transition-shadow duration-500 motion-reduce:transition-none", highlightedBlockId === b.id && "ring-2 ring-primary ring-offset-2 ring-offset-muted")}>
                 <BlockItem
                   block={b}
                   collapsed={!!collapsed[b.id]}
