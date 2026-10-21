@@ -15,7 +15,8 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { ChevronsDownUp, ChevronsUpDown } from "lucide-react";
+import { ChevronDown, ChevronUp, ChevronsDownUp, ChevronsUpDown, Search, X } from "lucide-react";
+import { searchBlocks } from "./searchBlocks";
 import { Button } from "@/components/ui/button";
 import BlockItem from "./BlockItem";
 import AddBlockMenu from "./AddBlockMenu";
@@ -121,6 +122,53 @@ export default function BlockEditor({ blocks, onChange, numberHeadings, imageLab
     return () => scroller.removeEventListener("scroll", onScroll);
   }, []);
 
+  // In-document search: UI only, never touches blocks or collapsed state.
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<string[] | null>(null);
+  const [resultIndex, setResultIndex] = useState(0);
+  const [searchHighlight, setSearchHighlight] = useState<string | null>(null);
+  const searchTimer = useRef<ReturnType<typeof setTimeout>>();
+  const lastQuery = useRef("");
+  const lastBlocks = useRef<Block[] | null>(null);
+  useEffect(() => () => clearTimeout(searchTimer.current), []);
+
+  const goTo = (id: string) => {
+    const scroller = toolbarRef.current?.closest(".overflow-auto") as HTMLElement | null;
+    const target = Array.from(document.querySelectorAll<HTMLElement>("[data-editor-block-id]")).find((el) => el.dataset.editorBlockId === id);
+    if (scroller && target) {
+      scroller.scrollTo({ top: scroller.scrollTop + target.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 48, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    }
+    clearTimeout(searchTimer.current);
+    setSearchHighlight(id);
+    searchTimer.current = setTimeout(() => setSearchHighlight(null), 1500);
+  };
+
+  const step = (dir: 1 | -1) => {
+    let list = results;
+    let idx = resultIndex;
+    if (!list || lastQuery.current !== query || lastBlocks.current !== blocks) {
+      list = searchBlocks(blocks, query);
+      lastQuery.current = query;
+      lastBlocks.current = blocks;
+      idx = dir === 1 ? 0 : list.length - 1;
+    } else if (list.length) {
+      idx = (idx + dir + list.length) % list.length;
+    }
+    setResults(list);
+    setResultIndex(Math.max(0, idx));
+    if (list.length) goTo(list[Math.max(0, idx)]);
+  };
+
+  const clearSearch = () => {
+    setQuery("");
+    setResults(null);
+    setResultIndex(0);
+    setSearchHighlight(null);
+    lastQuery.current = "";
+  };
+  const matched = new Set(results ?? []);
+  const activeHighlight = searchHighlight ?? highlightedBlockId;
+
   return (
     <div className="space-y-3">
       {leftSlot && <div className="flex items-center gap-2">{leftSlot}</div>}
@@ -136,6 +184,37 @@ export default function BlockEditor({ blocks, onChange, numberHeadings, imageLab
           )}
         >
           <div className="flex items-center gap-1 pointer-events-auto">
+            <div className="relative w-[220px]">
+              <Search className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") { e.preventDefault(); if (query.trim()) step(e.shiftKey ? -1 : 1); }
+                  else if (e.key === "Escape") { e.preventDefault(); clearSearch(); }
+                }}
+                placeholder="Hledat v dokumentu…"
+                aria-label="Hledat v dokumentu"
+                className="h-8 w-full rounded-md border border-input bg-background pl-8 pr-7 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              {query && (
+                <button type="button" onClick={clearSearch} aria-label="Zrušit hledání" title="Zrušit hledání" className="absolute right-1 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+            {results && (
+              results.length === 0 ? (
+                <span className="whitespace-nowrap px-1 text-xs text-muted-foreground">Nic nenalezeno</span>
+              ) : (
+                <>
+                  <span className="whitespace-nowrap px-1 text-xs tabular-nums text-muted-foreground" aria-live="polite">{resultIndex + 1} / {results.length}</span>
+                  <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => step(-1)} aria-label="Předchozí výsledek" title="Předchozí výsledek"><ChevronUp className="h-4 w-4" /></Button>
+                  <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => step(1)} aria-label="Další výsledek" title="Další výsledek"><ChevronDown className="h-4 w-4" /></Button>
+                </>
+              )
+            )}
             <Button
               type="button"
               variant="outline"
@@ -173,7 +252,12 @@ export default function BlockEditor({ blocks, onChange, numberHeadings, imageLab
               </div>
             )}
             {(() => { const paired = pairedImageIds(sorted); return sorted.map((b, i) => (
-              <div key={b.id} data-editor-block-id={b.id} className={cn("scroll-mt-12 rounded-lg transition-shadow duration-500 motion-reduce:transition-none", highlightedBlockId === b.id && "ring-2 ring-primary ring-offset-2 ring-offset-muted")}>
+              <div key={b.id} data-editor-block-id={b.id} className={cn(
+                "relative scroll-mt-12 rounded-lg",
+                "after:pointer-events-none after:absolute after:inset-x-0 after:top-0 after:bottom-2 after:z-10 after:rounded-lg after:bg-primary/10 after:ring-1 after:ring-primary/40 after:opacity-0 after:transition-opacity after:duration-500 motion-reduce:after:transition-none",
+                activeHighlight === b.id && "after:opacity-100",
+                matched.has(b.id) && "before:pointer-events-none before:absolute before:-left-2 before:top-0 before:bottom-2 before:w-1 before:rounded-full before:bg-primary/40",
+              )}>
                 <BlockItem
                   block={b}
                   collapsed={!!collapsed[b.id]}
