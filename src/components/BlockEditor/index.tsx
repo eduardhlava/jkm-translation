@@ -140,7 +140,7 @@ export default function BlockEditor({ blocks, onChange, numberHeadings, imageLab
     }
     clearTimeout(searchTimer.current);
     setSearchHighlight(id);
-    searchTimer.current = setTimeout(() => { console.log("DBG timer"); setSearchHighlight(null); }, 1500); console.log("DBG goTo", id);
+    searchTimer.current = setTimeout(() => setSearchHighlight(null), 1500);
   };
 
   const step = (dir: 1 | -1) => {
@@ -159,7 +159,7 @@ export default function BlockEditor({ blocks, onChange, numberHeadings, imageLab
     if (list.length) goTo(list[Math.max(0, idx)]);
   };
 
-  const clearSearch = () => { console.log("DBG clear", new Error().stack);
+  const clearSearch = () => {
     setQuery("");
     setResults(null);
     setResultIndex(0);
