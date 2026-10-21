@@ -338,6 +338,9 @@ export interface MeasureContext {
   tableStartPages: Map<string, number>;
   tablePartStartPages: Map<string, number>;
   tableEndPages: Map<string, number>;
+  // Textový blok s piktogramem: stránka sondy na začátku bloku (rezervuje
+  // min(výška bloku, keepWithNextPt)). pictoTextPages > prevEndPages → porušení.
+  pictoTextPages?: Map<string, number>;
 }
 
 /** Neviditelná značka zaznamenávající číslo stránky. */
@@ -454,7 +457,7 @@ function PictogramSvg({ kind, size = 26 }: { kind: Pictogram; size?: number }) {
 }
 
 
-function TextBlock({ block, startMarker }: { block: Block; startMarker?: JSX.Element }) {
+function TextBlock({ block, startMarker, measure }: { block: Block; startMarker?: JSX.Element; measure?: MeasureContext }) {
   const defaultPStyle = { ...styles.p } as any;
   const defaultLiStyle = { ...styles.li } as any;
 
@@ -551,8 +554,22 @@ function TextBlock({ block, startMarker }: { block: Block; startMarker?: JSX.Ele
 
   const pictogram = block.content?.pictogram;
   if (pictogram && pictogram !== "none") {
+    // Measure-only keep-together probe (same technique as Heading): an
+    // unbreakable reserved box with the compensating negative margin on its
+    // OUTER container, so the fit check sees the space but following content
+    // does not move. Short blocks reserve only their estimated height.
+    const reserve = measure?.pictoTextPages
+      ? Math.min(measure.keepWithNextPt, Math.max(15.75, estimateTextHeightPt(block.content?.html ?? "")))
+      : 0;
+    const probe = reserve > 0 && measure?.pictoTextPages ? (
+      <View wrap={false} style={{ marginBottom: -reserve, flexShrink: 0 }}>
+        <PageMarker onPage={(p) => measure.pictoTextPages!.set(block.id, p)} />
+        <View style={{ height: reserve }} />
+      </View>
+    ) : null;
     return (
       <View style={{ position: "relative", marginVertical: 4, flexShrink: 0 }}>
+        {probe}
         <View style={{ position: "absolute", left: -36, top: 2, width: 30, alignItems: "center" }}>
           <PictogramSvg kind={pictogram} size={26} />
         </View>
@@ -781,7 +798,7 @@ function BlockNode({ block, collector, number, imageCaption, measure, measureNex
     case "heading2": return <Heading block={block} level={2} collector={collector} number={number} measure={measure} />;
     case "heading3": return <Heading block={block} level={3} collector={collector} number={number} measure={measure} />;
     case "heading4": return <Heading block={block} level={4} number={number} measure={measure} />;
-    case "text":     return <TextBlock block={block} startMarker={startMarker} />;
+    case "text":     return <TextBlock block={block} startMarker={startMarker} measure={measure} />;
     case "image":    return withPictogram(block, <ImageBlock block={block} captionOverride={imageCaption} startMarker={startMarker} />);
     case "table":    return withPictogram(block, <TableBlock block={block} startMarker={startMarker} measure={measure} measureStartId={block.id} measureEndId={block.id} />);
     case "image-table": return withPictogram(block, (
@@ -1070,7 +1087,7 @@ export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collect
               : undefined;
             const node = (
               <Fragment key={b.id}>
-                {measure && isKeepHeading && (
+                {measure && (isKeepHeading || (b.type === "text" && !!b.content?.pictogram && b.content.pictogram !== "none")) && (
                   <Text
                     style={{ height: 0, fontSize: 0 }}
                     render={({ pageNumber }) => {

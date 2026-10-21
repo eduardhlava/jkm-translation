@@ -234,6 +234,11 @@ function splitCore(html: string, avail: number, widthPt: number): { side: string
   return { side: unitsToHtml(side), rest: unitsToHtml(rest), used };
 }
 
+/** Estimated rendered height of text block HTML (same heuristic as the wrap split). */
+export function estimateTextHeightPt(html: string, widthPt = CONTENT_WIDTH_PT): number {
+  return splitCore(html, Number.POSITIVE_INFINITY, widthPt).used;
+}
+
 /** Width a block pictogram takes inside the side column (icon + gap). */
 export const SIDE_PICTO_PT = 34;
 
