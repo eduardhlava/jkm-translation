@@ -146,6 +146,7 @@ describe("PDF rowspan render", () => {
     walk(layout!);
     expect(found).toBeDefined();
     const [merged, strip] = found!.children!;
+    console.log(JSON.stringify(found, (k, v) => (k === "box" || k === "children" || k === "type" || /^\d+$/.test(k) || k === "" ? v : undefined)));
     const sum = strip.children!.reduce((a, c) => a + (c.box?.height ?? 0), 0);
     expect(sum).toBeGreaterThan(20);
     expect(merged.box!.height).toBeCloseTo(sum, 1);
