@@ -76,9 +76,12 @@ export default function DocumentEditorContents({ blocks, numberHeadings, childre
   }, [activeId, open]);
 
   const navigate = (id: string) => {
+    const scroller = scrollRef.current;
     const target = Array.from(contentRef.current?.querySelectorAll<HTMLElement>("[data-editor-block-id]") ?? []).find((el) => el.dataset.editorBlockId === id);
-    if (!target) return;
-    target.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start", inline: "nearest" });
+    if (!target || !scroller) return;
+    // Limit movement to the editor: native scrollIntoView also moves the outer
+    // document when the editor fills the viewport, hiding its header.
+    scroller.scrollTo({ top: scroller.scrollTop + target.getBoundingClientRect().top - scroller.getBoundingClientRect().top - SCROLL_OFFSET, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
     setActiveId(id);
     clearTimeout(highlightTimer.current);
     setHighlightedId(id);
