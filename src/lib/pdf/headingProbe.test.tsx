@@ -172,3 +172,31 @@ describe("real DocumentPdf heading probe", () => {
     expect(result.remaining).toEqual([]);
   }, 20000);
 });
+describe("real DocumentPdf half image alignment without text", () => {
+  it("places a left half image at the left edge and a right half image at the right edge", async () => {
+    const image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAdsAAAH0AQAAAABd+7p6AAAAeUlEQVR42u3LMQ0AMAgAMMC/ySkZHuAiaf/mj7FXsSDLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsixfzw1x8QXIpFtcYwAAAABJRU5ErkJggg==";
+    const blocks: Block[] = [
+      { id: "left", type: "image", template: "default", order: 0, content: { url: image, alt: "Left", size: "half", position: "left" } },
+      { id: "right", type: "image", template: "default", order: 1, content: { url: image, alt: "Right", size: "half", position: "right" } },
+    ];
+    let layout: LayoutNode | undefined;
+    const document = DocumentPdf({ title: "", blocks, includeToc: false, measure: measurement() });
+    await pdf(cloneElement(document, { onRender: (data: { _INTERNAL__LAYOUT__DATA_: LayoutNode }) => {
+      layout = data._INTERNAL__LAYOUT__DATA_;
+    } })).toBuffer();
+    if (!layout) throw new Error("Renderer did not return layout");
+    const images: LayoutNode[] = [];
+    const walk = (node: LayoutNode) => {
+      if (node.type === "IMAGE") images.push(node);
+      for (const child of node.children ?? []) walk(child);
+    };
+    layout.children?.forEach(walk);
+    expect(images).toHaveLength(2);
+    const [leftImg, rightImg] = images;
+    // Page padding is 50pt; half column is 495/2 = 247.5pt wide.
+    expect(leftImg.box?.left).toBeCloseTo(50, 0);
+    expect(rightImg.box?.left).toBeCloseTo(50 + 247.5, 0);
+    expect(leftImg.box?.width).toBeCloseTo(247.5, 0);
+    expect(rightImg.box?.width).toBeCloseTo(247.5, 0);
+  }, 20000);
+});

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { splitTextForWrap, wrapsNextText, splitBlocksForWrap, wrapChain } from "./imageWrap";
+import { splitTextForWrap, wrapsNextText, splitBlocksForWrap, wrapChain, halfAlignOf } from "./imageWrap";
 import { blocksToHtml } from "@/components/BlockEditor/serialize";
 import { parseDocumentHtml, parseDocumentJson } from "@/components/BlockEditor/importJson";
 import type { Block } from "@/components/BlockEditor/types";
