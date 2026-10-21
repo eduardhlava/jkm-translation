@@ -24,6 +24,11 @@ import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
  *    Image-table nejprve přesune celý blok; pokud se tabulková část stále láme,
  *    nahradí vnější konec interním autoTableBreak před tabulkou. Teprve když
  *    se láme i na nové stránce, interní konec odstraní a označí tooLong.
+ *  - Textový blok S PIKTOGRAMEM nesmí začínat na spodku stránky, pokud se pod
+ *    něj nevejdou aspoň 3 řádky (KEEP_WITH_NEXT_PT); krátký blok rezervuje svou
+ *    odhadnutou výšku, takže se nerozdělí. Sonda stejná jako u nadpisů
+ *    (pictoTextPages vs. prevEndPages); nadpisový řetězec nad blokem jde
+ *    s ním. Neplatí pro text v bočním sloupci vedle obrázku.
  *  - Nikdy nevkládáme konec stránky za jiný konec stránky ani jako první blok.
  *
  * Automatické konce stránky jsou běžné `pagebreak` bloky s content.auto = true;
@@ -35,7 +40,7 @@ import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
 export const KEEP_WITH_NEXT_PT = 3 * 10.5 * 1.5;
 
 const MAX_ITERATIONS = 80;
-export const PAGINATION_BUILD_MARKER = "[paginate] v11";
+export const PAGINATION_BUILD_MARKER = "[paginate] v12";
 
 const KEEP_WITH_NEXT_TYPES = new Set(["heading2", "heading3", "heading4"]);
 
@@ -165,6 +170,7 @@ export interface MeasureResult {
   tableStartPages: Map<string, number>;
   tablePartStartPages: Map<string, number>;
   tableEndPages: Map<string, number>;
+  pictoTextPages?: Map<string, number>;
 }
 
 export type MeasureFn = (blocks: Block[]) => Promise<MeasureResult>;
@@ -181,7 +187,7 @@ export function collectRemaining(blocks: Block[], m: MeasureResult): RemainingVi
   return blocks.filter((b) => ids.has(b.id)).map((b) => ({
     id: b.id,
     type: b.type,
-    text: b.type.startsWith("heading") ? (b.content?.text ?? "") : "Tabulka",
+    text: b.type.startsWith("heading") ? (b.content?.text ?? "") : b.type === "text" ? "Text s piktogramem" : "Tabulka",
   }));
 }
 
@@ -197,6 +203,12 @@ export function findViolations(blocks: Block[], m: MeasureResult, tooLong: Set<s
       const pe = m.prevEndPages.get(b.id);
       const ns = m.nextStartPages.get(b.id);
       if (hp !== undefined && ((pe !== undefined && hp > pe) || (ns !== undefined && ns > hp))) out.push(b.id);
+      continue;
+    }
+    if (b.type === "text" && b.content?.pictogram && b.content.pictogram !== "none") {
+      const pp = m.pictoTextPages?.get(b.id);
+      const pe = m.prevEndPages.get(b.id);
+      if (pp !== undefined && pe !== undefined && pp > pe) out.push(b.id);
       continue;
     }
     if ((b.type === "table" || b.type === "image-table") && !tooLong.has(b.id)) {
@@ -325,7 +337,7 @@ export async function arrangePagination(
   const measure: MeasureFn = async (current) => {
     const m: MeasureResult = {
       headingPages: new Map(), prevEndPages: new Map(), nextStartPages: new Map(),
-      tableStartPages: new Map(), tablePartStartPages: new Map(), tableEndPages: new Map(),
+      tableStartPages: new Map(), tablePartStartPages: new Map(), tableEndPages: new Map(), pictoTextPages: new Map(),
     };
     await pdf(
       <DocumentPdf
