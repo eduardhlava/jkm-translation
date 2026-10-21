@@ -943,6 +943,48 @@ const DocumentCreator = () => {
 
               </div>
               <div className="flex items-center gap-2">
+                {/* Split button: Náhled PDF + podmenu se stránkováním */}
+                <DropdownMenu>
+                  <div className="flex">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={requestPdfPreview}
+                      disabled={paginating}
+                      className="rounded-r-none border-r-0"
+                    >
+                      {paginating ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Eye className="w-4 h-4 mr-1" />}
+                      {paginating ? `Uspořádávám…${paginatePass > 0 ? ` (průchod ${paginatePass})` : ""}` : "Náhled PDF"}
+                    </Button>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-l-none px-1.5"
+                        aria-label="Akce náhledu a stránkování"
+                        title="Akce náhledu a stránkování"
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </div>
+                  <DropdownMenuContent align="end" className="w-64">
+                    <DropdownMenuItem
+                      disabled={paginating || saving}
+                      onSelect={(e) => { e.preventDefault(); void arrangePagination(); }}
+                    >
+                      {paginating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ListOrdered className="w-4 h-4 mr-2" />}
+                      Uspořádat stránkování
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      disabled={paginating || saving}
+                      onSelect={(e) => { e.preventDefault(); void arrangeAndPreviewPdf(); }}
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      Uspořádat a zobrazit náhled
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="icon" className="h-8 w-8">
@@ -975,13 +1017,6 @@ const DocumentCreator = () => {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button variant="outline" size="sm" onClick={arrangePagination} disabled={paginating || saving}>
-                  {paginating ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <ListOrdered className="w-4 h-4 mr-1" />}
-                  {paginating ? `Uspořádávám…${paginatePass > 0 ? ` (průchod ${paginatePass})` : ""}` : "Uspořádat stránkování"}
-                </Button>
-                <Button variant="outline" size="sm" onClick={requestPdfPreview}>
-                  <Eye className="w-4 h-4 mr-1" /> Náhled PDF
-                </Button>
 
                 <div className="flex flex-col items-end">
                   <Tooltip>
