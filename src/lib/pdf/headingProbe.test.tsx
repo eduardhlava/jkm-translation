@@ -193,9 +193,9 @@ describe("real DocumentPdf half image alignment without text", () => {
     layout.children?.forEach(walk);
     expect(images).toHaveLength(2);
     const [leftImg, rightImg] = images;
-    // Page padding is 50pt; half column is 495/2 = 247.5pt wide.
-    expect(leftImg.box?.left).toBeCloseTo(50, 0);
-    expect(rightImg.box?.left).toBeCloseTo(50 + 247.5, 0);
+    // Layout boxes are relative to the page body; half column is 495/2 = 247.5pt wide.
+    expect(leftImg.box?.left).toBeCloseTo(0, 0);
+    expect(rightImg.box?.left).toBeCloseTo(247.5, 0);
     expect(leftImg.box?.width).toBeCloseTo(247.5, 0);
     expect(rightImg.box?.width).toBeCloseTo(247.5, 0);
   }, 20000);
