@@ -11,7 +11,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: "1.11.0",
     date: "2026-10-21",
     changes: [
-      "Obrázky lze vyřadit z číslování přepínačem Číslovat obrázek – popisek je pak jen ‚Obrázek: název‘.",
+      "Obrázky lze vyřadit z číslování přepínačem Číslovat obrázek; označení číslovaných i nečíslovaných obrázků se nastavuje v Nastavení dokumentu.",
     ],
   },
   {

@@ -26,7 +26,7 @@ import { BLOCK_TYPE_LABELS, buildCellValue, parseCellPictogram, type Block, type
 import TableCellEditor from "./TableCellEditor";
 import PictogramIcon from "./PictogramIcon";
 import { coveredBy, mergeAt, mergeCellsRight, normalizeMerges, remapDeleteColumn, remapDeleteRow, remapInsertColumn, unmergeCell } from "./cellMerges";
-import { imageLabelWord } from "./imageNumbers";
+import { imageNumberedLabel } from "./imageNumbers";
 
 const PICTOGRAM_LABELS: Record<string, string> = {
   alert: "Výstraha",
@@ -62,6 +62,7 @@ interface Props {
   /** HTML of the directly following text block (for the wrap preview). */
   nextTextHtml?: string;
   imageLabelPrefix?: string;
+  imageLabelUnnumbered?: string;
 }
 
 
@@ -102,7 +103,7 @@ function blockPreview(block: Block): string {
   }
 }
 
-export default function BlockItem({ block, collapsed, onToggleCollapsed, onChange, onDelete, onSplit, headingNumber, imageNumber, imageLabelPrefix, nextTextHtml }: Props) {
+export default function BlockItem({ block, collapsed, onToggleCollapsed, onChange, onDelete, onSplit, headingNumber, imageNumber, imageLabelPrefix, imageLabelUnnumbered, nextTextHtml }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -132,7 +133,7 @@ export default function BlockItem({ block, collapsed, onToggleCollapsed, onChang
       />
       {!collapsed && (
         <div className="p-3">
-          <BlockBody block={block} onChange={onChange} headingNumber={headingNumber} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} nextTextHtml={nextTextHtml} />
+          <BlockBody block={block} onChange={onChange} headingNumber={headingNumber} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} imageLabelUnnumbered={imageLabelUnnumbered} nextTextHtml={nextTextHtml} />
         </div>
       )}
     </div>
@@ -324,7 +325,7 @@ function setContent(block: Block, patch: any, onChange: Props["onChange"]) {
   onChange(block.id, { content: { ...block.content, ...patch } });
 }
 
-function BlockBody({ block, onChange, headingNumber, imageNumber, imageLabelPrefix, nextTextHtml }: { block: Block; onChange: Props["onChange"]; headingNumber?: string; imageNumber?: number; imageLabelPrefix?: string; nextTextHtml?: string }) {
+function BlockBody({ block, onChange, headingNumber, imageNumber, imageLabelPrefix, imageLabelUnnumbered, nextTextHtml }: { block: Block; onChange: Props["onChange"]; headingNumber?: string; imageNumber?: number; imageLabelPrefix?: string; imageLabelUnnumbered?: string; nextTextHtml?: string }) {
   switch (block.type) {
     case "heading1":
     case "heading2":
@@ -353,11 +354,11 @@ function BlockBody({ block, onChange, headingNumber, imageNumber, imageLabelPref
     case "text":
       return <TextBlockEditor block={block} onChange={onChange} />;
     case "image":
-      return <ImageBlockEditor block={block} onChange={onChange} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} nextTextHtml={nextTextHtml} />;
+      return <ImageBlockEditor block={block} onChange={onChange} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} imageLabelUnnumbered={imageLabelUnnumbered} nextTextHtml={nextTextHtml} />;
     case "table":
       return <TableBlockEditor block={block} onChange={onChange} />;
     case "image-table":
-      return <ImageTableBlockEditor block={block} onChange={onChange} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} />;
+      return <ImageTableBlockEditor block={block} onChange={onChange} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} imageLabelUnnumbered={imageLabelUnnumbered} />;
     case "alert":
     case "info":
     case "warning":
@@ -770,7 +771,7 @@ function htmlToPlainText(html: string): string {
   return (doc.body.textContent ?? "").replace(/\s+/g, " ").trim();
 }
 
-function ImageBlockEditor({ block, onChange, hidePictogram, imageNumber, imageLabelPrefix, sizeOnly, nextTextHtml, pictogramOverride }: { block: Block; onChange: Props["onChange"]; hidePictogram?: boolean; imageNumber?: number; imageLabelPrefix?: string; sizeOnly?: boolean; nextTextHtml?: string; pictogramOverride?: { value?: Pictogram; onChange: (v: Pictogram) => void } }) {
+function ImageBlockEditor({ block, onChange, hidePictogram, imageNumber, imageLabelPrefix, imageLabelUnnumbered, sizeOnly, nextTextHtml, pictogramOverride }: { block: Block; onChange: Props["onChange"]; hidePictogram?: boolean; imageNumber?: number; imageLabelPrefix?: string; imageLabelUnnumbered?: string; sizeOnly?: boolean; nextTextHtml?: string; pictogramOverride?: { value?: Pictogram; onChange: (v: Pictogram) => void } }) {
   const size: "full" | "half" = block.content.size === "half" ? "half" : "full";
   const position: "left" | "right" | "center" = sizeOnly ? "center" : (block.content.position === "right" || block.content.position === "center" ? block.content.position : "left");
   const wraps = size === "half" && position !== "center" && nextTextHtml !== undefined;
@@ -789,10 +790,10 @@ function ImageBlockEditor({ block, onChange, hidePictogram, imageNumber, imageLa
 
   const numbered = block.content.numbered !== false;
   const captionLabel =
-    numbered && imageNumber !== undefined ? `${imageLabelPrefix ?? "Obrázek č. "}${imageNumber}` : undefined;
+    numbered && imageNumber !== undefined ? imageNumberedLabel(imageLabelPrefix, imageNumber) : undefined;
   // Nečíslovaný obrázek: popisek bez čísla ("Obrázek: název"); bez názvu žádný popisek.
   const unnumberedCaption = !numbered && (block.content.alt ?? "").trim()
-    ? `${imageLabelWord(imageLabelPrefix ?? "Obrázek č. ")}: ${(block.content.alt ?? "").trim()}`
+    ? `${imageLabelUnnumbered ?? "Obrázek"}: ${(block.content.alt ?? "").trim()}`
     : undefined;
 
   const picto = pictogramOverride ?? (hidePictogram ? undefined : { value: block.content.pictogram as Pictogram | undefined, onChange: (v: Pictogram) => setContent(block, { pictogram: v }, onChange) });
@@ -1287,7 +1288,7 @@ function CalloutBlockEditor({ block, onChange }: { block: Block; onChange: Props
   );
 }
 
-function ImageTableBlockEditor({ block, onChange, imageNumber, imageLabelPrefix }: { block: Block; onChange: Props["onChange"]; imageNumber?: number; imageLabelPrefix?: string }) {
+function ImageTableBlockEditor({ block, onChange, imageNumber, imageLabelPrefix, imageLabelUnnumbered }: { block: Block; onChange: Props["onChange"]; imageNumber?: number; imageLabelPrefix?: string; imageLabelUnnumbered?: string }) {
   const imageContent = block.content?.image ?? { url: "", alt: "" };
   const tableContent = block.content?.table ?? { headerRow: true, rows: [["#", "Název části"]] };
 
@@ -1310,6 +1311,7 @@ function ImageTableBlockEditor({ block, onChange, imageNumber, imageLabelPrefix 
               pictogramOverride={{ value: block.content?.pictogram, onChange: (v) => onChange(block.id, { content: { ...block.content, pictogram: v } }) }}
               imageNumber={imageNumber}
               imageLabelPrefix={imageLabelPrefix}
+              imageLabelUnnumbered={imageLabelUnnumbered}
             />
           </div>
           <div className="border-t border-muted-foreground/20" />

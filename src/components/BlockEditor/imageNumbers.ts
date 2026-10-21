@@ -29,13 +29,11 @@ export function computeImageNumbers(blocks: Block[]): Map<string, number> {
 }
 
 /**
- * Odvodí slovo pro popisek nečíslovaného obrázku z prefixu číslování:
- * odstraní koncové označení čísla a mezery.
- * "Obrázek č. " → "Obrázek", "Figure No. " → "Figure",
- * "Abbildung Nr. " → "Abbildung", "Rys. nr " → "Rys."
+ * Popisek číslovaného obrázku: označení + číslo. Mezera mezi označením
+ * a číslem se doplňuje automaticky, takže "Obrázek č." i starší
+ * "Obrázek č. " dají "Obrázek č. 3".
  */
-export function imageLabelWord(prefix: string | undefined): string {
-  const raw = (prefix ?? "").trim();
-  const stripped = raw.replace(/\s*(č\.|číslo|no\.?|nr\.?|number)\s*$/i, "").trim();
-  return stripped || raw || "Obrázek";
+export function imageNumberedLabel(prefix: string | undefined, n: number): string {
+  const base = (prefix ?? "").trim() || "Obrázek č.";
+  return `${base} ${n}`;
 }

@@ -119,11 +119,19 @@ export default function DocumentMetadataDialog({ open, onOpenChange, value, docu
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Označení obrázků</Label>
+              <Label className="text-xs text-muted-foreground">Označení obrázků s číslováním</Label>
               <Input
                 value={draft.imageLabelPrefix}
                 onChange={(e) => update({ imageLabelPrefix: e.target.value })}
-                placeholder="Obrázek č. "
+                placeholder="Obrázek č."
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Označení obrázků bez číslování</Label>
+              <Input
+                value={draft.imageLabelUnnumbered}
+                onChange={(e) => update({ imageLabelUnnumbered: e.target.value })}
+                placeholder="Obrázek"
               />
             </div>
           </div>
