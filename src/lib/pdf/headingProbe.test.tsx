@@ -172,12 +172,13 @@ describe("real DocumentPdf heading probe", () => {
     expect(result.remaining).toEqual([]);
   }, 20000);
 });
-describe("real DocumentPdf half image alignment without text", () => {
-  it("places a left half image at the left edge and a right half image at the right edge", async () => {
+describe("real DocumentPdf half image pair side by side", () => {
+  it("renders a left+right half image pair in one row (left column at 0, right after gap, same top)", async () => {
     const image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAdsAAAH0AQAAAABd+7p6AAAAeUlEQVR42u3LMQ0AMAgAMMC/ySkZHuAiaf/mj7FXsSDLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsizLsixfzw1x8QXIpFtcYwAAAABJRU5ErkJggg==";
     const blocks: Block[] = [
-      { id: "left", type: "image", template: "default", order: 0, content: { url: image, alt: "Left", size: "half", position: "left" } },
-      { id: "right", type: "image", template: "default", order: 1, content: { url: image, alt: "Right", size: "half", position: "right" } },
+      { id: "right", type: "image", template: "default", order: 0, content: { url: image, alt: "Right", size: "half", position: "right" } },
+      { id: "left", type: "image", template: "default", order: 1, content: { url: image, alt: "Left", size: "half", position: "left" } },
+      { id: "after", type: "text", template: "default", order: 2, content: { html: "<p>Below</p>" } },
     ];
     let layout: LayoutNode | undefined;
     const document = DocumentPdf({ title: "", blocks, includeToc: false, measure: measurement() });
@@ -185,18 +186,20 @@ describe("real DocumentPdf half image alignment without text", () => {
       layout = data._INTERNAL__LAYOUT__DATA_;
     } })).toBuffer();
     if (!layout) throw new Error("Renderer did not return layout");
-    const images: LayoutNode[] = [];
-    const walk = (node: LayoutNode) => {
-      if (node.type === "IMAGE") images.push(node);
-      for (const child of node.children ?? []) walk(child);
+    const images: { left: number; top: number; width: number }[] = [];
+    const walk = (node: LayoutNode, ox: number, oy: number) => {
+      const x = ox + (node.box?.left ?? 0), y = oy + (node.box?.top ?? 0);
+      if (node.type === "IMAGE") images.push({ left: x, top: y, width: node.box?.width ?? 0 });
+      for (const child of node.children ?? []) walk(child, x, y);
     };
-    layout.children?.forEach(walk);
+    layout.children?.forEach((pg) => walk(pg, 0, 0));
     expect(images).toHaveLength(2);
-    const [leftImg, rightImg] = images;
-    // Layout boxes are relative to the page body; half column is 495/2 = 247.5pt wide.
-    expect(leftImg.box?.left).toBeCloseTo(0, 0);
-    expect(rightImg.box?.left).toBeCloseTo(247.5, 0);
-    expect(leftImg.box?.width).toBeCloseTo(247.5, 0);
-    expect(rightImg.box?.width).toBeCloseTo(247.5, 0);
+    images.sort((a, b) => a.left - b.left);
+    const [l, r] = images;
+    const col = (495 - 12) / 2;
+    expect(r.left - l.left).toBeCloseTo(col + 12, 0);
+    expect(l.width).toBeCloseTo(col, 0);
+    expect(r.width).toBeCloseTo(col, 0);
+    expect(l.top).toBeCloseTo(r.top, 1);
   }, 20000);
 });

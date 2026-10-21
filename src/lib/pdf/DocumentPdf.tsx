@@ -577,7 +577,7 @@ function ImageBlock({ block, captionOverride, startMarker, measure, measureStart
         <PageMarker onPage={(p) => measure.tableStartPages.set(measureStartId, p)} />
       )}
       {/* eslint-disable-next-line jsx-a11y/alt-text */}
-      <Image src={url} style={[styles.image, { width: half ? HALF_COLUMN_PT : "98%", maxHeight: MAX_IMAGE_HEIGHT_PT }]} />
+      <Image src={url} style={[styles.image, { width: half ? HALF_COLUMN_PT : inColumn ? "100%" : "98%", maxHeight: MAX_IMAGE_HEIGHT_PT }]} />
       {caption ? <Text style={[styles.caption, half ? { width: HALF_COLUMN_PT } : {}]}>{caption}</Text> : null}
     </View>
   );
