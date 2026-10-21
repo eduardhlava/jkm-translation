@@ -29,13 +29,14 @@ interface Props {
   onChange: (next: Block[]) => void;
   numberHeadings?: boolean;
   imageLabelPrefix?: string;
+  imageLabelUnnumbered?: string;
   collapsed?: Record<string, boolean>;
   onCollapsedChange?: (next: Record<string, boolean>) => void;
   leftSlot?: React.ReactNode;
 }
 
 
-export default function BlockEditor({ blocks, onChange, numberHeadings, imageLabelPrefix, collapsed: collapsedProp, onCollapsedChange, leftSlot }: Props) {
+export default function BlockEditor({ blocks, onChange, numberHeadings, imageLabelPrefix, imageLabelUnnumbered, collapsed: collapsedProp, onCollapsedChange, leftSlot }: Props) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),

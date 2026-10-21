@@ -1288,7 +1288,7 @@ function CalloutBlockEditor({ block, onChange }: { block: Block; onChange: Props
   );
 }
 
-function ImageTableBlockEditor({ block, onChange, imageNumber, imageLabelPrefix }: { block: Block; onChange: Props["onChange"]; imageNumber?: number; imageLabelPrefix?: string }) {
+function ImageTableBlockEditor({ block, onChange, imageNumber, imageLabelPrefix, imageLabelUnnumbered }: { block: Block; onChange: Props["onChange"]; imageNumber?: number; imageLabelPrefix?: string; imageLabelUnnumbered?: string }) {
   const imageContent = block.content?.image ?? { url: "", alt: "" };
   const tableContent = block.content?.table ?? { headerRow: true, rows: [["#", "Název části"]] };
 
