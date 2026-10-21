@@ -61,7 +61,7 @@ function rectOf(merges: CellMerge[], r: number, c: number): CellMerge {
   return mergeAt(merges, r, c) ?? { r, c, span: 1 };
 }
 
-export type MergeCheck = { ok: true; target: CellMerge } | { ok: false; reason?: string };
+export type MergeCheck = { ok: true; target: CellMerge; reason?: undefined } | { ok: false; target?: undefined; reason?: string };
 export const MERGE_WIDTH_MISMATCH = "Nelze sloučit – nesouhlasí šířka buněk";
 export const MERGE_HEIGHT_MISMATCH = "Nelze sloučit – nesouhlasí výška buněk";
 export const MERGE_HEADER = "Hlavičku nelze sloučit s tělem tabulky";
