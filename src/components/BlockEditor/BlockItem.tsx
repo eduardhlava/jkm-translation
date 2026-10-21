@@ -1250,11 +1250,11 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                                       {showRight && (
                                         <button
                                           type="button"
-                                          disabled={!rightCheck.ok}
-                                          onClick={() => mergeRight(ri, ci)}
+                                          aria-disabled={!rightCheck.ok}
+                                          onClick={() => rightCheck.ok && mergeRight(ri, ci)}
                                           title={rightCheck.ok ? "Sloučit s buňkou vpravo" : rightCheck.reason}
                                           aria-label="Sloučit s buňkou vpravo"
-                                          className="flex items-center gap-2 rounded px-2 py-1 text-xs hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                                          className="flex items-center gap-2 rounded px-2 py-1 text-xs hover:bg-muted aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:hover:bg-transparent"
                                         >
                                           <Combine className="w-3.5 h-3.5" /> Sloučit s buňkou vpravo
                                         </button>
@@ -1262,11 +1262,11 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                                       {showDown && (
                                         <button
                                           type="button"
-                                          disabled={!downCheck.ok}
-                                          onClick={() => mergeDown(ri, ci)}
+                                          aria-disabled={!downCheck.ok}
+                                          onClick={() => downCheck.ok && mergeDown(ri, ci)}
                                           title={downCheck.ok ? "Sloučit s buňkou dolů" : downCheck.reason}
                                           aria-label="Sloučit s buňkou dolů"
-                                          className="flex items-center gap-2 rounded px-2 py-1 text-xs hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                                          className="flex items-center gap-2 rounded px-2 py-1 text-xs hover:bg-muted aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:hover:bg-transparent"
                                         >
                                           <Combine className="w-3.5 h-3.5 rotate-90" /> Sloučit s buňkou dolů
                                         </button>
