@@ -106,3 +106,12 @@ describe("splitBlocksForWrap / wrapChain", () => {
     expect(chain.map((b) => b.id)).toEqual(["a", "b"]);
   });
 });
+
+describe("halfAlignOf", () => {
+  it("maps position to flex alignment for standalone half images", () => {
+    expect(halfAlignOf({ size: "half", position: "left" })).toBe("flex-start");
+    expect(halfAlignOf({ size: "half", position: "right" })).toBe("flex-end");
+    expect(halfAlignOf({ size: "half", position: "center" })).toBe("center");
+    expect(halfAlignOf({ size: "half" })).toBe("flex-start");
+  });
+});
