@@ -62,6 +62,7 @@ interface Props {
   /** HTML of the directly following text block (for the wrap preview). */
   nextTextHtml?: string;
   imageLabelPrefix?: string;
+  imageLabelUnnumbered?: string;
 }
 
 
@@ -102,7 +103,7 @@ function blockPreview(block: Block): string {
   }
 }
 
-export default function BlockItem({ block, collapsed, onToggleCollapsed, onChange, onDelete, onSplit, headingNumber, imageNumber, imageLabelPrefix, nextTextHtml }: Props) {
+export default function BlockItem({ block, collapsed, onToggleCollapsed, onChange, onDelete, onSplit, headingNumber, imageNumber, imageLabelPrefix, imageLabelUnnumbered, nextTextHtml }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -132,7 +133,7 @@ export default function BlockItem({ block, collapsed, onToggleCollapsed, onChang
       />
       {!collapsed && (
         <div className="p-3">
-          <BlockBody block={block} onChange={onChange} headingNumber={headingNumber} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} nextTextHtml={nextTextHtml} />
+          <BlockBody block={block} onChange={onChange} headingNumber={headingNumber} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} imageLabelUnnumbered={imageLabelUnnumbered} nextTextHtml={nextTextHtml} />
         </div>
       )}
     </div>
@@ -324,7 +325,7 @@ function setContent(block: Block, patch: any, onChange: Props["onChange"]) {
   onChange(block.id, { content: { ...block.content, ...patch } });
 }
 
-function BlockBody({ block, onChange, headingNumber, imageNumber, imageLabelPrefix, nextTextHtml }: { block: Block; onChange: Props["onChange"]; headingNumber?: string; imageNumber?: number; imageLabelPrefix?: string; nextTextHtml?: string }) {
+function BlockBody({ block, onChange, headingNumber, imageNumber, imageLabelPrefix, imageLabelUnnumbered, nextTextHtml }: { block: Block; onChange: Props["onChange"]; headingNumber?: string; imageNumber?: number; imageLabelPrefix?: string; imageLabelUnnumbered?: string; nextTextHtml?: string }) {
   switch (block.type) {
     case "heading1":
     case "heading2":
@@ -353,11 +354,11 @@ function BlockBody({ block, onChange, headingNumber, imageNumber, imageLabelPref
     case "text":
       return <TextBlockEditor block={block} onChange={onChange} />;
     case "image":
-      return <ImageBlockEditor block={block} onChange={onChange} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} nextTextHtml={nextTextHtml} />;
+      return <ImageBlockEditor block={block} onChange={onChange} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} imageLabelUnnumbered={imageLabelUnnumbered} nextTextHtml={nextTextHtml} />;
     case "table":
       return <TableBlockEditor block={block} onChange={onChange} />;
     case "image-table":
-      return <ImageTableBlockEditor block={block} onChange={onChange} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} />;
+      return <ImageTableBlockEditor block={block} onChange={onChange} imageNumber={imageNumber} imageLabelPrefix={imageLabelPrefix} imageLabelUnnumbered={imageLabelUnnumbered} />;
     case "alert":
     case "info":
     case "warning":
