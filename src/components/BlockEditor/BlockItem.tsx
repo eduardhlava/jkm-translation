@@ -25,7 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BLOCK_TYPE_LABELS, buildCellValue, parseCellPictogram, type Block, type Pictogram } from "./types";
 import TableCellEditor from "./TableCellEditor";
 import PictogramIcon from "./PictogramIcon";
-import { coveredBy, mergeAt, mergeCellsRight, normalizeMerges, remapDeleteColumn, remapDeleteRow, remapInsertColumn, unmergeCell } from "./cellMerges";
+import { canMergeDown, canMergeRight as checkMergeRight, coveredBy, deleteRowWithMerges, mergeAt, mergeCellsDown, mergeCellsRight, normalizeMerges, remapDeleteColumn, remapDeleteRow, remapInsertColumn, rowSpanOf, unmergeCell } from "./cellMerges";
 import { imageNumberedLabel } from "./imageNumbers";
 
 const PICTOGRAM_LABELS: Record<string, string> = {
@@ -960,10 +960,11 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
   }, onChange);
   const deleteRowAt = (idx: number) => {
     if (rows.length <= 1) return;
+    const next = deleteRowWithMerges(rows, merges, idx);
     setContent(block, {
-      rows: rows.filter((_, i) => i !== idx),
+      rows: next.rows,
       rowColors: rowColors.length ? rowColors.filter((_, i) => i !== idx) : rowColors,
-      merges: remapDeleteRow(merges, idx),
+      merges: next.merges,
     }, onChange);
   };
   const setRowColor = (idx: number, color: string | null) => {
@@ -996,6 +997,10 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
 
   const mergeRight = (r: number, c: number) => {
     const next = mergeCellsRight(rows, merges, r, c);
+    setContent(block, { rows: next.rows, merges: next.merges }, onChange);
+  };
+  const mergeDown = (r: number, c: number) => {
+    const next = mergeCellsDown(rows, merges, r, c, !!block.content.headerRow);
     setContent(block, { rows: next.rows, merges: next.merges }, onChange);
   };
   const unmerge = (r: number, c: number) => {
@@ -1181,7 +1186,12 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                         if (coveredBy(merges, ri, ci)) return null;
                         const anchor = mergeAt(merges, ri, ci);
                         const span = anchor?.span ?? 1;
-                        const canMergeRight = ci + span < cols;
+                        const rSpan = anchor ? rowSpanOf(anchor) : 1;
+                        const rightCheck = checkMergeRight(rows, merges, ri, ci);
+                        const downCheck = canMergeDown(rows, merges, ri, ci, !!block.content.headerRow);
+                        const showRight = rightCheck.ok || !!rightCheck.reason;
+                        const showDown = downCheck.ok || !!downCheck.reason;
+                        const canMergeRight = showRight || showDown;
                         const isHeaderCell = !!block.content.headerRow && ri === 0;
                         const bgCls = rowBg
                           ? "bg-transparent"
@@ -1190,7 +1200,7 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                             : "bg-background";
                         const parsed = parseCellPictogram(cell);
                         return (
-                          <td key={ci} colSpan={span} className="border border-muted-foreground/50 p-0 relative group/cell">
+                          <td key={ci} colSpan={span} rowSpan={rSpan} className="border border-muted-foreground/50 p-0 relative group/cell">
                             <div className="flex min-w-0 items-center">
                               {parsed.pictogram !== "none" && (
                                 <span className="pl-1 shrink-0">
@@ -1237,15 +1247,28 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                                   </div>
                                   {(canMergeRight || anchor) && (
                                     <div className="mt-2 flex flex-col gap-1 border-t border-border pt-2">
-                                      {canMergeRight && (
+                                      {showRight && (
                                         <button
                                           type="button"
-                                          onClick={() => mergeRight(ri, ci)}
-                                          title="Sloučit s buňkou vpravo"
+                                          aria-disabled={!rightCheck.ok}
+                                          onClick={() => rightCheck.ok && mergeRight(ri, ci)}
+                                          title={rightCheck.ok ? "Sloučit s buňkou vpravo" : rightCheck.reason}
                                           aria-label="Sloučit s buňkou vpravo"
-                                          className="flex items-center gap-2 rounded px-2 py-1 text-xs hover:bg-muted"
+                                          className="flex items-center gap-2 rounded px-2 py-1 text-xs hover:bg-muted aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:hover:bg-transparent"
                                         >
                                           <Combine className="w-3.5 h-3.5" /> Sloučit s buňkou vpravo
+                                        </button>
+                                      )}
+                                      {showDown && (
+                                        <button
+                                          type="button"
+                                          aria-disabled={!downCheck.ok}
+                                          onClick={() => downCheck.ok && mergeDown(ri, ci)}
+                                          title={downCheck.ok ? "Sloučit s buňkou dolů" : downCheck.reason}
+                                          aria-label="Sloučit s buňkou dolů"
+                                          className="flex items-center gap-2 rounded px-2 py-1 text-xs hover:bg-muted aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:hover:bg-transparent"
+                                        >
+                                          <Combine className="w-3.5 h-3.5 rotate-90" /> Sloučit s buňkou dolů
                                         </button>
                                       )}
                                       {anchor && (

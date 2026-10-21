@@ -69,7 +69,7 @@ export function cellFromExportText(cell: string): string {
 export interface HeadingContent { text: string }
 export interface TextContent { html: string; align?: TextAlign; size?: TextSize; pictogram?: Pictogram }
 /** Sloučení sousedních buněk v řádku: buňky c+1 … c+span-1 jsou zakryté (prázdné). */
-export interface CellMerge { r: number; c: number; span: number }
+export interface CellMerge { r: number; c: number; span: number; rowSpan?: number }
 export interface TableContent {
   headerRow: boolean;
   rows: string[][]; // rows[r][c]

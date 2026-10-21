@@ -1,6 +1,6 @@
 import { type Block, type BlockType, emptyContent } from "./types";
 import { cellFromExportHtml, cellPlainText } from "./cellFormatting";
-import { normalizeMerges } from "./cellMerges";
+import { coveredCellsEmpty, normalizeMerges } from "./cellMerges";
 import { type DocumentMetadata, mergeMetadata } from "@/components/DocumentMetadata/types";
 import { META_BLOCK_PREFIX, META_DOC_PREFIX } from "./serialize";
 
@@ -199,9 +199,7 @@ function applyBlockMeta(block: Block, meta: any | null): void {
   if (table && Array.isArray(rawMerges)) {
     const valid = normalizeMerges(rawMerges, table.rows ?? []);
     // Pojistka: zakrytá buňka, do které někdo v Notion psal, sloučení ruší – text se zachová.
-    const kept = valid.filter((m) =>
-      (table.rows[m.r] ?? []).slice(m.c + 1, m.c + m.span).every((cell: string) => !cell || !cell.trim())
-    );
+    const kept = valid.filter((m) => coveredCellsEmpty(table.rows ?? [], m));
     if (kept.length) table.merges = kept;
   }
   if (table && Array.isArray(meta.indexedCells)) {
