@@ -650,7 +650,13 @@ function TableBlock({ block, startMarker, measure, measureStartId, measurePartSt
     if (hCuts.length > 2) {
       return (
         <View key={key} style={[{ flexDirection: "column", flexShrink: 0 }, sizeStyle]}>
-          {hCuts.slice(0, -1).map((a, i) => region(a, hCuts[i + 1], c0, c1, { flexGrow: i === hCuts.length - 2 ? 1 : 0, flexShrink: 0, flexBasis: "auto" }, `${key}h${i}`))}
+          {(() => {
+            // Volné místo dostanou pásy se svislým sloučením (jinak poslední), aby řádky co nejvíc lícovaly.
+            const bands = hCuts.slice(0, -1).map((a, i) => [a, hCuts[i + 1]] as const);
+            const grows = bands.map(([a, b]) => local.some((m) => rs(m) > 1 && m.r >= a && m.r + rs(m) <= b));
+            const any = grows.some(Boolean);
+            return bands.map(([a, b], i) => region(a, b, c0, c1, { flexGrow: (any ? grows[i] : i === bands.length - 1) ? 1 : 0, flexShrink: 0, flexBasis: "auto" }, `${key}h${i}`));
+          })()}
         </View>
       );
     }
