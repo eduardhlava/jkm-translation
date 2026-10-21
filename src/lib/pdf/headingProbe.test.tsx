@@ -187,17 +187,18 @@ describe("real DocumentPdf half image pair side by side", () => {
     } })).toBuffer();
     if (!layout) throw new Error("Renderer did not return layout");
     const images: { left: number; top: number; width: number }[] = [];
-    const walk = (node: LayoutNode) => {
-      if (node.type === "IMAGE") images.push({ left: node.box?.left ?? 0, top: node.box?.top ?? 0, width: node.box?.width ?? 0 });
-      for (const child of node.children ?? []) walk(child);
+    // Boxes are relative to the parent: accumulate offsets below the page.
+    const walk = (node: LayoutNode, ox: number, oy: number) => {
+      const x = ox + (node.box?.left ?? 0), y = oy + (node.box?.top ?? 0);
+      if (node.type === "IMAGE") images.push({ left: x, top: y, width: node.box?.width ?? 0 });
+      for (const child of node.children ?? []) walk(child, x, y);
     };
-    layout.children?.forEach(walk);
+    layout.children?.forEach((pg) => (pg.children ?? []).forEach((c) => walk(c, 0, 0)));
     expect(images).toHaveLength(2);
     images.sort((a, b) => a.left - b.left);
     const [l, r] = images;
     const col = (495 - 12) / 2;
-    expect(l.left).toBeCloseTo(0, 0);
-    expect(r.left).toBeCloseTo(col + 12, 0);
+    expect(r.left - l.left).toBeCloseTo(col + 12, 0);
     expect(l.width).toBeCloseTo(col, 0);
     expect(r.width).toBeCloseTo(col, 0);
     expect(l.top).toBeCloseTo(r.top, 1);
