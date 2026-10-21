@@ -657,6 +657,16 @@ function TableBlock({ block, startMarker, measure, measureStartId, measurePartSt
     const vCuts = [c0];
     for (let k = c0 + 1; k < c1; k++) if (!local.some((m) => m.c < k && m.c + m.span > k)) vCuts.push(k);
     vCuts.push(c1);
+    // Sousední pásy se stejnými vodorovnými řezy se spojí, aby řádky lícovaly.
+    const cutsOf = (a: number, b: number) => {
+      const out: number[] = [];
+      for (let k = r0 + 1; k < r1; k++) if (!local.some((m) => m.c < b && m.c + m.span > a && m.r < k && m.r + rs(m) > k)) out.push(k);
+      return out.join(",");
+    };
+    for (let i = 1; i < vCuts.length - 1; ) {
+      if (cutsOf(vCuts[i - 1], vCuts[i]) === cutsOf(vCuts[i], vCuts[i + 1])) vCuts.splice(i, 1);
+      else i++;
+    }
     if (vCuts.length > 2) {
       return (
         <View key={key} style={[{ flexDirection: "row", flexShrink: 0 }, sizeStyle]}>
