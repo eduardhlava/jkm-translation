@@ -43,18 +43,24 @@ describe("computeImageNumbers", () => {
   });
 });
 
-describe("imageLabelWord", () => {
-  it("odvodí slovo z prefixu číslování", () => {
-    expect(imageLabelWord("Obrázek č. ")).toBe("Obrázek");
-    expect(imageLabelWord("Figure No. ")).toBe("Figure");
-    expect(imageLabelWord("Abbildung Nr. ")).toBe("Abbildung");
-    expect(imageLabelWord("Rys. nr ")).toBe("Rys.");
+describe("imageNumberedLabel", () => {
+  it("mezera mezi označením a číslem se doplňuje automaticky", () => {
+    expect(imageNumberedLabel("Obrázek č.", 3)).toBe("Obrázek č. 3");
+    expect(imageNumberedLabel("Obrázek č. ", 3)).toBe("Obrázek č. 3");
+    expect(imageNumberedLabel("Figure No. ", 12)).toBe("Figure No. 12");
   });
 
-  it("bez označení čísla vrátí oříznutý prefix, při prázdném výchozí Obrázek", () => {
-    expect(imageLabelWord("Schema")).toBe("Schema");
-    expect(imageLabelWord("")).toBe("Obrázek");
-    expect(imageLabelWord(undefined)).toBe("Obrázek");
+  it("prázdný prefix → výchozí označení", () => {
+    expect(imageNumberedLabel("", 1)).toBe("Obrázek č. 1");
+    expect(imageNumberedLabel(undefined, 1)).toBe("Obrázek č. 1");
+  });
+});
+
+describe("metadata výchozí hodnoty popisků", () => {
+  it("starší metadata bez imageLabelUnnumbered dostanou výchozí 'Obrázek'", () => {
+    const merged = mergeMetadata({ imageLabelPrefix: "Figure No. " });
+    expect(merged.imageLabelUnnumbered).toBe("Obrázek");
+    expect(merged.imageLabelPrefix).toBe("Figure No. ");
   });
 });
 
