@@ -16,6 +16,14 @@ export const CHANGELOG: ChangelogEntry[] = [
     ],
   },
   {
+    version: "1.17.0",
+    date: "2026-10-21",
+    changes: [
+      "Bloky Obrázek a Tabulka pod sebou lze spojit do bloku Obrázek + Tabulka (ikona v záhlaví obrázku).",
+      "Drobná vylepšení a opravy.",
+    ],
+  },
+  {
     version: "1.16.0",
     date: "2026-10-21",
     changes: [
