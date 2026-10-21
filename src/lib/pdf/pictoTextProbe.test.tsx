@@ -36,7 +36,7 @@ async function measureOf(blocks: Block[]) {
 
 /** Filler such that roughly `linesLeft` body lines remain at the bottom of page 1. */
 async function fillerLeaving(linesLeft: number): Promise<string> {
-  const make = (n: number) => `<p>${Array.from({ length: n }, (_, i) => `Line ${i}`).join("<br>")}</p>`;
+  const make = (n: number) => Array.from({ length: n }, (_, i) => `<p>Line ${i}</p>`).join("");
   let n = 10;
   for (; n < 80; n++) {
     const end = new Map<string, number>();
