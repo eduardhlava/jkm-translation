@@ -201,7 +201,7 @@ export default function BlockEditor({ blocks, onChange, numberHeadings, imageLab
                   </div>
                 </div>
               </div>
-            ))}
+            )); })()}
           </div>
         </SortableContext>
       </DndContext>
