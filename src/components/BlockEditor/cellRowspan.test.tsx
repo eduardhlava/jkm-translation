@@ -56,7 +56,7 @@ describe("merge down (rowspan)", () => {
     expect(mergeCellsDown(ROWS, merges, 0, 0).merges).toBe(merges);
   });
   it("forbids merging right into a group of different height", () => {
-    const merges = [{ r: 0, c: 0, span: 1, rowSpan: 2 }];
+    const merges = [{ r: 0, c: 0, span: 1, rowSpan: 2 }, { r: 1, c: 1, span: 2 }];
     expect(canMergeRight(ROWS, merges, 0, 0).ok).toBe(false);
     const ok = mergeCellsRight(ROWS, [{ r: 0, c: 0, span: 1, rowSpan: 2 }, { r: 0, c: 1, span: 1, rowSpan: 2 }], 0, 0);
     expect(ok.merges).toEqual([{ r: 0, c: 0, span: 2, rowSpan: 2 }]);
