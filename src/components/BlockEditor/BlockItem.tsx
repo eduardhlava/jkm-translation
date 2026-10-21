@@ -83,6 +83,9 @@ interface Props {
   onDelete: (id: string) => void;
   /** Rozdělí blok "Obrázek + Tabulka" na samostatný obrázek a tabulku. */
   onSplit?: (id: string) => void;
+  /** Table block directly below an image block (enables merge). */
+  mergeTable?: Block;
+  onMerge?: (id: string) => void;
   headingNumber?: string;
   imageNumber?: number;
   /** HTML of the directly following text block (for the wrap preview). */
@@ -130,7 +133,7 @@ function blockPreview(block: Block): string {
   }
 }
 
-export default function BlockItem({ block, collapsed, onToggleCollapsed, onChange, onDelete, onSplit, headingNumber, imageNumber, imageLabelPrefix, imageLabelUnnumbered, nextTextHtml, pairedInPdf }: Props) {
+export default function BlockItem({ block, collapsed, onToggleCollapsed, onChange, onDelete, onSplit, mergeTable, onMerge, headingNumber, imageNumber, imageLabelPrefix, imageLabelUnnumbered, nextTextHtml, pairedInPdf }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -153,6 +156,8 @@ export default function BlockItem({ block, collapsed, onToggleCollapsed, onChang
         onChange={onChange}
         onDelete={onDelete}
         onSplit={onSplit}
+        mergeTable={mergeTable}
+        onMerge={onMerge}
         preview={preview}
         headingNumber={headingNumber}
         attributes={attributes}
@@ -175,6 +180,8 @@ function BlockHeader({
   onChange,
   onDelete,
   onSplit,
+  mergeTable,
+  onMerge,
   preview,
   headingNumber,
   attributes,
@@ -186,6 +193,8 @@ function BlockHeader({
   onChange: Props["onChange"];
   onDelete: Props["onDelete"];
   onSplit?: Props["onSplit"];
+  mergeTable?: Block;
+  onMerge?: Props["onMerge"];
   preview: string;
   headingNumber?: string;
   attributes: any;
@@ -193,6 +202,10 @@ function BlockHeader({
 }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [splitOpen, setSplitOpen] = useState(false);
+  const [mergeOpen, setMergeOpen] = useState(false);
+  const imgPic = block.content?.pictogram, tblPic = mergeTable?.content?.pictogram;
+  const losesPosition = block.content?.size === "half" && (block.content?.position === "left" || block.content?.position === "right");
+  const losesTablePic = !!imgPic && imgPic !== "none" && !!tblPic && tblPic !== "none" && imgPic !== tblPic;
   return (
     <div className={`flex items-center justify-between rounded-t-[inherit] px-2 py-1 ${collapsed ? "rounded-b-[inherit]" : "border-b border-muted-foreground/30"} ${block.type === "image" || block.type === "image-table" ? "bg-success/10" : "bg-muted/30"}`}>
       <div className="flex items-center gap-1 min-w-0 flex-1 flex-wrap">
@@ -278,6 +291,38 @@ function BlockHeader({
                 : "Nadpis je číslován a zahrnut do obsahu"}
             </TooltipContent>
           </Tooltip>
+        )}
+        {block.type === "image" && mergeTable && onMerge && (
+          <AlertDialog open={mergeOpen} onOpenChange={setMergeOpen}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" aria-label="Spojit s tabulkou pod">
+                    <Combine className="w-4 h-4" />
+                  </Button>
+                </AlertDialogTrigger>
+              </TooltipTrigger>
+              <TooltipContent side="top">Spojit s tabulkou pod</TooltipContent>
+            </Tooltip>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Spojit bloky?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Obrázek a tabulka pod ním se spojí do jednoho bloku Obrázek + Tabulka. Obsah i nastavení zůstanou zachovány.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              {(losesPosition || losesTablePic) && (
+                <div className="space-y-1 text-sm text-warning">
+                  {losesPosition && <p>Umístění obrázku Vlevo/Vpravo se nezachová – blok Obrázek + Tabulka je vždy na střed.</p>}
+                  {losesTablePic && <p>Piktogram tabulky se nahradí piktogramem obrázku.</p>}
+                </div>
+              )}
+              <AlertDialogFooter>
+                <AlertDialogCancel>Zrušit</AlertDialogCancel>
+                <AlertDialogAction onClick={() => onMerge(block.id)}>Spojit</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
         {block.type === "image-table" && onSplit && (
           <AlertDialog open={splitOpen} onOpenChange={setSplitOpen}>

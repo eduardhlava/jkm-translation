@@ -110,8 +110,8 @@ export default function DocumentEditorContents({ blocks, numberHeadings, childre
 
   return (
     <div className="relative flex flex-1 min-h-0 overflow-hidden bg-muted">
-      <div className="w-8 shrink-0 border-r bg-background/70">
-        <Button variant="ghost" className="sticky top-0 h-auto w-8 flex-col gap-2 rounded-none px-1 py-3 text-muted-foreground hover:bg-secondary hover:text-foreground" aria-label={open ? "Zavřít obsah" : "Otevřít obsah"} aria-expanded={open} aria-controls="document-editor-contents" onClick={() => setOpen((value) => !value)} title="Obsah">
+      <div className="w-8 shrink-0 box-content border-r bg-background/70">
+        <Button variant="ghost" className="sticky top-0 h-auto w-full flex-col gap-2 rounded-none px-1 py-3 text-muted-foreground hover:bg-secondary hover:text-foreground" aria-label={open ? "Zavřít obsah" : "Otevřít obsah"} aria-expanded={open} aria-controls="document-editor-contents" onClick={() => setOpen((value) => !value)} title="Obsah">
           <ListTree className="h-4 w-4" />
           <span className="text-xs [writing-mode:vertical-rl]">Obsah</span>
         </Button>
