@@ -182,6 +182,7 @@ export default function BlockEditor({ blocks, onChange, numberHeadings, imageLab
                   headingNumber={numbersMap?.get(b.id)}
                   imageNumber={imageNumbersMap.get(b.id)}
                   imageLabelPrefix={imageLabelPrefix}
+                  imageLabelUnnumbered={imageLabelUnnumbered}
                   nextTextHtml={(() => {
                     const htmls: string[] = [];
                     for (let j = i + 1; j < sorted.length && sorted[j].type === "text"; j++) htmls.push(sorted[j].content?.html ?? "");

@@ -790,10 +790,10 @@ function ImageBlockEditor({ block, onChange, hidePictogram, imageNumber, imageLa
 
   const numbered = block.content.numbered !== false;
   const captionLabel =
-    numbered && imageNumber !== undefined ? `${imageLabelPrefix ?? "Obrázek č. "}${imageNumber}` : undefined;
+    numbered && imageNumber !== undefined ? imageNumberedLabel(imageLabelPrefix, imageNumber) : undefined;
   // Nečíslovaný obrázek: popisek bez čísla ("Obrázek: název"); bez názvu žádný popisek.
   const unnumberedCaption = !numbered && (block.content.alt ?? "").trim()
-    ? `${imageLabelWord(imageLabelPrefix ?? "Obrázek č. ")}: ${(block.content.alt ?? "").trim()}`
+    ? `${imageLabelUnnumbered ?? "Obrázek"}: ${(block.content.alt ?? "").trim()}`
     : undefined;
 
   const picto = pictogramOverride ?? (hidePictogram ? undefined : { value: block.content.pictogram as Pictogram | undefined, onChange: (v: Pictogram) => setContent(block, { pictogram: v }, onChange) });
@@ -1311,6 +1311,7 @@ function ImageTableBlockEditor({ block, onChange, imageNumber, imageLabelPrefix,
               pictogramOverride={{ value: block.content?.pictogram, onChange: (v) => onChange(block.id, { content: { ...block.content, pictogram: v } }) }}
               imageNumber={imageNumber}
               imageLabelPrefix={imageLabelPrefix}
+              imageLabelUnnumbered={imageLabelUnnumbered}
             />
           </div>
           <div className="border-t border-muted-foreground/20" />

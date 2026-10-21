@@ -1023,6 +1023,7 @@ const DocumentCreator = () => {
                     onChange={setBlocks}
                     numberHeadings={numberHeadings}
                     imageLabelPrefix={metadata.imageLabelPrefix}
+                    imageLabelUnnumbered={metadata.imageLabelUnnumbered}
                     collapsed={collapsedBlocks}
                     onCollapsedChange={setCollapsedBlocks}
                   />
