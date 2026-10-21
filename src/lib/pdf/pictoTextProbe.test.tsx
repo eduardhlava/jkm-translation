@@ -10,6 +10,8 @@ Font.register({ family: "Helvetica", src: resolve("src/assets/fonts/NotoSans-Reg
 Font.register({ family: "NotoSans", fonts: [
   { src: resolve("src/assets/fonts/NotoSans-Regular.ttf"), fontWeight: "normal" },
   { src: resolve("src/assets/fonts/NotoSans-Bold.ttf"), fontWeight: "bold" },
+  { src: resolve("src/assets/fonts/NotoSans-Regular.ttf"), fontStyle: "italic" },
+  { src: resolve("src/assets/fonts/NotoSans-Bold.ttf"), fontWeight: "bold", fontStyle: "italic" },
 ] });
 
 const measurement = (): MeasureContext => ({
