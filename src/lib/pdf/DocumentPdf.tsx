@@ -9,7 +9,7 @@ import notoItalic from "@/assets/fonts/NotoSans-Italic.ttf?url";
 import notoBoldItalic from "@/assets/fonts/NotoSans-BoldItalic.ttf?url";
 import { PICTOGRAM_PATHS } from "@/components/BlockEditor/pictogramPaths";
 import { computeImageNumbers, imageNumberedLabel, isImageNumbered } from "@/components/BlockEditor/imageNumbers";
-import { HALF_COLUMN_PT, SIDE_TEXT_WIDTH_PT, WRAP_GAP_PT, halfAlignOf, imagePositionOf, sideImageHeight, splitBlocksForWrap, wrapChain, SIDE_PICTO_PT } from "./imageWrap";
+import { HALF_COLUMN_PT, SIDE_TEXT_WIDTH_PT, WRAP_GAP_PT, halfAlignOf, imagePositionOf, sideImageHeight, splitBlocksForWrap, wrapChain, SIDE_PICTO_PT, PAIR_COLUMN_PT, pairHalfImages } from "./imageWrap";
 import { DOCUMENT_LANGUAGES, mergeMetadata, type DocumentMetadata } from "@/components/DocumentMetadata/types";
 
 const NOTO_FACES = [
@@ -577,7 +577,7 @@ function ImageBlock({ block, captionOverride, startMarker, measure, measureStart
         <PageMarker onPage={(p) => measure.tableStartPages.set(measureStartId, p)} />
       )}
       {/* eslint-disable-next-line jsx-a11y/alt-text */}
-      <Image src={url} style={[styles.image, { width: half ? HALF_COLUMN_PT : "98%", maxHeight: MAX_IMAGE_HEIGHT_PT }]} />
+      <Image src={url} style={[styles.image, { width: half ? HALF_COLUMN_PT : inColumn ? "100%" : "98%", maxHeight: MAX_IMAGE_HEIGHT_PT }]} />
       {caption ? <Text style={[styles.caption, half ? { width: HALF_COLUMN_PT } : {}]}>{caption}</Text> : null}
     </View>
   );
@@ -754,6 +754,24 @@ function WrappedImageText({ image, texts, caption, measure, measureNextFor }: { 
     </View>
   );
   return image.content?.pictogram && image.content.pictogram !== "none" ? withPictogram(image, row) : row;
+}
+
+/** Two half-width images side by side (left / right), one unbreakable row. */
+function ImagePairRow({ left, right, leftCaption, rightCaption, measure, measureNextFor }: { left: Block; right: Block; leftCaption?: string; rightCaption?: string; measure?: MeasureContext; measureNextFor?: string[] }) {
+  const startMarker = measure && measureNextFor && measureNextFor.length > 0
+    ? <StartMarker ids={measureNextFor} measure={measure} />
+    : undefined;
+  const col = (b: Block, caption?: string, marker?: JSX.Element) => {
+    const node = <ImageBlock block={b} captionOverride={caption} startMarker={marker} inColumn />;
+    return b.content?.pictogram && b.content.pictogram !== "none" ? withPictogram(b, node) : node;
+  };
+  return (
+    <View wrap={false} style={{ flexDirection: "row", alignItems: "flex-start", flexShrink: 0 }}>
+      <View style={{ width: PAIR_COLUMN_PT, flexShrink: 0 }}>{col(left, leftCaption, startMarker)}</View>
+      <View style={{ width: WRAP_GAP_PT, flexShrink: 0 }} />
+      <View style={{ width: PAIR_COLUMN_PT, flexShrink: 0 }}>{col(right, rightCaption)}</View>
+    </View>
+  );
 }
 
 // ---------- TOC ----------
@@ -948,6 +966,7 @@ export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collect
           // blok za řetězcem dostane značku začátku pro všechny jeho nadpisy.
           let headingChain: string[] = [];
           const consumed = new Set<string>();
+          const pairs = pairHalfImages(ordered);
           return ordered.map((b, bi) => {
             if (consumed.has(b.id)) return null;
             const isKeepHeading = b.type === "heading2" || b.type === "heading3" || b.type === "heading4";
@@ -965,7 +984,11 @@ export function DocumentPdf({ title, blocks, includeToc = true, pageMap, collect
                     }}
                   />
                 )}
-                {wrapChain(ordered, bi).length > 0 ? (() => {
+                {pairs.has(bi) ? (() => {
+                  const pr = pairs.get(bi)!;
+                  consumed.add(ordered[bi + 1].id);
+                  return <ImagePairRow left={pr.left} right={pr.right} leftCaption={captionFor(pr.left)} rightCaption={captionFor(pr.right)} measure={measure} measureNextFor={nextFor} />;
+                })() : wrapChain(ordered, bi).length > 0 ? (() => {
                   const texts = wrapChain(ordered, bi);
                   texts.forEach((t) => consumed.add(t.id));
                   return <WrappedImageText image={b} texts={texts} caption={captionFor(b)} measure={measure} measureNextFor={nextFor} />;

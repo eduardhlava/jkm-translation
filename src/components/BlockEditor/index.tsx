@@ -23,6 +23,7 @@ import { createBlock, type Block, type BlockType } from "./types";
 import { computeHeadingNumbers } from "./headingNumbers";
 import { computeImageNumbers } from "./imageNumbers";
 import { splitImageTableBlock } from "./splitImageTable";
+import { pairedImageIds } from "@/lib/pdf/imageWrap";
 
 interface Props {
   blocks: Block[];
@@ -170,7 +171,7 @@ export default function BlockEditor({ blocks, onChange, numberHeadings, imageLab
                 Zatím žádné bloky. Začněte tlačítkem „Přidat blok".
               </div>
             )}
-            {sorted.map((b, i) => (
+            {(() => { const paired = pairedImageIds(sorted); return sorted.map((b, i) => (
               <div key={b.id}>
                 <BlockItem
                   block={b}
@@ -183,7 +184,8 @@ export default function BlockEditor({ blocks, onChange, numberHeadings, imageLab
                   imageNumber={imageNumbersMap.get(b.id)}
                   imageLabelPrefix={imageLabelPrefix}
                   imageLabelUnnumbered={imageLabelUnnumbered}
-                  nextTextHtml={(() => {
+                  pairedInPdf={paired.has(b.id)}
+                  nextTextHtml={paired.has(b.id) ? undefined : (() => {
                     const htmls: string[] = [];
                     for (let j = i + 1; j < sorted.length && sorted[j].type === "text"; j++) htmls.push(sorted[j].content?.html ?? "");
                     return htmls.length ? htmls.map((h) => `<p>${h}</p>`).join("") : undefined;
@@ -199,7 +201,7 @@ export default function BlockEditor({ blocks, onChange, numberHeadings, imageLab
                   </div>
                 </div>
               </div>
-            ))}
+            )); })()}
           </div>
         </SortableContext>
       </DndContext>

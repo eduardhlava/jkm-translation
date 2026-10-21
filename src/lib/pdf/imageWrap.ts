@@ -266,3 +266,37 @@ export function splitBlocksForWrap(blocks: Block[], availHeightPt: number, width
     return { block: b, side: r.side, rest: r.rest };
   });
 }
+
+// ---------- Two half-width images side by side ----------
+/** Column width of a side-by-side image pair (two columns + WRAP_GAP_PT fit the content width). */
+export const PAIR_COLUMN_PT = (CONTENT_WIDTH_PT - WRAP_GAP_PT) / 2;
+
+function isPairable(b: Block | undefined): boolean {
+  return !!b && b.type === "image" && !!b.content?.url && imageSizeOf(b.content) === "half"
+    && imagePositionOf(b.content) !== "center";
+}
+
+/**
+ * Greedy top-down pairing of directly consecutive half-width images where one is
+ * "left" and the other "right" (any order). Returns start index → { left, right }.
+ * Image-table blocks never pair.
+ */
+export function pairHalfImages(blocks: Block[]): Map<number, { left: Block; right: Block }> {
+  const out = new Map<number, { left: Block; right: Block }>();
+  for (let i = 0; i + 1 < blocks.length; i++) {
+    const a = blocks[i], b = blocks[i + 1];
+    if (!isPairable(a) || !isPairable(b)) continue;
+    const pa = imagePositionOf(a.content), pb = imagePositionOf(b.content);
+    if (pa === pb) continue;
+    out.set(i, pa === "left" ? { left: a, right: b } : { left: b, right: a });
+    i++;
+  }
+  return out;
+}
+
+/** Ids of all images that are part of a side-by-side pair. */
+export function pairedImageIds(blocks: Block[]): Set<string> {
+  const s = new Set<string>();
+  for (const [i] of pairHalfImages(blocks)) { s.add(blocks[i].id); s.add(blocks[i + 1].id); }
+  return s;
+}
