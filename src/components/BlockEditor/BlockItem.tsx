@@ -786,8 +786,13 @@ function ImageBlockEditor({ block, onChange, hidePictogram, imageNumber, imageLa
     setUploadOpen(false);
   };
 
+  const numbered = block.content.numbered !== false;
   const captionLabel =
-    imageNumber !== undefined ? `${imageLabelPrefix ?? "Obrázek č. "}${imageNumber}` : undefined;
+    numbered && imageNumber !== undefined ? `${imageLabelPrefix ?? "Obrázek č. "}${imageNumber}` : undefined;
+  // Nečíslovaný obrázek: popisek bez čísla ("Obrázek: název"); bez názvu žádný popisek.
+  const unnumberedCaption = !numbered && (block.content.alt ?? "").trim()
+    ? `${imageLabelWord(imageLabelPrefix ?? "Obrázek č. ")}: ${(block.content.alt ?? "").trim()}`
+    : undefined;
 
   const picto = pictogramOverride ?? (hidePictogram ? undefined : { value: block.content.pictogram as Pictogram | undefined, onChange: (v: Pictogram) => setContent(block, { pictogram: v }, onChange) });
   const fieldCls = "h-8 text-sm";
@@ -856,17 +861,35 @@ function ImageBlockEditor({ block, onChange, hidePictogram, imageNumber, imageLa
         ) : <div />}
       </PictogramRow>
 
-      {/* 4. Popisek */}
+      {/* 4. Popisek + přepínač číslování */}
       <div className="space-y-1">
-        <Label className="text-xs text-muted-foreground">Název obrázku</Label>
-        <Input
-          value={block.content.alt ?? ""}
-          onChange={(e) => setContent(block, { alt: e.target.value }, onChange)}
-          placeholder="Popis obrázku"
-        />
+        <div className="flex items-end gap-3">
+          <div className="flex-1 space-y-1">
+            <Label className="text-xs text-muted-foreground">Název obrázku</Label>
+            <Input
+              value={block.content.alt ?? ""}
+              onChange={(e) => setContent(block, { alt: e.target.value }, onChange)}
+              placeholder="Popis obrázku"
+            />
+          </div>
+          <div className="flex items-center gap-2 pb-1.5 shrink-0">
+            <Label htmlFor={`numbered-${block.id}`} className="text-xs text-muted-foreground cursor-pointer">Číslovat obrázek</Label>
+            <Switch
+              id={`numbered-${block.id}`}
+              checked={numbered}
+              onCheckedChange={(v) => setContent(block, { numbered: v }, onChange)}
+              aria-label="Číslovat obrázek"
+            />
+          </div>
+        </div>
         {captionLabel && (
           <Label className="text-xs text-muted-foreground/70 font-normal">
             Popis obrázku — v PDF: <span className="font-medium text-muted-foreground">{captionLabel}: {block.content.alt || "…"}</span>
+          </Label>
+        )}
+        {unnumberedCaption && (
+          <Label className="text-xs text-muted-foreground/70 font-normal">
+            Popis obrázku — v PDF: <span className="font-medium text-muted-foreground">{unnumberedCaption}</span>
           </Label>
         )}
       </div>
