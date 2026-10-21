@@ -34,10 +34,11 @@ interface Props {
   collapsed?: Record<string, boolean>;
   onCollapsedChange?: (next: Record<string, boolean>) => void;
   leftSlot?: React.ReactNode;
+  highlightedBlockId?: string | null;
 }
 
 
-export default function BlockEditor({ blocks, onChange, numberHeadings, imageLabelPrefix, imageLabelUnnumbered, collapsed: collapsedProp, onCollapsedChange, leftSlot }: Props) {
+export default function BlockEditor({ blocks, onChange, numberHeadings, imageLabelPrefix, imageLabelUnnumbered, collapsed: collapsedProp, onCollapsedChange, leftSlot, highlightedBlockId }: Props) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -172,7 +173,7 @@ export default function BlockEditor({ blocks, onChange, numberHeadings, imageLab
               </div>
             )}
             {(() => { const paired = pairedImageIds(sorted); return sorted.map((b, i) => (
-              <div key={b.id}>
+              <div key={b.id} data-editor-block-id={b.id} className={cn("scroll-mt-12 rounded-md transition-shadow duration-500 motion-reduce:transition-none", highlightedBlockId === b.id && "ring-2 ring-primary ring-offset-2 ring-offset-muted")}>
                 <BlockItem
                   block={b}
                   collapsed={!!collapsed[b.id]}
