@@ -1,4 +1,5 @@
 # Tasks
+- [ ] Add editor-only document contents, chapter navigation and scroll-spy; test and visually verify without saving document changes.
 - [x] Cap PDF images at 640pt, prevent block shrinking and bump pagination marker to v6; 54 tests pass, including real-renderer portrait/image-table checks without flow overlap or warnings; automatic preview build OK. Real manual page 38 not re-tested.
 - [x] Make PDF preview always clickable with stale-pagination confirmation; verified cancel, unchanged preview, arrange-then-preview, direct current-layout preview and changed-layout warning on the real manual; 52 tests pass and build OK.
 - [x] Show the heading number in the block header (badge next to the heading-level label) and prefix the collapsed preview with it; nothing extra when numbering is off or a heading is unlisted; 48 tests pass, build OK, verified in the authenticated preview with numbering on and off.
