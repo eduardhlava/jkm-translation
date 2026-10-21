@@ -8,10 +8,10 @@ export interface ChangelogEntry {
 /** Newest first. The first entry defines the current app version. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
-    version: "1.17.0",
+    version: "1.17.1",
     date: "2026-10-21",
     changes: [
-      "Bloky Obrázek a Tabulka pod sebou lze spojit do bloku Obrázek + Tabulka (ikona v záhlaví obrázku).",
+      "Uspořádat stránkování je v podmenu tlačítka Náhled PDF.",
       "Drobná vylepšení a opravy.",
     ],
   },
