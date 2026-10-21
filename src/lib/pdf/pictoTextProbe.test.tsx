@@ -32,23 +32,19 @@ async function measureOf(blocks: Block[]) {
   return m;
 }
 
-/** Filler paragraph lines such that `lines` body lines remain at the page bottom. */
+/** Filler such that roughly `linesLeft` body lines remain at the bottom of page 1. */
 async function fillerLeaving(linesLeft: number): Promise<string> {
-  // Find the largest filler line count whose following one-liner stays on page 1, then back off.
+  const make = (n: number) => `<p>${Array.from({ length: n }, (_, i) => `Line ${i}`).join("<br>")}</p>`;
   let n = 10;
-  for (; n < 60; n++) {
-    const html = Array.from({ length: n }, (_, i) => `L${i}`).join("<br>");
-    const c = new Map<string, number>();
-    const blocks = doc(`<p>${html}</p>`, { html: "<p>x</p>" });
-    blocks.push({ id: "probe", type: "heading1", order: 2, template: "default", content: { text: "" } } as Block);
-    const m = await measureOf(doc(`<p>${html}</p>`, { html: `<p>${Array.from({ length: linesLeft + 1 }, () => "y").join("<br>")}</p>` }));
-    void c; void blocks; void m;
+  for (; n < 80; n++) {
     const end = new Map<string, number>();
-    await pdf(<DocumentPdf title="" includeToc={false} collector={end} blocks={[...doc(`<p>${html}</p>`, { html: "<p>x</p>" }), { id: "h", type: "heading2", order: 2, template: "default", content: { text: "H" } } as Block]} />).toBuffer();
+    await pdf(<DocumentPdf title="" includeToc={false} collector={end} blocks={[
+      { id: "fill", type: "text", order: 0, template: "default", content: { html: make(n) } },
+      { id: "h", type: "heading2", order: 1, template: "default", content: { text: "H" } },
+    ] as Block[]} />).toBuffer();
     if ((end.get("h") ?? 1) > 1) break;
   }
-  // n lines push the following heading over; leave room for linesLeft lines.
-  return `<p>${Array.from({ length: Math.max(1, n - linesLeft - 1) }, (_, i) => `L${i}`).join("<br>")}</p>`;
+  return make(Math.max(1, n - linesLeft - 1));
 }
 
 describe("pictogram text keep-with-next", () => {
