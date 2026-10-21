@@ -59,9 +59,20 @@ describe("pictogram text keep-with-next", () => {
     expect(findViolations(plain, m, new Set())).toEqual([]);
   });
 
-  it("moves a pictogram block with ~2 free lines to the next page, not a plain one", async () => {
-    const fill = await fillerLeaving(2);
-    const run = (content: Block["content"]) => runPaginationLoop(doc(fill, content), async (cur) => measureOf(cur));
+  it("moves a pictogram block with too little room to the next page, not a plain one", async () => {
+    const make = (n: number) => Array.from({ length: n }, (_, i) => `<p>Line ${i}</p>`).join("");
+    // Smallest filler where the 3-line reservation no longer fits on page 1.
+    let n = 20;
+    for (; n < 80; n++) {
+      const m = await measureOf(doc(make(n), { html: LONG, pictogram: "warning" }));
+      if ((m.pictoTextPages?.get("target") ?? 1) > (m.prevEndPages.get("target") ?? 1)) break;
+    }
+    expect(n).toBeLessThan(80);
+    // Without a pictogram the same position still leaves room for the text to start on page 1.
+    const end = new Map<string, number>();
+    await pdf(<DocumentPdf title="" includeToc={false} collector={end} blocks={[...doc(make(n), { html: "<p>One line</p>" }),
+      { id: "h", type: "heading1", order: 2, template: "default", content: { text: "End" } } as Block]} />).toBuffer();
+    const run = (content: Block["content"]) => runPaginationLoop(doc(make(n), content), async (cur) => measureOf(cur));
     const withPic = await run({ html: LONG, pictogram: "warning" });
     expect(withPic.blocks.map((b) => b.type)).toEqual(["text", "pagebreak", "text"]);
     expect(withPic.remaining).toEqual([]);
