@@ -140,7 +140,7 @@ describe("PDF rowspan render", () => {
     let found: LayoutNode | undefined;
     const walk = (n: LayoutNode) => {
       const ch = n.children ?? [];
-      if (!found && ch.length === 3 && ch[0].type === "TEXT" && ch[1].type === "VIEW" && (ch[1].children ?? []).length === 2) found = n;
+      if (!found && ch.length === 2 && ch[0].type === "TEXT" && ch[1].type === "VIEW" && (ch[1].children ?? []).length === 2) found = n;
       ch.forEach(walk);
     };
     walk(layout!);
