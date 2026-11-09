@@ -8,6 +8,11 @@ export interface ChangelogEntry {
 /** Newest first. The first entry defines the current app version. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.17.2",
+    date: "2026-11-09",
+    changes: ["Nové oprávnění „Piktogramy“ ve správě uživatelů (příprava knihovny piktogramů)."],
+  },
+  {
     version: "1.17.1",
     date: "2026-10-21",
     changes: [

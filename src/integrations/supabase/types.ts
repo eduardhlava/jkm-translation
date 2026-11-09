@@ -47,6 +47,7 @@ export type Database = {
           can_documents: boolean
           can_files: boolean
           can_folders: boolean
+          can_pictograms: boolean
           created_at: string
           email: string
           full_name: string
@@ -62,6 +63,7 @@ export type Database = {
           can_documents?: boolean
           can_files?: boolean
           can_folders?: boolean
+          can_pictograms?: boolean
           created_at?: string
           email: string
           full_name?: string
@@ -77,6 +79,7 @@ export type Database = {
           can_documents?: boolean
           can_files?: boolean
           can_folders?: boolean
+          can_pictograms?: boolean
           created_at?: string
           email?: string
           full_name?: string
@@ -86,6 +89,51 @@ export type Database = {
           ui_lang?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      symbols: {
+        Row: {
+          archived: boolean
+          code: string
+          created_at: string
+          default_width_mm: number
+          file_path: string
+          height_px: number
+          id: string
+          name: string
+          render_path: string | null
+          updated_at: string
+          updated_by: string | null
+          width_px: number
+        }
+        Insert: {
+          archived?: boolean
+          code: string
+          created_at?: string
+          default_width_mm?: number
+          file_path: string
+          height_px?: number
+          id?: string
+          name?: string
+          render_path?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          width_px?: number
+        }
+        Update: {
+          archived?: boolean
+          code?: string
+          created_at?: string
+          default_width_mm?: number
+          file_path?: string
+          height_px?: number
+          id?: string
+          name?: string
+          render_path?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          width_px?: number
         }
         Relationships: []
       }
@@ -115,6 +163,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_symbols: { Args: { _uid: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -122,6 +171,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      symbol_usage: { Args: { _code: string }; Returns: number }
     }
     Enums: {
       app_role: "admin" | "user"

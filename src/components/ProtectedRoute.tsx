@@ -2,7 +2,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 
-export type Section = "dictionary" | "documents" | "files" | "folders";
+export type Section = "dictionary" | "documents" | "files" | "folders" | "pictograms";
 
 interface Props {
   children: React.ReactNode;
@@ -11,13 +11,14 @@ interface Props {
 }
 
 export const sectionAllowed = (
-  profile: { can_dictionary?: boolean; can_documents?: boolean; can_files?: boolean; can_folders?: boolean } | null,
+  profile: { can_dictionary?: boolean; can_documents?: boolean; can_files?: boolean; can_folders?: boolean; can_pictograms?: boolean } | null,
   section: Section,
 ) => {
   if (!profile) return false;
   if (section === "dictionary") return profile.can_dictionary !== false;
   if (section === "documents") return profile.can_documents !== false;
   if (section === "folders") return profile.can_folders !== false;
+  if (section === "pictograms") return profile.can_pictograms !== false;
   return profile.can_files !== false;
 };
 
@@ -40,7 +41,7 @@ const ProtectedRoute = ({ children, requireAdmin, requireSection }: Props) => {
   }
   if (!session) return <Navigate to="/auth" replace />;
   if (requireAdmin && !isAdmin) return <Navigate to={firstAllowed(profile)} replace />;
-  if (requireSection && !sectionAllowed(profile, requireSection))
+  if (requireSection && !(requireSection === "pictograms" && isAdmin) && !sectionAllowed(profile, requireSection))
     return <Navigate to={firstAllowed(profile)} replace />;
   return <>{children}</>;
 };

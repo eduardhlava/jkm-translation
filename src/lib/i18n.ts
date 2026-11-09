@@ -95,6 +95,7 @@ export type TKey =
   | "secDocs"
   | "secFiles"
   | "secFolders"
+  | "secPictograms"
   | "allMachinesTitle"
   | "confirmTranslation"
   | "rejectWord"
@@ -109,6 +110,7 @@ const cz: Dict = {
   secDocs: "Tvorba dokumentů",
   secFiles: "Soubory",
   secFolders: "Správa složek",
+  secPictograms: "Piktogramy",
   appName: "Překlady slovníku",
   appTagline: "Správa hesel slovníku",
   fullName: "Jméno a příjmení",
@@ -204,6 +206,7 @@ const en: Dict = {
   secDocs: "Document creation",
   secFiles: "Files",
   secFolders: "Folder management",
+  secPictograms: "Pictograms",
   appName: "Dictionary translations",
   appTagline: "Dictionary term management",
   fullName: "Full name",
@@ -299,6 +302,7 @@ const ru: Dict = {
   secDocs: "Создание документов",
   secFiles: "Файлы",
   secFolders: "Управление папками",
+  secPictograms: "Пиктограммы",
   appName: "Переводы словаря",
   appTagline: "Управление терминами словаря",
   fullName: "Имя и фамилия",
@@ -394,6 +398,7 @@ const pl: Dict = {
   secDocs: "Tworzenie dokumentów",
   secFiles: "Pliki",
   secFolders: "Zarządzanie folderami",
+  secPictograms: "Piktogramy",
   appName: "Tłumaczenia słownika",
   appTagline: "Zarządzanie terminami słownika",
   fullName: "Imię i nazwisko",
