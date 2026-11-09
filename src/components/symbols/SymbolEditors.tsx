@@ -76,13 +76,18 @@ export function SymbolListEditor({ symbols, onChange, kind }: { symbols: SymbolR
 
 /** Náhled umístění v editoru textu: na střed nad textem, vlevo/vpravo vedle. */
 export function TextSymbolsLayout({ symbols, children }: { symbols: SymbolRef[]; children: React.ReactNode }) {
-  if (!symbols.length) return <>{children}</>;
+  // Always render the same tree: switching between a fragment and wrapper divs
+  // remounted the contentEditable child, leaving an empty collapsed editor box.
   const of = (p: SymbolPos) => symbols.filter((s) => s.pos === p);
   const col = (list: SymbolRef[]) => list.length ? <div className="flex shrink-0 flex-col items-center gap-1 pt-1">{list.map((s, i) => <SymbolThumb key={i} code={s.code} width={editorPx(s.w, 180)} />)}</div> : null;
   return (
-    <div className="flex-1 space-y-2">
+    <div className="min-w-0 flex-1 space-y-2" data-symbol-layout>
       {of("center").length > 0 && <div className="flex flex-col items-center gap-1">{of("center").map((s, i) => <SymbolThumb key={i} code={s.code} width={editorPx(s.w)} />)}</div>}
-      <div className="flex items-start gap-2">{col(of("left"))}<div className="min-w-0 flex-1">{children}</div>{col(of("right"))}</div>
+      <div className="flex w-full items-start gap-2">
+        <div key="left" className="contents" data-symbol-side="left">{col(of("left"))}</div>
+        <div key="body" className="min-w-0 flex-1 basis-0">{children}</div>
+        <div key="right" className="contents" data-symbol-side="right">{col(of("right"))}</div>
+      </div>
     </div>
   );
 }
