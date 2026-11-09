@@ -31,7 +31,7 @@ export default function SymbolPicker({ open, onOpenChange, onPick }: { open: boo
   const pick = (r: SymbolRow) => { pushRecent(r.code); onPick(r); onOpenChange(false); setQ(""); };
   const tile = (r: SymbolRow) => (
     <button key={r.id} type="button" onClick={() => pick(r)} className="flex flex-col items-center gap-1 rounded-md border bg-background p-2 text-center text-xs hover:border-primary hover:bg-muted" title={r.name}>
-      <span className="flex h-16 w-full items-center justify-center"><SymbolThumb code={r.code} width={56} /></span>
+      <span className="flex h-20 w-full items-center justify-center overflow-hidden"><SymbolThumb code={r.code} width={112} maxHeight={72} /></span>
       <span className="line-clamp-2 w-full break-words">{r.name}</span>
     </button>
   );

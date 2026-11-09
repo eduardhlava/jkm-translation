@@ -1,4 +1,5 @@
 # Tasks
+- [x] Fix bounded symbol thumbnails in the library, picker and editor controls; all 16 uploaded images are contained without text overlap at desktop and narrow widths in the library and live picker; close-up frames checked, 21 tests passed, build OK, version 1.18.1. Unbounded document and PDF sizing unchanged; cell previews have natural-height containers.
 - [x] Add editor-only document contents, chapter navigation and scroll-spy; 120 tests passed and preview build OK. Authenticated visual checks confirmed desktop push, narrow drawer, navigation/highlight, active chapter, muted unlisted and unchanged collapsed state; transient fixture discarded without saving.
 - [x] Cap PDF images at 640pt, prevent block shrinking and bump pagination marker to v6; 54 tests pass, including real-renderer portrait/image-table checks without flow overlap or warnings; automatic preview build OK. Real manual page 38 not re-tested.
 - [x] Make PDF preview always clickable with stale-pagination confirmation; verified cancel, unchanged preview, arrange-then-preview, direct current-layout preview and changed-layout warning on the real manual; 52 tests pass and build OK.

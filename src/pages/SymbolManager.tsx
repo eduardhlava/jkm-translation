@@ -264,7 +264,7 @@ export default function SymbolManager() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
             {shown.map((r) => (
               <Card key={r.id} className={`group flex flex-col gap-2 p-3 ${r.archived ? "opacity-60" : ""}`}>
-                <div className="flex h-28 items-center justify-center rounded bg-muted/40"><SymbolThumb code={r.code} width={96} /></div>
+                <div className="flex h-36 items-center justify-center overflow-hidden rounded bg-muted/40 p-2"><SymbolThumb code={r.code} width={180} maxHeight={128} /></div>
                 <div className="min-w-0">
                   <div className="truncate text-sm font-medium" title={r.name}>{r.name}</div>
                   <div className="text-xs text-muted-foreground">{Number(r.default_width_mm)} mm · {r.width_px}×{r.height_px} px{r.archived ? " · archivováno" : ""}</div>

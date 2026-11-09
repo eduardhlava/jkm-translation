@@ -43,7 +43,7 @@ function SymbolRowControls({ s, labels, onChange, onRemove }: { s: SymbolRef; la
   };
   return (
     <div className="flex items-center gap-2 rounded-md border bg-muted/30 px-2 py-1 text-xs">
-      <SymbolThumb code={s.code} width={24} />
+      <SymbolThumb code={s.code} width={24} maxHeight={24} />
       <span className="max-w-[10rem] truncate" title={row?.name ?? s.code}>{row?.name ?? s.code}{row?.archived ? " (archivováno)" : ""}</span>
       <Input aria-label="Šířka v mm" value={w} onChange={(e) => setW(e.target.value)} onBlur={commit} onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter") commit(); }} className="h-6 w-14 px-1 text-xs" />
       <span className="text-muted-foreground">mm</span>
