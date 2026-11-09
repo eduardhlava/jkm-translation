@@ -1,6 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Trash2, AlertTriangle, Info, AlertCircle, Loader2, Upload, Plus, Minus, ChevronDown, ChevronRight, List, ListMinus, ListOrdered, Link, ImageIcon, AlignLeft, AlignCenter, AlignRight, SeparatorHorizontal, Pencil, MoreVertical, Superscript, Subscript, RemoveFormatting, ClipboardType, Highlighter, Combine, Split, MoreHorizontal } from "lucide-react";
+import { GripVertical, Trash2, AlertTriangle, Info, AlertCircle, Loader2, Upload, Plus, Minus, ChevronDown, ChevronRight, List, ListMinus, ListOrdered, Link, ImageIcon, AlignLeft, AlignCenter, AlignRight, SeparatorHorizontal, Pencil, MoreVertical, Superscript, Subscript, RemoveFormatting, ClipboardType, Highlighter, Combine, Split, MoreHorizontal, Shapes } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -24,6 +24,10 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BLOCK_TYPE_LABELS, buildCellValue, parseCellPictogram, type Block, type Pictogram } from "./types";
 import TableCellEditor from "./TableCellEditor";
+import { CellSymbolsAbove, CellSymbolsLeft, InsertSymbolButton, SymbolListEditor, TextSymbolsLayout } from "@/components/symbols/SymbolEditors";
+import { buildCellSymbolText, normalizeSymbolList, splitCellSymbols } from "@/lib/symbols/symbolTokens";
+import SymbolPicker from "@/components/symbols/SymbolPicker";
+import type { SymbolRow } from "@/lib/symbols/symbolStore";
 import PictogramIcon from "./PictogramIcon";
 import { canMergeDown, canMergeRight as checkMergeRight, coveredBy, deleteRowWithMerges, mergeAt, mergeCellsDown, mergeCellsRight, normalizeMerges, remapDeleteColumn, remapDeleteRow, remapInsertColumn, rowSpanOf, unmergeCell } from "./cellMerges";
 import { imageNumberedLabel } from "./imageNumbers";
@@ -771,7 +775,15 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
           value={block.content.pictogram}
           onChange={(v) => onChange(block.id, { content: { ...block.content, pictogram: v } })}
         />
+        <div className="mx-1 h-5 w-px bg-border" />
+        <InsertSymbolButton onInsert={(sym) => onChange(block.id, { content: { ...block.content, symbols: [...normalizeSymbolList(block.content.symbols), sym] } })} />
       </div>
+      <SymbolListEditor
+        kind="text"
+        symbols={normalizeSymbolList(block.content.symbols)}
+        onChange={(list) => onChange(block.id, { content: { ...block.content, symbols: list.length ? list : undefined } })}
+      />
+      <TextSymbolsLayout symbols={normalizeSymbolList(block.content.symbols)}>
       <div className="flex items-start gap-2">
         {block.content.pictogram && block.content.pictogram !== "none" && (
           <div className="shrink-0 pt-2">
@@ -794,6 +806,7 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
           className="ProseMirror min-h-[60px] flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring prose prose-sm max-w-none [&_sup]:align-super [&_sup]:static [&_sub]:align-sub [&_sub]:static"
         />
       </div>
+      </TextSymbolsLayout>
     </div>
   );
 }
@@ -989,6 +1002,14 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
   const rowColors: Array<string | null> = block.content.rowColors ?? [];
   const getRowColor = (ri: number): string | null => rowColors[ri] ?? null;
 
+  const [symbolTarget, setSymbolTarget] = useState<{ ri: number; ci: number } | null>(null);
+  const insertCellSymbol = (row: SymbolRow) => {
+    if (!symbolTarget) return;
+    const { ri, ci } = symbolTarget;
+    const parsed = parseCellPictogram(block.content.rows?.[ri]?.[ci] ?? "");
+    const cur = splitCellSymbols(parsed.text);
+    updateCell(ri, ci, buildCellValue(parsed.pictogram, buildCellSymbolText([...cur.symbols, { code: row.code, w: Math.min(Number(row.default_width_mm) || 20, 40), pos: "left" }], cur.rest)));
+  };
   const updateCell = (r: number, c: number, v: string) => {
     const next = rows.map((row, ri) => row.map((cell, ci) => (ri === r && ci === c ? v : cell)));
     setContent(block, { rows: next }, onChange);
@@ -1244,18 +1265,22 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                             ? "bg-muted/40"
                             : "bg-background";
                         const parsed = parseCellPictogram(cell);
+                        const cellSym = splitCellSymbols(parsed.text);
+                        const setCellSymbols = (list: typeof cellSym.symbols) => updateCell(ri, ci, buildCellValue(parsed.pictogram, buildCellSymbolText(list, cellSym.rest)));
                         return (
                           <td key={ci} colSpan={span} rowSpan={rSpan} className="border border-muted-foreground/50 p-0 relative group/cell">
+                            <CellSymbolsAbove symbols={cellSym.symbols} />
                             <div className="flex min-w-0 items-center">
                               {parsed.pictogram !== "none" && (
                                 <span className="pl-1 shrink-0">
                                   <PictogramIcon kind={parsed.pictogram} size={20} />
                                 </span>
                               )}
+                              <CellSymbolsLeft symbols={cellSym.symbols} />
                               <TableCellEditor
                                 label={`Buňka ${ri + 1}, ${ci + 1}`}
-                                value={parsed.text}
-                                onChange={(value) => updateCell(ri, ci, buildCellValue(parsed.pictogram, value))}
+                                value={cellSym.rest}
+                                onChange={(value) => updateCell(ri, ci, buildCellValue(parsed.pictogram, buildCellSymbolText(cellSym.symbols, value)))}
                                 className={`min-w-0 flex-1 rounded-none border-0 shadow-none focus-visible:ring-1 ${bgCls} ${
                                   isHeaderCell ? "font-semibold" : ""
                                 } ${narrowFirstCol && ci === 0 ? "text-center" : ""}`}
@@ -1289,6 +1314,17 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                                         <PictogramOptionRow kind={o.value} label={o.label} />
                                       </button>
                                     ))}
+                                  </div>
+                                  <div className="mt-2 flex flex-col gap-1 border-t border-border pt-2">
+                                    <div className="px-2 text-[11px] font-medium text-muted-foreground">Piktogramy z knihovny</div>
+                                    <SymbolListEditor kind="cell" symbols={cellSym.symbols} onChange={setCellSymbols} />
+                                    <button
+                                      type="button"
+                                      onClick={() => setSymbolTarget({ ri, ci })}
+                                      className="flex items-center gap-2 rounded px-2 py-1 text-xs hover:bg-muted"
+                                    >
+                                      <Shapes className="w-3.5 h-3.5" /> Vložit piktogram…
+                                    </button>
                                   </div>
                                   {(canMergeRight || anchor) && (
                                     <div className="mt-2 flex flex-col gap-1 border-t border-border pt-2">
@@ -1344,6 +1380,7 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
           </div>
         </div>
       </PictogramRow>
+      <SymbolPicker open={!!symbolTarget} onOpenChange={(o) => !o && setSymbolTarget(null)} onPick={insertCellSymbol} />
     </div>
   );
 }

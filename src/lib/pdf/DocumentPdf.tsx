@@ -11,6 +11,9 @@ import notoBoldItalic from "@/assets/fonts/NotoSans-BoldItalic.ttf?url";
 import { PICTOGRAM_PATHS } from "@/components/BlockEditor/pictogramPaths";
 import { computeImageNumbers, imageNumberedLabel, isImageNumbered } from "@/components/BlockEditor/imageNumbers";
 import { HALF_COLUMN_PT, SIDE_TEXT_WIDTH_PT, WRAP_GAP_PT, halfAlignOf, imagePositionOf, sideImageHeight, splitBlocksForWrap, wrapChain, SIDE_PICTO_PT, PAIR_COLUMN_PT, pairHalfImages, estimateTextHeightPt } from "./imageWrap";
+import { pdfSymbolAsset } from "@/lib/symbols/symbolStore";
+import { mmToPt, normalizeSymbolList, splitCellSymbols, type SymbolRef } from "@/lib/symbols/symbolTokens";
+import { CONTENT_WIDTH_PT, splitTextForWrap } from "./imageWrap";
 import { DOCUMENT_LANGUAGES, mergeMetadata, type DocumentMetadata } from "@/components/DocumentMetadata/types";
 
 const NOTO_FACES = [
@@ -580,6 +583,83 @@ function TextBlock({ block, startMarker, measure }: { block: Block; startMarker?
   return body;
 }
 
+// ---------- Piktogramy z knihovny (symboly) ----------
+const SYMBOL_GAP_PT = 6;
+const MAX_CELL_SYMBOL_PT = 120;
+
+function SymbolImage({ code, widthPt }: { code: string; widthPt: number }) {
+  const a = pdfSymbolAsset(code);
+  if (!a) {
+    return (
+      <View style={{ width: widthPt, minHeight: Math.min(widthPt, 28), borderWidth: 0.5, borderColor: "#9ca3af", borderStyle: "dashed", alignItems: "center", justifyContent: "center", padding: 2, flexShrink: 0 }}>
+        <Text style={{ fontFamily: "NotoSans", fontSize: 6, color: "#6b7280", textAlign: "center" }}>Neznámý piktogram: {code}</Text>
+      </View>
+    );
+  }
+  return <Image src={a.src} style={{ width: widthPt, height: widthPt / a.ratio, objectFit: "contain", flexShrink: 0 }} />;
+}
+
+const symbolHeightPt = (code: string, widthPt: number) => {
+  const a = pdfSymbolAsset(code);
+  return a ? widthPt / a.ratio : Math.min(widthPt, 28);
+};
+
+/**
+ * Textový blok s piktogramy z knihovny: vlevo/vpravo = nerozdělitelný řádek
+ * (sloupec piktogramů + odhadem rozdělený text, stejně jako u obrázků na půl
+ * stránky), zbytek textu pokračuje plnou šířkou; na střed = samostatně nad textem.
+ */
+function TextWithSymbols({ block, startMarker, measure }: { block: Block; startMarker?: JSX.Element; measure?: MeasureContext }) {
+  const symbols = normalizeSymbolList(block.content?.symbols);
+  if (!symbols.length) return <TextBlock block={block} startMarker={startMarker} measure={measure} />;
+  const html: string = block.content?.html ?? "";
+  const plain = (h: string): Block => ({ ...block, content: { ...block.content, html: h, symbols: undefined, pictogram: "none" } });
+  const centers = symbols.filter((s) => s.pos === "center");
+  const lefts = symbols.filter((s) => s.pos === "left");
+  const rights = symbols.filter((s) => s.pos === "right");
+  const col = (list: SymbolRef[]) => {
+    if (!list.length) return null;
+    const widths = list.map((s) => Math.min(mmToPt(s.w), CONTENT_WIDTH_PT / 2));
+    const w = Math.max(...widths);
+    const h = list.reduce((acc, s, i) => acc + symbolHeightPt(s.code, widths[i]) + (i ? SYMBOL_GAP_PT : 0), 0);
+    const node = (
+      <View style={{ width: w, flexShrink: 0, alignItems: "center" }}>
+        {list.map((s, i) => <View key={i} style={{ marginTop: i ? SYMBOL_GAP_PT : 0 }}><SymbolImage code={s.code} widthPt={widths[i]} /></View>)}
+      </View>
+    );
+    return { w, h, node };
+  };
+  const centerNode = centers.length ? (
+    <View wrap={false} style={{ alignItems: "center", marginVertical: 4, flexShrink: 0 }}>
+      {startMarker}
+      {centers.map((s, i) => <View key={i} style={{ marginTop: i ? SYMBOL_GAP_PT : 0 }}><SymbolImage code={s.code} widthPt={Math.min(mmToPt(s.w), CONTENT_WIDTH_PT)} /></View>)}
+    </View>
+  ) : null;
+  const marker = centerNode ? undefined : startMarker;
+  let main: JSX.Element | null;
+  const L = col(lefts);
+  const R = col(rights);
+  if (!L && !R) {
+    main = html.trim() ? <TextBlock block={plain(html)} startMarker={marker} /> : (marker ? <View>{marker}</View> : null);
+  } else {
+    const textW = Math.max(60, CONTENT_WIDTH_PT - (L ? L.w + WRAP_GAP_PT : 0) - (R ? R.w + WRAP_GAP_PT : 0));
+    const colH = Math.max(L?.h ?? 0, R?.h ?? 0);
+    const { side, rest } = html.trim() ? splitTextForWrap(html, colH, textW) : { side: "", rest: "" };
+    main = (
+      <View style={{ flexShrink: 0 }}>
+        <View wrap={false} style={{ flexDirection: "row", alignItems: "flex-start", marginVertical: 4, flexShrink: 0 }}>
+          {marker}
+          {L && <>{L.node}<View style={{ width: WRAP_GAP_PT, flexShrink: 0 }} /></>}
+          <View style={{ width: textW, flexShrink: 0 }}>{side ? <TextBlock block={plain(side)} /> : null}</View>
+          {R && <><View style={{ width: WRAP_GAP_PT, flexShrink: 0 }} />{R.node}</>}
+        </View>
+        {rest ? <TextBlock block={plain(rest)} /> : null}
+      </View>
+    );
+  }
+  return withPictogram(block, <View style={{ flexShrink: 0 }}>{centerNode}{main}</View>);
+}
+
 function ImageBlock({ block, captionOverride, startMarker, measure, measureStartId, inColumn }: { block: Block; captionOverride?: string; startMarker?: JSX.Element; measure?: MeasureContext; measureStartId?: string; inColumn?: boolean }) {
   const url = block.content?.url;
   const alt = block.content?.alt;
@@ -636,10 +716,34 @@ function TableBlock({ block, startMarker, measure, measureStartId, measurePartSt
     const cell = rows[ri]?.[ci] ?? "";
     const rowBg = rowColors[ri] ?? null;
     const isHeader = headerRow && ri === 0 && !rowBg;
-    const { pictogram: cellPic, text: cellText } = parseCellPictogram(cell);
+    const { pictogram: cellPic, text: cellRaw } = parseCellPictogram(cell);
+    const { symbols: cellSyms, rest: cellText } = splitCellSymbols(cellRaw);
     const paragraphs = parseInline(cellTextToHtml(cellText));
     const formattedText = paragraphs.map((runs, i) => <Fragment key={i}>{i > 0 ? "\n" : ""}<RunsText runs={headerRow && ri === 0 ? runs.map((run) => ({ ...run, bold: true })) : runs} /></Fragment>);
     const cellStyle = [styles.td, sizeStyle, isHeader ? styles.th : {}, ownBg && rowBg ? { backgroundColor: rowBg } : {}, headerRow && ri === 0 ? { fontFamily: "NotoSans", fontWeight: "bold" } : {}] as any;
+    if (cellSyms.length) {
+      // Piktogramy z knihovny v buňce: nad textem / na střed nad textem / vlevo od textu.
+      const wOf = (sym: SymbolRef) => Math.min(mmToPt(sym.w), MAX_CELL_SYMBOL_PT);
+      const above = cellSyms.filter((sym) => sym.pos !== "left");
+      const lefts = cellSyms.filter((sym) => sym.pos === "left");
+      const centered = above.some((sym) => sym.pos === "center");
+      return (
+        <View key={key} style={[cellStyle, { flexDirection: "column" }] as any}>
+          {above.length > 0 && (
+            <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: centered ? "center" : "flex-start", gap: 3, marginBottom: cellText ? 2 : 0 }}>
+              {above.map((sym, i) => <SymbolImage key={i} code={sym.code} widthPt={wOf(sym)} />)}
+            </View>
+          )}
+          {(lefts.length > 0 || cellPic !== "none" || cellText) && (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+              {cellPic !== "none" && <View style={styles.cellIcon}><PictogramSvg kind={cellPic} size={14} /></View>}
+              {lefts.map((sym, i) => <SymbolImage key={i} code={sym.code} widthPt={wOf(sym)} />)}
+              {cellText ? <Text style={styles.cellText}>{formattedText}</Text> : null}
+            </View>
+          )}
+        </View>
+      );
+    }
     if (cellPic !== "none") {
       return (
         <View key={key} style={[cellStyle, { flexDirection: "row", alignItems: "center", gap: 4 }] as any}>
@@ -798,7 +902,7 @@ function BlockNode({ block, collector, number, imageCaption, measure, measureNex
     case "heading2": return <Heading block={block} level={2} collector={collector} number={number} measure={measure} />;
     case "heading3": return <Heading block={block} level={3} collector={collector} number={number} measure={measure} />;
     case "heading4": return <Heading block={block} level={4} number={number} measure={measure} />;
-    case "text":     return <TextBlock block={block} startMarker={startMarker} measure={measure} />;
+    case "text":     return <TextWithSymbols block={block} startMarker={startMarker} measure={measure} />;
     case "image":    return withPictogram(block, <ImageBlock block={block} captionOverride={imageCaption} startMarker={startMarker} />);
     case "table":    return withPictogram(block, <TableBlock block={block} startMarker={startMarker} measure={measure} measureStartId={block.id} measureEndId={block.id} />);
     case "image-table": return withPictogram(block, (

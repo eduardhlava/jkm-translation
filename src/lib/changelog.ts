@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 /** Newest first. The first entry defines the current app version. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.18.0",
+    date: "2026-11-09",
+    changes: [
+      "Nová knihovna Piktogramy (v sekci Soubory): hromadné nahrávání, úpravy, nahrazení souboru, archivace a mazání nepoužitých.",
+      "Do textu i buněk tabulek lze vložit piktogram z knihovny (vlevo, vpravo nebo na střed), zobrazí se v editoru i v PDF a zachová se v Notion.",
+    ],
+  },
+  {
     version: "1.17.2",
     date: "2026-11-09",
     changes: ["Nové oprávnění „Piktogramy“ ve správě uživatelů (příprava knihovny piktogramů)."],
