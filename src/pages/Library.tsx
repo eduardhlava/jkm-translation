@@ -399,6 +399,11 @@ const Library = () => {
                     <Link to="/library/filters">Správa filtrů</Link>
                   </Button>
                 )}
+                {(isAdmin || profile?.can_pictograms !== false) && (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/library/pictograms">Piktogramy</Link>
+                  </Button>
+                )}
 
                 <Button variant="outline" size="icon" onClick={() => void load()} disabled={loading}>
                   <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />

@@ -1,3 +1,4 @@
+import { preparePdfSymbols } from "@/lib/symbols/symbolStore";
 import { pdf } from "@react-pdf/renderer";
 import type { Block } from "@/components/BlockEditor/types";
 import { DocumentPdf, type PageMap } from "./DocumentPdf";
@@ -91,6 +92,8 @@ async function fetchAsDataUrl(url: string, pageId?: string): Promise<{ data: str
 }
 
 export async function inlineImages(blocks: Block[], pageId?: string): Promise<{ blocks: Block[]; rewrites: Map<string, string> }> {
+  // Piktogramy z knihovny (soukromé úložiště) se stáhnou jako data URL jednou před vykreslením.
+  await preparePdfSymbols(blocks);
   const cache = new Map<string, { data: string | null; permanentUrl?: string }>();
   const rewrites = new Map<string, string>();
   const out = await Promise.all(

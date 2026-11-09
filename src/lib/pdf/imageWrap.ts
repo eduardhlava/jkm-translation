@@ -246,7 +246,8 @@ export const SIDE_PICTO_PT = 34;
 export function wrapChain(blocks: Block[], imageIndex: number): Block[] {
   if (!wrapsNextText(blocks[imageIndex], blocks[imageIndex + 1])) return [];
   const out: Block[] = [];
-  for (let i = imageIndex + 1; i < blocks.length && blocks[i].type === "text"; i++) out.push(blocks[i]);
+  // Text s piktogramy z knihovny má vlastní obtékání → řetězec končí před ním.
+  for (let i = imageIndex + 1; i < blocks.length && blocks[i].type === "text" && !(blocks[i].content?.symbols?.length); i++) out.push(blocks[i]);
   return out;
 }
 

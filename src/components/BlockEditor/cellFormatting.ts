@@ -1,4 +1,5 @@
 import { buildCellValue, CELL_PICTOGRAM_GLYPHS, parseCellPictogram } from "./types";
+import { buildCellSymbolText, formatSymbolToken, splitCellSymbols } from "@/lib/symbols/symbolTokens";
 
 // Explicit discriminator keeps legacy plain cells (including literal < >) intact.
 const HTML_PREFIX = "[[html]]";
@@ -40,7 +41,7 @@ export function cellHtmlToValue(html: string): string {
 }
 
 export function cellPlainText(value: string): string {
-  const { text } = parseCellPictogram(value);
+  const text = splitCellSymbols(parseCellPictogram(value).text).rest;
   const doc = new DOMParser().parseFromString(cellTextToHtml(text).replace(/<br\s*\/?\s*>/gi, "\n"), "text/html");
   return doc.body.textContent ?? "";
 }
@@ -48,7 +49,15 @@ export function cellPlainText(value: string): string {
 export function cellToExportHtml(value: string): string {
   const { pictogram, text } = parseCellPictogram(value);
   const prefix = pictogram === "none" ? "" : `${CELL_PICTOGRAM_GLYPHS[pictogram]} `;
-  return prefix + cellTextToHtml(text);
+  // Piktogramy z knihovny zůstávají jako prostý textový token před obsahem.
+  const { symbols, rest } = splitCellSymbols(text);
+  const tokens = symbols.map(formatSymbolToken).join("");
+  return prefix + (tokens ? tokens + " " : "") + cellTextToHtml(rest);
+}
+
+function fromExportBody(html: string): string {
+  const { symbols, rest } = splitCellSymbols(html);
+  return buildCellSymbolText(symbols, cellHtmlToValue(rest));
 }
 
 export function cellFromExportHtml(html: string): string {
@@ -56,8 +65,8 @@ export function cellFromExportHtml(html: string): string {
   for (const [kind, glyph] of Object.entries(CELL_PICTOGRAM_GLYPHS)) {
     if (safe.startsWith(glyph)) {
       const pic = kind as keyof typeof CELL_PICTOGRAM_GLYPHS;
-      return buildCellValue(pic, cellHtmlToValue(safe.slice(glyph.length).replace(/^\uFE0F?\s*/, "")));
+      return buildCellValue(pic, fromExportBody(safe.slice(glyph.length).replace(/^\uFE0F?\s*/, "")));
     }
   }
-  return cellHtmlToValue(safe);
+  return fromExportBody(safe);
 }

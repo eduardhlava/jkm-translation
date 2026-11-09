@@ -67,7 +67,7 @@ export function cellFromExportText(cell: string): string {
 
 
 export interface HeadingContent { text: string }
-export interface TextContent { html: string; align?: TextAlign; size?: TextSize; pictogram?: Pictogram }
+export interface TextContent { html: string; align?: TextAlign; size?: TextSize; pictogram?: Pictogram; /** Piktogramy z knihovny (symboly) vázané na blok. */ symbols?: import("@/lib/symbols/symbolTokens").SymbolRef[] }
 /** Sloučení sousedních buněk v řádku: buňky c+1 … c+span-1 jsou zakryté (prázdné). */
 export interface CellMerge { r: number; c: number; span: number; rowSpan?: number }
 export interface TableContent {

@@ -3,6 +3,7 @@ import { cellFromExportHtml, cellPlainText } from "./cellFormatting";
 import { coveredCellsEmpty, normalizeMerges } from "./cellMerges";
 import { type DocumentMetadata, mergeMetadata } from "@/components/DocumentMetadata/types";
 import { META_BLOCK_PREFIX, META_DOC_PREFIX } from "./serialize";
+import { extractSymbolsFromHtml, normalizeSymbolList } from "@/lib/symbols/symbolTokens";
 
 const VALID_TYPES: BlockType[] = [
   "heading1", "heading2", "heading3", "heading4",
@@ -40,9 +41,11 @@ function normalizeContent(type: BlockType, raw: any): any {
     case "text": {
       const align = (VALID_ALIGN as readonly string[]).includes(c.align) ? c.align : "left";
       const size = (VALID_SIZE as readonly string[]).includes(c.size) ? c.size : "normal";
-      if (typeof c.html === "string") return { html: c.html, align, size };
-      if (typeof c.text === "string") return { html: `<p>${c.text}</p>`, align, size };
-      return { ...base, align, size };
+      const symbols = normalizeSymbolList(c.symbols);
+      const extra = symbols.length ? { symbols } : {};
+      if (typeof c.html === "string") return { html: c.html, align, size, ...extra };
+      if (typeof c.text === "string") return { html: `<p>${c.text}</p>`, align, size, ...extra };
+      return { ...base, align, size, ...extra };
     }
     case "image":
       return {
@@ -334,7 +337,8 @@ export function parseDocumentHtml(html: string): ParsedDocument {
     } else if (tag === "DIV" && /page-break/i.test(el.getAttribute("style") || "")) {
       push("pagebreak", {});
     } else if (tag === "UL" || tag === "OL" || tag === "P") {
-      push("text", { html: el.outerHTML, align: "left", size: "normal" });
+      const { symbols, html } = extractSymbolsFromHtml(el.outerHTML);
+      push("text", { html, align: "left", size: "normal", ...(symbols.length ? { symbols } : {}) });
     } else {
       const text = el.textContent?.trim() ?? "";
       if (text) push("text", { html: `<p>${text}</p>`, align: "left", size: "normal" });

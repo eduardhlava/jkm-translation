@@ -2,6 +2,7 @@ import { type Block } from "./types";
 import { cellPlainText, cellTextToHtml, cellToExportHtml } from "./cellFormatting";
 import { parseCellPictogram } from "./types";
 import { normalizeMerges } from "./cellMerges";
+import { injectSymbolTokens, splitCellSymbols } from "@/lib/symbols/symbolTokens";
 import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
 
 // ---------- Round-trip metadata markers ----------
@@ -69,7 +70,7 @@ function serializeBlockMeta(b: Block): Record<string, unknown> {
 // Retain indexed cells only, guarded by their visible text when importing.
 function indexedCells(rows: string[][]) {
   return rows.flatMap((row, r) => row.flatMap((cell, c) => {
-    const html = cellTextToHtml(parseCellPictogram(cell).text);
+    const html = cellTextToHtml(splitCellSymbols(parseCellPictogram(cell).text).rest);
     return /<(sup|sub)\b/i.test(html) ? [{ r, c, value: cell, text: cellPlainText(cell) }] : [];
   }));
 }
@@ -163,7 +164,9 @@ export function blockToHtml(b: Block): string {
     case "heading4": return `<h4>${escapeHtml(b.content.text)}</h4>`;
     case "text": {
       const inner = sanitizeInline(b.content.html ?? "");
-      return /<(p|ul|ol)\b/i.test(inner) ? inner : `<p>${inner}</p>`;
+      const html = /<(p|ul|ol)\b/i.test(inner) ? inner : `<p>${inner}</p>`;
+      // Piktogramy z knihovny jdou do Notion jen jako textové tokeny [[sym:…]].
+      return injectSymbolTokens(html, b.content.symbols);
     }
     case "pagebreak":
       return `<div style="page-break-before:always;break-before:page;"></div>`;

@@ -11,6 +11,7 @@ import DocumentCreator from "./pages/DocumentCreator.tsx";
 import Library from "./pages/Library.tsx";
 import FolderManager from "./pages/FolderManager.tsx";
 import FilterManager from "./pages/FilterManager.tsx";
+import SymbolManager from "./pages/SymbolManager.tsx";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -69,6 +70,14 @@ const App = () => (
             element={
               <ProtectedRoute requireSection="folders">
                 <FilterManager />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/library/pictograms"
+            element={
+              <ProtectedRoute requireSection="pictograms">
+                <SymbolManager />
               </ProtectedRoute>
             }
           />
