@@ -10,7 +10,7 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     version: "1.18.2",
     date: "2026-11-09",
-    changes: ["Piktogram nastavený „Vlevo s obtékáním" se v editoru textu zobrazuje vlevo a text zůstává v poli pro psaní."],
+    changes: ["Piktogram nastavený „Vlevo s obtékáním“ se v editoru textu zobrazuje vlevo a text zůstává v poli pro psaní."],
   },
   {
     version: "1.18.1",
