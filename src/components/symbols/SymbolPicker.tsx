@@ -39,7 +39,7 @@ export default function SymbolPicker({ open, onOpenChange, onPick }: { open: boo
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl" onClick={(e) => e.stopPropagation()}>
-        <DialogHeader><DialogTitle>Vložit piktogram</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>Vložit grafický symbol</DialogTitle></DialogHeader>
         <div className="relative">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Hledat podle názvu…" className="pl-8" />
@@ -54,8 +54,8 @@ export default function SymbolPicker({ open, onOpenChange, onPick }: { open: boo
           )}
           {loaded && (
             <section className="space-y-2">
-              {recent.length > 0 && <h3 className="text-xs font-medium text-muted-foreground">Všechny piktogramy</h3>}
-              {filtered.length ? <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">{filtered.map(tile)}</div> : <p className="py-6 text-center text-sm text-muted-foreground">{active.length ? "Nic nenalezeno" : "Knihovna piktogramů je prázdná."}</p>}
+              {recent.length > 0 && <h3 className="text-xs font-medium text-muted-foreground">Všechny grafické symboly</h3>}
+              {filtered.length ? <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">{filtered.map(tile)}</div> : <p className="py-6 text-center text-sm text-muted-foreground">{active.length ? "Nic nenalezeno" : "Knihovna grafických symbolů je prázdná."}</p>}
             </section>
           )}
         </div>

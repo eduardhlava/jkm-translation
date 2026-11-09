@@ -107,7 +107,7 @@ export default function SymbolManager() {
     if (!ok.length) { toast({ title: "Žádný vhodný soubor", description: "Nahrát lze jen PNG a SVG.", variant: "destructive" }); return; }
     const taken = new Set(list.map((r) => r.code));
     const jobs = ok.map((file) => {
-      const name = baseName(file.name) || "Piktogram";
+      const name = baseName(file.name) || "Grafický symbol";
       const code = uniqueSymbolCode(slugifySymbolName(name), taken);
       taken.add(code);
       return { file, name, code };
@@ -133,7 +133,7 @@ export default function SymbolManager() {
     await Promise.all([worker(), worker()]);
     await reload().catch(() => undefined);
     toast({
-      title: `Nahráno ${jobs.length - (failed.length - skipped.length)} z ${jobs.length} piktogramů`,
+      title: `Nahráno ${jobs.length - (failed.length - skipped.length)} z ${jobs.length} grafických symbolů`,
       description: failed.length ? `Nepodařilo se: ${failed.slice(0, 5).join(", ")}${failed.length > 5 ? "…" : ""}` : undefined,
       variant: failed.length ? "destructive" : undefined,
     });
@@ -169,7 +169,7 @@ export default function SymbolManager() {
       if (error) throw error;
       const old = [replace.row.file_path, replace.row.render_path].filter(Boolean) as string[];
       if (old.length) await supabase.storage.from(SYMBOL_BUCKET).remove(old);
-      toast({ title: "Soubor nahrazen", description: "Dokumenty piktogram zobrazí v nové podobě." });
+      toast({ title: "Soubor nahrazen", description: "Dokumenty grafický symbol zobrazí v nové podobě." });
       setReplace(null);
       await reload();
     } catch (e: any) {
@@ -180,7 +180,7 @@ export default function SymbolManager() {
   const toggleArchive = async (row: SymbolRow) => {
     const { error } = await supabase.from("symbols").update({ archived: !row.archived, updated_by: user?.id ?? null }).eq("id", row.id);
     if (error) { toast({ title: "Změna selhala", description: error.message, variant: "destructive" }); return; }
-    toast({ title: row.archived ? "Piktogram obnoven" : "Piktogram archivován", description: row.archived ? undefined : "Nelze ho nově vkládat, v dokumentech se ale dál zobrazuje." });
+    toast({ title: row.archived ? "Grafický symbol obnoven" : "Grafický symbol archivován", description: row.archived ? undefined : "Nelze ho nově vkládat, v dokumentech se ale dál zobrazuje." });
     await reload();
   };
 
@@ -232,7 +232,7 @@ export default function SymbolManager() {
       <main className="container max-w-[105rem] space-y-4 py-6">
         <div className="flex flex-wrap items-center gap-3">
           <Button variant="ghost" size="sm" asChild><Link to="/library"><ArrowLeft className="w-4 h-4 mr-1" /> Soubory</Link></Button>
-          <h2 className="text-xl font-semibold">Piktogramy</h2>
+          <h2 className="text-xl font-semibold">Grafické symboly</h2>
           <div className="relative ml-auto w-full max-w-xs">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Hledat podle názvu…" className="pl-8" />
@@ -240,7 +240,7 @@ export default function SymbolManager() {
           <label className="flex items-center gap-2 text-sm"><Switch checked={showArchived} onCheckedChange={setShowArchived} /> Zobrazit archivované</label>
           <Button variant="outline" size="icon" onClick={() => void reload()} aria-label="Obnovit"><RefreshCw className="h-4 w-4" /></Button>
           <Button onClick={() => uploadRef.current?.click()} disabled={!!progress && progress.done < progress.total}>
-            <Upload className="w-4 h-4 mr-1" /> Nahrát piktogramy
+            <Upload className="w-4 h-4 mr-1" /> Nahrát grafické symboly
           </Button>
           <input ref={uploadRef} type="file" accept=".png,.svg,image/png,image/svg+xml" multiple className="hidden" onChange={(e) => { const f = Array.from(e.target.files ?? []); e.target.value = ""; if (f.length) void bulkUpload(f); }} />
           <input ref={replaceRef} type="file" accept=".png,.svg,image/png,image/svg+xml" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f && replaceTarget.current) void startReplace(replaceTarget.current, f); }} />
@@ -249,7 +249,7 @@ export default function SymbolManager() {
         {progress && (
           <Card className="space-y-2 p-4">
             <div className="flex items-center justify-between text-sm">
-              <span className="flex items-center gap-2">{progress.done < progress.total && <Loader2 className="h-4 w-4 animate-spin" />}Nahrávám {progress.done} / {progress.total}</span>
+              <span className="flex items-center gap-2">{progress.done < progress.total && <Loader2 className="h-4 w-4 animate-spin" />}Nahrávám {progress.done} z {progress.total} grafických symbolů</span>
               {progress.failed.length > 0 && <span className="text-destructive">Chyby: {progress.failed.length}</span>}
             </div>
             <Progress value={(progress.done / Math.max(1, progress.total)) * 100} />
@@ -259,7 +259,7 @@ export default function SymbolManager() {
         {!loaded ? (
           <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
         ) : shown.length === 0 ? (
-          <Card className="p-10 text-center text-sm text-muted-foreground">{list.length ? "Nic nenalezeno" : "Knihovna je prázdná. Nahrajte první piktogramy (PNG nebo SVG, lze vybrat více souborů najednou)."}</Card>
+          <Card className="p-10 text-center text-sm text-muted-foreground">{list.length ? "Nic nenalezeno" : "Knihovna grafických symbolů je prázdná. Nahrajte první grafické symboly (PNG nebo SVG, lze vybrat více souborů najednou)."}</Card>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
             {shown.map((r) => (
@@ -283,7 +283,7 @@ export default function SymbolManager() {
 
       <Dialog open={!!edit} onOpenChange={(o) => !o && setEdit(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Upravit piktogram</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Upravit grafický symbol</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1"><Label>Název</Label><Input value={editName} onChange={(e) => setEditName(e.target.value)} /></div>
             <div className="space-y-1"><Label>Výchozí šířka (mm)</Label><Input type="number" min={MIN_SYMBOL_MM} max={MAX_SYMBOL_MM} step="0.5" value={editWidth} onChange={(e) => setEditWidth(e.target.value)} /></div>
@@ -301,7 +301,7 @@ export default function SymbolManager() {
           <AlertDialogHeader>
             <AlertDialogTitle>Nahradit soubor?</AlertDialogTitle>
             <AlertDialogDescription>
-              Piktogram „{replace?.row.name}“ je použit v {czDocs(replace?.usage ?? 0)}. Po nahrazení se ve všech dokumentech zobrazí nový obrázek ({replace?.file.name}).
+              Grafický symbol „{replace?.row.name}“ je použit v {czDocs(replace?.usage ?? 0)}. Po nahrazení se ve všech dokumentech zobrazí nový obrázek ({replace?.file.name}).
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -314,11 +314,11 @@ export default function SymbolManager() {
       <AlertDialog open={!!del} onOpenChange={(o) => !o && !busy && setDel(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{del && del.usage > 0 ? "Piktogram nelze smazat" : "Smazat piktogram?"}</AlertDialogTitle>
+            <AlertDialogTitle>{del && del.usage > 0 ? "Grafický symbol nelze smazat" : "Smazat grafický symbol?"}</AlertDialogTitle>
             <AlertDialogDescription>
               {del && del.usage > 0
-                ? `Piktogram „${del.row.name}“ je použit v ${czDocs(del.usage)}. Místo smazání ho můžete archivovat – nepůjde nově vkládat, ale v dokumentech zůstane.`
-                : `Piktogram „${del?.row.name}“ se nikde nepoužívá a bude trvale smazán.`}
+                ? `Grafický symbol „${del.row.name}“ je použit v ${czDocs(del.usage)}. Místo smazání ho můžete archivovat – nepůjde nově vkládat, ale v dokumentech zůstane.`
+                : `Grafický symbol „${del?.row.name}“ se nikde nepoužívá a bude trvale smazán.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

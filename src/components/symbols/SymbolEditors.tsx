@@ -15,7 +15,7 @@ const CELL_POS_LABELS: Partial<Record<SymbolPos, string>> = { left: "Vlevo od te
 /** Náhledová šířka v editoru: 1 mm ≈ 2.2 px (obsah stránky A4 ≈ 175 mm). */
 export const editorPx = (mm: number, max = 260) => Math.min(max, Math.max(12, mm * 2.2));
 
-export function InsertSymbolButton({ onInsert, label = "Vložit piktogram", compact }: { onInsert: (s: SymbolRef) => void; label?: string; compact?: boolean }) {
+export function InsertSymbolButton({ onInsert, label = "Vložit grafický symbol", compact }: { onInsert: (s: SymbolRef) => void; label?: string; compact?: boolean }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -51,7 +51,7 @@ function SymbolRowControls({ s, labels, onChange, onRemove }: { s: SymbolRef; la
         <SelectTrigger className="h-6 w-[150px] text-xs"><SelectValue /></SelectTrigger>
         <SelectContent>{Object.entries(labels).map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}</SelectContent>
       </Select>
-      <button type="button" onClick={onRemove} aria-label="Odebrat piktogram" title="Odebrat piktogram" className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-destructive"><X className="h-3.5 w-3.5" /></button>
+      <button type="button" onClick={onRemove} aria-label="Odebrat grafický symbol" title="Odebrat grafický symbol" className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-destructive"><X className="h-3.5 w-3.5" /></button>
     </div>
   );
 }
@@ -86,7 +86,7 @@ export function hydrateSymbolImgs(root: HTMLElement | null, byCode: Map<string, 
     img.className = `sym sym-${["left", "right", "center"].includes(pos) ? pos : "left"}${img.classList.contains("sym-selected") ? " sym-selected" : ""}`;
     img.style.width = `${editorPx(Number(img.dataset.w) || 20)}px`;
     const row = byCode.get(code);
-    img.title = row ? row.name : `Neznámý piktogram: ${code}`;
+    img.title = row ? row.name : `Neznámý grafický symbol: ${code}`;
     if (!row) { if (byCode.size) img.src = PLACEHOLDER_SRC; return; }
     const path = row.render_path || row.file_path;
     const hit = cachedSignedUrl(path);
@@ -124,7 +124,7 @@ export function InlineSymbolToolbar({ img, container, onChange, onClose }: { img
           {p === "left" ? "Vlevo" : p === "right" ? "Vpravo" : "Na střed"}
         </Button>
       ))}
-      <Button type="button" size="sm" variant="ghost" className="h-6 px-2 text-xs text-destructive" onClick={() => { img.remove(); onChange(); onClose(); }}>Odebrat</Button>
+      <Button type="button" size="sm" variant="ghost" className="h-6 px-2 text-xs text-destructive" aria-label="Odebrat grafický symbol" title="Odebrat grafický symbol" onClick={() => { img.remove(); onChange(); onClose(); }}>Odebrat grafický symbol</Button>
       <button type="button" onClick={onClose} aria-label="Zavřít" className="rounded p-0.5 text-muted-foreground hover:bg-muted"><X className="h-3.5 w-3.5" /></button>
     </div>
   );

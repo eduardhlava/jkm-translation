@@ -19,9 +19,9 @@ export default function SymbolThumb({ code, width, maxHeight, className, title }
       <span
         className={cn("inline-flex items-center justify-center rounded border border-dashed border-muted-foreground/50 bg-muted p-1 text-center text-[10px] leading-tight text-muted-foreground", maxHeight !== undefined && "max-w-full overflow-hidden break-words", className)}
         style={maxHeight === undefined ? { width, minHeight: Math.min(width, 48) } : dimensions}
-        title={`Neznámý piktogram: ${code}`}
+        title={`Neznámý grafický symbol: ${code}`}
       >
-        Neznámý piktogram: {code}
+        Neznámý grafický symbol: {code}
       </span>
     );
   }

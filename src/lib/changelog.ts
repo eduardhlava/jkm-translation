@@ -8,14 +8,19 @@ export interface ChangelogEntry {
 /** Newest first. The first entry defines the current app version. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.19.1",
+    date: "2026-11-09",
+    changes: ["Knihovna Piktogramy přejmenována na Grafické symboly."],
+  },
+  {
     version: "1.19.0",
     date: "2026-11-09",
-    changes: ["Piktogramy se do textu vkládají přímo na místo kurzoru jako ve Wordu – vlevo nebo vpravo s obtékáním textu, nebo samostatně na střed; kliknutím na piktogram změníte velikost, umístění nebo ho odeberete."],
+    changes: ["Grafické symboly se do textu vkládají přímo na místo kurzoru jako ve Wordu – vlevo nebo vpravo s obtékáním textu, nebo samostatně na střed; kliknutím na grafický symbol změníte velikost, umístění nebo ho odeberete."],
   },
   {
     version: "1.18.2",
     date: "2026-11-09",
-    changes: ["Piktogram nastavený „Vlevo s obtékáním“ se v editoru textu zobrazuje vlevo a text zůstává v poli pro psaní."],
+    changes: ["Grafický symbol nastavený „Vlevo s obtékáním“ se v editoru textu zobrazuje vlevo a text zůstává v poli pro psaní."],
   },
   {
     version: "1.18.1",
@@ -26,14 +31,14 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: "1.18.0",
     date: "2026-11-09",
     changes: [
-      "Nová knihovna Piktogramy (v sekci Soubory): hromadné nahrávání, úpravy, nahrazení souboru, archivace a mazání nepoužitých.",
-      "Do textu i buněk tabulek lze vložit piktogram z knihovny (vlevo, vpravo nebo na střed), zobrazí se v editoru i v PDF a zachová se v Notion.",
+      "Nová knihovna Grafické symboly (v sekci Soubory): hromadné nahrávání, úpravy, nahrazení souboru, archivace a mazání nepoužitých.",
+      "Do textu i buněk tabulek lze vložit grafický symbol z knihovny (vlevo, vpravo nebo na střed), zobrazí se v editoru i v PDF a zachová se v Notion.",
     ],
   },
   {
     version: "1.17.2",
     date: "2026-11-09",
-    changes: ["Nové oprávnění „Piktogramy“ ve správě uživatelů (příprava knihovny piktogramů)."],
+    changes: ["Nové oprávnění „Grafické symboly“ ve správě uživatelů (příprava knihovny grafických symbolů)."],
   },
   {
     version: "1.17.1",

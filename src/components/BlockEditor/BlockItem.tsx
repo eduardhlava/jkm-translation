@@ -1368,14 +1368,14 @@ function TableBlockEditor({ block, onChange, narrowFirstCol, hidePictogram }: { 
                                     ))}
                                   </div>
                                   <div className="mt-2 flex flex-col gap-1 border-t border-border pt-2">
-                                    <div className="px-2 text-[11px] font-medium text-muted-foreground">Piktogramy z knihovny</div>
+                                    <div className="px-2 text-[11px] font-medium text-muted-foreground">Grafické symboly</div>
                                     <SymbolListEditor kind="cell" symbols={cellSym.symbols} onChange={setCellSymbols} />
                                     <button
                                       type="button"
                                       onClick={() => setSymbolTarget({ ri, ci })}
                                       className="flex items-center gap-2 rounded px-2 py-1 text-xs hover:bg-muted"
                                     >
-                                      <Shapes className="w-3.5 h-3.5" /> Vložit piktogram…
+                                      <Shapes className="w-3.5 h-3.5" /> Vložit grafický symbol…
                                     </button>
                                   </div>
                                   {(canMergeRight || anchor) && (

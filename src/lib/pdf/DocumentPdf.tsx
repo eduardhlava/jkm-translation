@@ -593,7 +593,7 @@ function SymbolImage({ code, widthPt }: { code: string; widthPt: number }) {
   if (!a) {
     return (
       <View style={{ width: widthPt, minHeight: Math.min(widthPt, 28), borderWidth: 0.5, borderColor: "#9ca3af", borderStyle: "dashed", alignItems: "center", justifyContent: "center", padding: 2, flexShrink: 0 }}>
-        <Text style={{ fontFamily: "NotoSans", fontSize: 6, color: "#6b7280", textAlign: "center" }}>Neznámý piktogram: {code}</Text>
+        <Text style={{ fontFamily: "NotoSans", fontSize: 6, color: "#6b7280", textAlign: "center" }}>Neznámý grafický symbol: {code}</Text>
       </View>
     );
   }

@@ -401,7 +401,7 @@ const Library = () => {
                 )}
                 {(isAdmin || profile?.can_pictograms !== false) && (
                   <Button variant="outline" size="sm" asChild>
-                    <Link to="/library/pictograms">Piktogramy</Link>
+                    <Link to="/library/pictograms">Grafické symboly</Link>
                   </Button>
                 )}
 
