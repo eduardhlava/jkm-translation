@@ -12,7 +12,8 @@ import { PICTOGRAM_PATHS } from "@/components/BlockEditor/pictogramPaths";
 import { computeImageNumbers, imageNumberedLabel, isImageNumbered } from "@/components/BlockEditor/imageNumbers";
 import { HALF_COLUMN_PT, SIDE_TEXT_WIDTH_PT, WRAP_GAP_PT, halfAlignOf, imagePositionOf, sideImageHeight, splitBlocksForWrap, wrapChain, SIDE_PICTO_PT, PAIR_COLUMN_PT, pairHalfImages, estimateTextHeightPt } from "./imageWrap";
 import { pdfSymbolAsset } from "@/lib/symbols/symbolStore";
-import { mmToPt, normalizeSymbolList, splitCellSymbols, type SymbolRef } from "@/lib/symbols/symbolTokens";
+import { migrateTextContent, mmToPt, splitCellSymbols, type SymbolRef } from "@/lib/symbols/symbolTokens";
+import { splitHtmlAtSymbols } from "./symbolFlow";
 import { CONTENT_WIDTH_PT, splitTextForWrap } from "./imageWrap";
 import { DOCUMENT_LANGUAGES, mergeMetadata, type DocumentMetadata } from "@/components/DocumentMetadata/types";
 
@@ -610,13 +611,9 @@ const symbolHeightPt = (code: string, widthPt: number) => {
  * stránky), zbytek textu pokračuje plnou šířkou; na střed = samostatně nad textem.
  */
 function TextWithSymbols({ block, startMarker, measure }: { block: Block; startMarker?: JSX.Element; measure?: MeasureContext }) {
-  const symbols = normalizeSymbolList(block.content?.symbols);
-  if (!symbols.length) return <TextBlock block={block} startMarker={startMarker} measure={measure} />;
-  const html: string = block.content?.html ?? "";
+  const html: string = migrateTextContent(block.content ?? { html: "" }).html ?? "";
+  if (!/data-sym=/i.test(html)) return <TextBlock block={{ ...block, content: { ...block.content, html, symbols: undefined } }} startMarker={startMarker} measure={measure} />;
   const plain = (h: string): Block => ({ ...block, content: { ...block.content, html: h, symbols: undefined, pictogram: "none" } });
-  const centers = symbols.filter((s) => s.pos === "center");
-  const lefts = symbols.filter((s) => s.pos === "left");
-  const rights = symbols.filter((s) => s.pos === "right");
   const col = (list: SymbolRef[]) => {
     if (!list.length) return null;
     const widths = list.map((s) => Math.min(mmToPt(s.w), CONTENT_WIDTH_PT / 2));
@@ -629,26 +626,27 @@ function TextWithSymbols({ block, startMarker, measure }: { block: Block; startM
     );
     return { w, h, node };
   };
-  const centerNode = centers.length ? (
-    <View wrap={false} style={{ alignItems: "center", marginVertical: 4, flexShrink: 0 }}>
-      {startMarker}
-      {centers.map((s, i) => <View key={i} style={{ marginTop: i ? SYMBOL_GAP_PT : 0 }}><SymbolImage code={s.code} widthPt={Math.min(mmToPt(s.w), CONTENT_WIDTH_PT)} /></View>)}
-    </View>
-  ) : null;
-  const marker = centerNode ? undefined : startMarker;
-  let main: JSX.Element | null;
-  const L = col(lefts);
-  const R = col(rights);
-  if (!L && !R) {
-    main = html.trim() ? <TextBlock block={plain(html)} startMarker={marker} /> : (marker ? <View>{marker}</View> : null);
-  } else {
+  let marker: JSX.Element | undefined = startMarker;
+  const take = () => { const m = marker; marker = undefined; return m; };
+  const parts = splitHtmlAtSymbols(html).map((seg, k) => {
+    if (seg.kind === "text") return <TextBlock key={k} block={plain(seg.html)} startMarker={take()} />;
+    if (seg.kind === "center") {
+      return (
+        <View key={k} wrap={false} style={{ alignItems: "center", marginVertical: 4, flexShrink: 0 }}>
+          {take()}
+          <SymbolImage code={seg.sym.code} widthPt={Math.min(mmToPt(seg.sym.w), CONTENT_WIDTH_PT)} />
+        </View>
+      );
+    }
+    const L = col(seg.left);
+    const R = col(seg.right);
     const textW = Math.max(60, CONTENT_WIDTH_PT - (L ? L.w + WRAP_GAP_PT : 0) - (R ? R.w + WRAP_GAP_PT : 0));
     const colH = Math.max(L?.h ?? 0, R?.h ?? 0);
-    const { side, rest } = html.trim() ? splitTextForWrap(html, colH, textW) : { side: "", rest: "" };
-    main = (
-      <View style={{ flexShrink: 0 }}>
+    const { side, rest } = seg.html.trim() ? splitTextForWrap(seg.html, colH, textW) : { side: "", rest: "" };
+    return (
+      <View key={k} style={{ flexShrink: 0 }}>
         <View wrap={false} style={{ flexDirection: "row", alignItems: "flex-start", marginVertical: 4, flexShrink: 0 }}>
-          {marker}
+          {take()}
           {L && <>{L.node}<View style={{ width: WRAP_GAP_PT, flexShrink: 0 }} /></>}
           <View style={{ width: textW, flexShrink: 0 }}>{side ? <TextBlock block={plain(side)} /> : null}</View>
           {R && <><View style={{ width: WRAP_GAP_PT, flexShrink: 0 }} />{R.node}</>}
@@ -656,8 +654,8 @@ function TextWithSymbols({ block, startMarker, measure }: { block: Block; startM
         {rest ? <TextBlock block={plain(rest)} /> : null}
       </View>
     );
-  }
-  return withPictogram(block, <View style={{ flexShrink: 0 }}>{centerNode}{main}</View>);
+  });
+  return withPictogram(block, <View style={{ flexShrink: 0 }}>{parts}{marker ? <View>{marker}</View> : null}</View>);
 }
 
 function ImageBlock({ block, captionOverride, startMarker, measure, measureStartId, inColumn }: { block: Block; captionOverride?: string; startMarker?: JSX.Element; measure?: MeasureContext; measureStartId?: string; inColumn?: boolean }) {

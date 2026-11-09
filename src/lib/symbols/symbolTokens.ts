@@ -121,9 +121,68 @@ export function collectSymbolCodes(blocks: Array<{ type: string; content: any }>
     for (const r of rows) if (Array.isArray(r)) for (const c of r) extractSymbolTokens(String(c ?? ""), CELL_SYMBOL_POSITIONS).symbols.forEach((s) => out.add(s.code));
   };
   for (const b of blocks) {
-    if (b.type === "text") normalizeSymbolList(b.content?.symbols).forEach((s) => out.add(s.code));
+    if (b.type === "text") {
+      normalizeSymbolList(b.content?.symbols).forEach((s) => out.add(s.code));
+      inlineSymbolsOf(b.content?.html ?? "").forEach((s) => out.add(s.code));
+    }
     if (b.type === "table") cells(b.content?.rows);
     if (b.type === "image-table") cells(b.content?.table?.rows);
   }
   return out;
+}
+
+// ---------- Inline piktogramy v HTML textového bloku ----------
+// Uložená podoba: <img data-sym="code" data-w="20" data-pos="left" contenteditable="false" class="sym sym-left">
+// Bez `src`/`style` – podepsané URL z privátního bucketu vyprší, doplní je editor.
+const SYM_IMG_RE = /<img\b[^>]*\bdata-sym\s*=\s*["']?[^"'\s>]+[^>]*>/gi;
+const attr = (tag: string, name: string) => new RegExp(`\\b${name}\\s*=\\s*["']?([^"'\\s>]+)`, "i").exec(tag)?.[1];
+
+export function parseSymbolImgTag(tag: string): SymbolRef | null {
+  return normalizeSymbolRef({ code: attr(tag, "data-sym"), w: attr(tag, "data-w"), pos: attr(tag, "data-pos") });
+}
+
+export function symbolImgHtml(s: SymbolRef): string {
+  return `<img data-sym="${s.code}" data-w="${s.w}" data-pos="${s.pos}" contenteditable="false" class="sym sym-${s.pos}" alt="">`;
+}
+
+/** Normalizuje inline piktogramy (zahodí src/style apod.) – pro ukládání. */
+export function cleanSymbolImgs(html: string): string {
+  return (html ?? "").replace(SYM_IMG_RE, (t) => { const s = parseSymbolImgTag(t); return s ? symbolImgHtml(s) : ""; });
+}
+
+/** Notion/export: inline piktogram → token přesně na místě v textu. */
+export function symbolImgsToTokens(html: string): string {
+  return (html ?? "").replace(SYM_IMG_RE, (t) => { const s = parseSymbolImgTag(t); return s ? formatSymbolToken(s) : ""; });
+}
+
+/** Import: tokeny v textu → inline piktogramy (tolerantní parser; rozbité tokeny zůstanou textem). */
+export function tokensToSymbolImgs(html: string): string {
+  return (html ?? "").replace(TOKEN_RE, (_m, code: string, params: string) => symbolImgHtml({ code: code.toLowerCase(), ...parseParams(params ?? "", TEXT_SYMBOL_POSITIONS) }));
+}
+
+export function inlineSymbolsOf(html: string): SymbolRef[] {
+  const out: SymbolRef[] = [];
+  for (const t of (html ?? "").match(SYM_IMG_RE) ?? []) { const s = parseSymbolImgTag(t); if (s) out.push(s); }
+  return out;
+}
+
+/** Odstraní inline piktogramy (prostý text, hledání). */
+export function stripSymbolImgs(html: string): string { return (html ?? "").replace(SYM_IMG_RE, ""); }
+
+/** Starý formát `content.symbols` → inline na začátek prvního odstavce. */
+export function migrateTextContent<T extends { html?: string; symbols?: any }>(c: T): T {
+  if (!c || !("symbols" in c)) return c;
+  const list = normalizeSymbolList(c.symbols);
+  const { symbols: _drop, ...rest } = c as any;
+  let html: string = rest.html ?? "";
+  if (list.length) {
+    const imgs = list.map(symbolImgHtml).join("");
+    const m = /^\s*<p\b[^>]*>/i.exec(html);
+    html = m ? html.slice(0, m[0].length) + imgs + html.slice(m[0].length) : `<p>${imgs}</p>${html}`;
+  }
+  return { ...rest, html } as T;
+}
+
+export function migrateBlocksSymbols<B extends { type: string; content: any }>(blocks: B[]): B[] {
+  return blocks.map((b) => (b.type === "text" && b.content && "symbols" in b.content ? { ...b, content: migrateTextContent(b.content) } : b));
 }

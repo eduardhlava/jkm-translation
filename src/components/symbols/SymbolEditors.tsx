@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import SymbolPicker from "./SymbolPicker";
 import SymbolThumb from "./SymbolThumb";
-import { useSymbols } from "@/lib/symbols/symbolStore";
+import { cachedSignedUrl, signedSymbolUrl, useSymbols, type SymbolRow } from "@/lib/symbols/symbolStore";
 import { MAX_SYMBOL_MM, MIN_SYMBOL_MM, type SymbolPos, type SymbolRef } from "@/lib/symbols/symbolTokens";
 
 const TEXT_POS_LABELS: Partial<Record<SymbolPos, string>> = { left: "Vlevo s obtékáním", right: "Vpravo s obtékáním", center: "Na střed (samostatně)" };
@@ -74,20 +74,58 @@ export function SymbolListEditor({ symbols, onChange, kind }: { symbols: SymbolR
   );
 }
 
-/** Náhled umístění v editoru textu: na střed nad textem, vlevo/vpravo vedle. */
-export function TextSymbolsLayout({ symbols, children }: { symbols: SymbolRef[]; children: React.ReactNode }) {
-  // Always render the same tree: switching between a fragment and wrapper divs
-  // remounted the contentEditable child, leaving an empty collapsed editor box.
-  const of = (p: SymbolPos) => symbols.filter((s) => s.pos === p);
-  const col = (list: SymbolRef[]) => list.length ? <div className="flex shrink-0 flex-col items-center gap-1 pt-1">{list.map((s, i) => <SymbolThumb key={i} code={s.code} width={editorPx(s.w, 180)} />)}</div> : null;
+const PLACEHOLDER_SRC = "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><rect x="1" y="1" width="38" height="38" fill="none" stroke="#9ca3af" stroke-dasharray="3 2"/><text x="20" y="24" font-size="9" text-anchor="middle" fill="#6b7280">?</text></svg>');
+
+/** Doplní inline piktogramům v editoru podepsané URL a náhledovou šířku (neukládá se). */
+export function hydrateSymbolImgs(root: HTMLElement | null, byCode: Map<string, SymbolRow>) {
+  if (!root) return;
+  root.querySelectorAll<HTMLImageElement>("img[data-sym]").forEach((img) => {
+    const code = img.dataset.sym ?? "";
+    const pos = img.dataset.pos ?? "left";
+    img.setAttribute("contenteditable", "false");
+    img.className = `sym sym-${["left", "right", "center"].includes(pos) ? pos : "left"}${img.classList.contains("sym-selected") ? " sym-selected" : ""}`;
+    img.style.width = `${editorPx(Number(img.dataset.w) || 20)}px`;
+    const row = byCode.get(code);
+    img.title = row ? row.name : `Neznámý piktogram: ${code}`;
+    if (!row) { if (byCode.size) img.src = PLACEHOLDER_SRC; return; }
+    const path = row.render_path || row.file_path;
+    const hit = cachedSignedUrl(path);
+    if (hit) { if (img.src !== hit) img.src = hit; return; }
+    void signedSymbolUrl(path).then((u) => { if (u && img.isConnected) img.src = u; });
+  });
+}
+
+/** Malá lišta u vybraného inline piktogramu: šířka, umístění, odebrat. */
+export function InlineSymbolToolbar({ img, container, onChange, onClose }: { img: HTMLImageElement; container: HTMLElement; onChange: () => void; onClose: () => void }) {
+  const [w, setW] = useState(img.dataset.w ?? "20");
+  const [pos, setPos] = useState(img.dataset.pos ?? "left");
+  const [, force] = useState(0);
+  const cr = container.getBoundingClientRect();
+  const ir = img.getBoundingClientRect();
+  const top = ir.bottom - cr.top + 4;
+  const left = Math.max(0, Math.min(ir.left - cr.left, cr.width - 330));
+  const apply = (next: { w?: string; pos?: string }) => {
+    if (next.w !== undefined) img.dataset.w = next.w;
+    if (next.pos !== undefined) { img.dataset.pos = next.pos; setPos(next.pos); }
+    onChange();
+    force((n) => n + 1);
+  };
+  const commitW = () => {
+    const n = Number(w.replace(",", "."));
+    if (Number.isFinite(n) && n >= MIN_SYMBOL_MM && n <= MAX_SYMBOL_MM) apply({ w: String(Math.round(n * 10) / 10) });
+    else setW(img.dataset.w ?? "20");
+  };
   return (
-    <div className="min-w-0 flex-1 space-y-2" data-symbol-layout>
-      {of("center").length > 0 && <div className="flex flex-col items-center gap-1">{of("center").map((s, i) => <SymbolThumb key={i} code={s.code} width={editorPx(s.w)} />)}</div>}
-      <div className="flex w-full items-start gap-2">
-        <div key="left" className="contents" data-symbol-side="left">{col(of("left"))}</div>
-        <div key="body" className="min-w-0 flex-1 basis-0">{children}</div>
-        <div key="right" className="contents" data-symbol-side="right">{col(of("right"))}</div>
-      </div>
+    <div data-sym-toolbar className="absolute z-20 flex items-center gap-1 rounded-md border bg-popover px-2 py-1 text-xs shadow-md" style={{ top, left }} onMouseDown={(e) => e.stopPropagation()}>
+      <Input aria-label="Šířka v mm" value={w} onChange={(e) => setW(e.target.value)} onBlur={commitW} onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter") commitW(); if (e.key === "Escape") onClose(); }} className="h-6 w-14 px-1 text-xs" />
+      <span className="text-muted-foreground">mm</span>
+      {(["left", "right", "center"] as const).map((p) => (
+        <Button key={p} type="button" size="sm" variant={pos === p ? "secondary" : "ghost"} className="h-6 px-2 text-xs" onClick={() => apply({ pos: p })}>
+          {p === "left" ? "Vlevo" : p === "right" ? "Vpravo" : "Na střed"}
+        </Button>
+      ))}
+      <Button type="button" size="sm" variant="ghost" className="h-6 px-2 text-xs text-destructive" onClick={() => { img.remove(); onChange(); onClose(); }}>Odebrat</Button>
+      <button type="button" onClick={onClose} aria-label="Zavřít" className="rounded p-0.5 text-muted-foreground hover:bg-muted"><X className="h-3.5 w-3.5" /></button>
     </div>
   );
 }

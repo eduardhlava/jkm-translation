@@ -24,8 +24,9 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BLOCK_TYPE_LABELS, buildCellValue, parseCellPictogram, type Block, type Pictogram } from "./types";
 import TableCellEditor from "./TableCellEditor";
-import { CellSymbolsAbove, CellSymbolsLeft, InsertSymbolButton, SymbolListEditor, TextSymbolsLayout } from "@/components/symbols/SymbolEditors";
-import { buildCellSymbolText, normalizeSymbolList, splitCellSymbols } from "@/lib/symbols/symbolTokens";
+import { CellSymbolsAbove, CellSymbolsLeft, InsertSymbolButton, SymbolListEditor, hydrateSymbolImgs, InlineSymbolToolbar } from "@/components/symbols/SymbolEditors";
+import { useSymbols } from "@/lib/symbols/symbolStore";
+import { buildCellSymbolText, cleanSymbolImgs, migrateTextContent, splitCellSymbols, symbolImgHtml, type SymbolRef } from "@/lib/symbols/symbolTokens";
 import SymbolPicker from "@/components/symbols/SymbolPicker";
 import type { SymbolRow } from "@/lib/symbols/symbolStore";
 import PictogramIcon from "./PictogramIcon";
@@ -464,6 +465,13 @@ function PageBreakBlock({ auto }: { auto?: boolean }) {
 
 function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["onChange"] }) {
   const ref = useRef<HTMLDivElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const { byCode: symbolsByCode } = useSymbols();
+  // Old saved format (block-level content.symbols) → inline pictograms in the HTML.
+  useEffect(() => {
+    if (block.content && "symbols" in block.content) onChange(block.id, { content: migrateTextContent(block.content) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [block.id, (block.content as any)?.symbols]);
   const lastHtmlRef = useRef<string>(block.content.html ?? "");
   const selectionRef = useRef<Range | null>(null);
   const [highlightOpen, setHighlightOpen] = useState(false);
@@ -543,6 +551,7 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
       ref.current.innerHTML = block.content.html ?? "";
       lastHtmlRef.current = block.content.html ?? "";
     }
+    hydrateSymbolImgs(ref.current, symbolsByCode);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [block.id]);
 
@@ -552,12 +561,47 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
     if (incoming !== lastHtmlRef.current && ref.current && ref.current.innerHTML !== incoming) {
       ref.current.innerHTML = incoming;
       lastHtmlRef.current = incoming;
+      hydrateSymbolImgs(ref.current, symbolsByCode);
     }
   }, [block.content.html]);
 
+  // Signed URLs expire: re-hydrate when the library loads and periodically.
+  useEffect(() => {
+    hydrateSymbolImgs(ref.current, symbolsByCode);
+    const t = setInterval(() => hydrateSymbolImgs(ref.current, symbolsByCode), 10 * 60 * 1000);
+    return () => clearInterval(t);
+  }, [symbolsByCode]);
+
+  const [selectedSym, setSelectedSym] = useState<HTMLImageElement | null>(null);
+  const selectSym = (img: HTMLImageElement | null) => {
+    ref.current?.querySelectorAll("img.sym-selected").forEach((x) => x.classList.remove("sym-selected"));
+    if (img) img.classList.add("sym-selected");
+    setSelectedSym(img);
+  };
+
+  const insertSymbol = (sym: SymbolRef) => {
+    const editor = ref.current;
+    if (!editor) return;
+    editor.focus();
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    let range = selectionRef.current && editor.contains(selectionRef.current.commonAncestorContainer) ? selectionRef.current : null;
+    if (!range) {
+      // No caret in this block → start of the text.
+      range = document.createRange();
+      const first = editor.querySelector("p, li, div") ?? editor;
+      range.setStart(first, 0);
+      range.collapse(true);
+    }
+    selection?.addRange(range);
+    document.execCommand("insertHTML", false, symbolImgHtml(sym));
+    hydrateSymbolImgs(editor, symbolsByCode);
+    syncHtml();
+  };
+
   const syncHtml = () => {
     if (ref.current) {
-      const html = ref.current.innerHTML;
+      const html = cleanSymbolImgs(ref.current.innerHTML);
       lastHtmlRef.current = html;
       onChange(block.id, { content: { ...block.content, html } });
       saveSelection();
@@ -776,15 +820,9 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
           onChange={(v) => onChange(block.id, { content: { ...block.content, pictogram: v } })}
         />
         <div className="mx-1 h-5 w-px bg-border" />
-        <InsertSymbolButton onInsert={(sym) => onChange(block.id, { content: { ...block.content, symbols: [...normalizeSymbolList(block.content.symbols), sym] } })} />
+        <InsertSymbolButton onInsert={insertSymbol} />
       </div>
-      <SymbolListEditor
-        kind="text"
-        symbols={normalizeSymbolList(block.content.symbols)}
-        onChange={(list) => onChange(block.id, { content: { ...block.content, symbols: list.length ? list : undefined } })}
-      />
-      <TextSymbolsLayout symbols={normalizeSymbolList(block.content.symbols)}>
-      <div className="flex items-start gap-2">
+      <div ref={wrapRef} className="relative flex items-start gap-2">
         {block.content.pictogram && block.content.pictogram !== "none" && (
           <div className="shrink-0 pt-2">
             <PictogramIcon kind={block.content.pictogram} size={28} />
@@ -797,16 +835,30 @@ function TextBlockEditor({ block, onChange }: { block: Block; onChange: Props["o
           onKeyDown={onEditorKeyDown}
           onKeyUp={saveSelection}
           onMouseUp={saveSelection}
+          onClick={(e) => {
+            const img = (e.target as HTMLElement).closest?.("img[data-sym]") as HTMLImageElement | null;
+            selectSym(img);
+          }}
           onInput={(e) => {
-            const html = (e.target as HTMLDivElement).innerHTML;
+            hydrateSymbolImgs(e.currentTarget, symbolsByCode);
+            if (selectedSym && !selectedSym.isConnected) setSelectedSym(null);
+            const html = cleanSymbolImgs((e.target as HTMLDivElement).innerHTML);
             lastHtmlRef.current = html;
             onChange(block.id, { content: { ...block.content, html } });
             saveSelection();
           }}
-          className="ProseMirror min-h-[60px] flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring prose prose-sm max-w-none [&_sup]:align-super [&_sup]:static [&_sub]:align-sub [&_sub]:static"
+          className="ProseMirror min-h-[60px] flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring prose prose-sm max-w-none flow-root [&_sup]:align-super [&_sup]:static [&_sub]:align-sub [&_sub]:static"
         />
+        {selectedSym && wrapRef.current && selectedSym.isConnected && (
+          <InlineSymbolToolbar
+            key={selectedSym.dataset.sym}
+            img={selectedSym}
+            container={wrapRef.current}
+            onChange={() => { hydrateSymbolImgs(ref.current, symbolsByCode); syncHtml(); }}
+            onClose={() => selectSym(null)}
+          />
+        )}
       </div>
-      </TextSymbolsLayout>
     </div>
   );
 }

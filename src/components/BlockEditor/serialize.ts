@@ -2,7 +2,7 @@ import { type Block } from "./types";
 import { cellPlainText, cellTextToHtml, cellToExportHtml } from "./cellFormatting";
 import { parseCellPictogram } from "./types";
 import { normalizeMerges } from "./cellMerges";
-import { injectSymbolTokens, splitCellSymbols } from "@/lib/symbols/symbolTokens";
+import { migrateTextContent, symbolImgsToTokens, splitCellSymbols } from "@/lib/symbols/symbolTokens";
 import type { DocumentMetadata } from "@/components/DocumentMetadata/types";
 
 // ---------- Round-trip metadata markers ----------
@@ -163,10 +163,9 @@ export function blockToHtml(b: Block): string {
     case "heading3": return `<h3>${escapeHtml(b.content.text)}</h3>`;
     case "heading4": return `<h4>${escapeHtml(b.content.text)}</h4>`;
     case "text": {
-      const inner = sanitizeInline(b.content.html ?? "");
-      const html = /<(p|ul|ol)\b/i.test(inner) ? inner : `<p>${inner}</p>`;
-      // Piktogramy z knihovny jdou do Notion jen jako textové tokeny [[sym:…]].
-      return injectSymbolTokens(html, b.content.symbols);
+      // Piktogramy z knihovny jdou do Notion jen jako textové tokeny [[sym:…]] přesně na místě v textu.
+      const inner = sanitizeInline(symbolImgsToTokens(migrateTextContent(b.content).html ?? ""));
+      return /<(p|ul|ol)\b/i.test(inner) ? inner : `<p>${inner}</p>`;
     }
     case "pagebreak":
       return `<div style="page-break-before:always;break-before:page;"></div>`;

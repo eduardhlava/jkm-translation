@@ -247,7 +247,7 @@ export function wrapChain(blocks: Block[], imageIndex: number): Block[] {
   if (!wrapsNextText(blocks[imageIndex], blocks[imageIndex + 1])) return [];
   const out: Block[] = [];
   // Text s piktogramy z knihovny má vlastní obtékání → řetězec končí před ním.
-  for (let i = imageIndex + 1; i < blocks.length && blocks[i].type === "text" && !(blocks[i].content?.symbols?.length); i++) out.push(blocks[i]);
+  for (let i = imageIndex + 1; i < blocks.length && blocks[i].type === "text" && !(blocks[i].content?.symbols?.length) && !/data-sym=/.test(blocks[i].content?.html ?? ""); i++) out.push(blocks[i]);
   return out;
 }
 

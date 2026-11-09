@@ -8,6 +8,11 @@ export interface ChangelogEntry {
 /** Newest first. The first entry defines the current app version. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.19.0",
+    date: "2026-11-09",
+    changes: ["Piktogramy se do textu vkládají přímo na místo kurzoru jako ve Wordu – vlevo nebo vpravo s obtékáním textu, nebo samostatně na střed; kliknutím na piktogram změníte velikost, umístění nebo ho odeberete."],
+  },
+  {
     version: "1.18.2",
     date: "2026-11-09",
     changes: ["Piktogram nastavený „Vlevo s obtékáním“ se v editoru textu zobrazuje vlevo a text zůstává v poli pro psaní."],

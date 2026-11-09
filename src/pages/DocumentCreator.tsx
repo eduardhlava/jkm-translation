@@ -1,3 +1,4 @@
+import { migrateBlocksSymbols } from "@/lib/symbols/symbolTokens";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -393,7 +394,7 @@ const DocumentCreator = () => {
         // never opens with an empty block view.
         saved = parsedHtml.blocks;
       }
-      setBlocks(saved);
+      setBlocks(migrateBlocksSymbols(saved));
       setMode("blocks");
       setActivePage(item);
       const initialTitle = item.properties[titleProp] || "";
