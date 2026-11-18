@@ -8,6 +8,11 @@ export interface ChangelogEntry {
 /** Newest first. The first entry defines the current app version. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.20.1",
+    date: "2026-11-18",
+    changes: ["Okno Nový/Upravit uživatel jde na menších obrazovkách posouvat, tlačítko Vytvořit/Uložit je vždy vidět."],
+  },
+  {
     version: "1.20.0",
     date: "2026-11-18",
     changes: ["Přehled dokumentů: nový sloupec Revize dokumentu."],

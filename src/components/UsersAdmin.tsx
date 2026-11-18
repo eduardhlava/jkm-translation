@@ -243,6 +243,7 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
+          className="max-h-[90vh] flex flex-col"
           onPointerDownOutside={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
@@ -252,7 +253,7 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
               {form.user_id ? t(ui, "editUser") : t(ui, "newUser")}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 flex-1 min-h-0 overflow-y-auto pr-1">
             <div className="space-y-1.5">
               <Label>{t(ui, "fullName")}</Label>
               <Input
@@ -362,7 +363,7 @@ export default function UsersAdmin({ ui }: { ui: UiLang }) {
               </Select>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="shrink-0">
             <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>
               {t(ui, "cancel")}
             </Button>

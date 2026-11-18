@@ -86,14 +86,14 @@ export default function DocumentMetadataDialog({ open, onOpenChange, value, docu
   return (
     <Dialog open={open} onOpenChange={(next) => { if (!saving) onOpenChange(next); }}>
       <DialogContent
-        className="max-w-2xl w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto"
+        className="max-w-2xl w-[calc(100vw-2rem)] max-h-[90vh] flex flex-col"
         style={{ ["--border" as any]: "220 13% 70%", ["--input" as any]: "220 13% 70%" }}
       >
         <DialogHeader>
           <DialogTitle>Metadata dokumentu</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-5">
+        <div className="space-y-5 flex-1 min-h-0 overflow-y-auto pr-1">
           <div className="space-y-1.5">
             <Label htmlFor="metadata-document-title" className="text-xs text-muted-foreground">Název dokumentu</Label>
             <Input id="metadata-document-title" value={title} onChange={(e) => setTitle(e.target.value)} disabled={saving} required />
@@ -244,7 +244,7 @@ export default function DocumentMetadataDialog({ open, onOpenChange, value, docu
           )}
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-2">
+        <DialogFooter className="gap-2 sm:gap-2 shrink-0">
           <Button type="button" variant="ghost" onClick={resetDefaults} disabled={saving}>Obnovit výchozí</Button>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Zrušit</Button>
           <Button type="button" onClick={save} disabled={saving}>
