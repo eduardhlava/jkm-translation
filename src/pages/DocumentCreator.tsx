@@ -105,6 +105,9 @@ interface PropMeta {
 
 const FILTER_PROPS = ["jazyk", "typ", "stav"] as const;
 
+/** Sloupce přehledu: vlastnosti z Notion + zobrazovaný sloupec Revize dokumentu. */
+type ListColumn = { kind: "prop"; prop: string } | { kind: "revision" };
+
 const capitalizeHeader = (s: string) =>
   s
     .split(" ")
@@ -156,6 +159,7 @@ const DocumentCreator = () => {
   const [baselineSnapshot, setBaselineSnapshot] = useState<string>("");
   const [backDialogOpen, setBackDialogOpen] = useState(false);
   const [exportMap, setExportMap] = useState<Record<string, string | null>>({});
+  const [revisionMap, setRevisionMap] = useState<Record<string, string>>({});
   const [newDocOpen, setNewDocOpen] = useState(false);
   const [paginating, setPaginating] = useState(false);
   const [paginatePass, setPaginatePass] = useState(0);
@@ -224,6 +228,7 @@ const DocumentCreator = () => {
       /* non-fatal — the document exists in Notion regardless */
     }
     setItems((prev) => [doc, ...prev.filter((i) => i.id !== doc.id)]);
+    setRevisionMap((prev) => ({ ...prev, [doc.id]: mergedMeta.revision }));
     setBlocks([]);
     setMode("blocks");
     setActivePage(doc);
@@ -350,13 +355,19 @@ const DocumentCreator = () => {
       if (ids.length > 0) {
         const { data: rows } = await supabase
           .from("document_blocks")
-          .select("page_id, notion_exported_at")
+          .select("page_id, notion_exported_at, settings")
           .in("page_id", ids);
         const map: Record<string, string | null> = {};
-        (rows ?? []).forEach((r: any) => { map[r.page_id] = r.notion_exported_at ?? null; });
+        const revMap: Record<string, string> = {};
+        (rows ?? []).forEach((r: any) => {
+          map[r.page_id] = r.notion_exported_at ?? null;
+          revMap[r.page_id] = String((r.settings as any)?.metadata?.revision ?? "");
+        });
         setExportMap(map);
+        setRevisionMap(revMap);
       } else {
         setExportMap({});
+        setRevisionMap({});
       }
     } catch (e) {
       toast.error("Načtení selhalo", { description: e instanceof Error ? e.message : "" });
@@ -720,6 +731,16 @@ const DocumentCreator = () => {
     return cols;
   }, [titleProp, schema]);
 
+  // Revize dokumentu se zobrazuje mezi sloupci Jazyk a Typ; není to filtr.
+  const listColumns = useMemo<ListColumn[]>(() => {
+    const cols: ListColumn[] = tableHeaders.map((p) => ({ kind: "prop", prop: p }));
+    const afterJazyk = tableHeaders.indexOf("jazyk");
+    const beforeTyp = tableHeaders.indexOf("typ");
+    const at = afterJazyk >= 0 ? afterJazyk + 1 : beforeTyp >= 0 ? beforeTyp : cols.length;
+    cols.splice(at, 0, { kind: "revision" });
+    return cols;
+  }, [tableHeaders]);
+
   return (
     <div className="min-h-screen bg-[var(--gradient-subtle)]">
       <header className="border-b-[3px] bg-background/80 backdrop-blur-sm sticky top-0 z-30" style={{ borderBottomColor: sectionAccent }}>
@@ -815,25 +836,37 @@ const DocumentCreator = () => {
               <table className="w-full caption-bottom text-sm bg-card">
                 <TableHeader className="bg-muted/70 [&_tr]:border-b-0 [&>tr>th]:sticky [&>tr>th]:top-0 [&>tr>th]:z-20 [&>tr>th]:bg-muted">
                   <TableRow className="h-9">
-                    {tableHeaders.map((h) => (
-                      <TableHead key={h} className="h-9 px-3 py-1 text-xs">
-                        {h === titleProp ? "Označení dokumentu (jméno souboru)" : capitalizeHeader(h)}
-                      </TableHead>
-                    ))}
+                    {listColumns.map((col) =>
+                      col.kind === "revision" ? (
+                        <TableHead key="revision" className="h-9 px-3 py-1 text-xs">Revize dokumentu</TableHead>
+                      ) : (
+                        <TableHead key={col.prop} className="h-9 px-3 py-1 text-xs">
+                          {col.prop === titleProp ? "Označení dokumentu (jméno souboru)" : capitalizeHeader(col.prop)}
+                        </TableHead>
+                      )
+                    )}
                     <TableHead className="h-9 px-3 py-1 text-right text-xs">Akce</TableHead>
                     <TableHead className="h-9 w-16 px-3 py-1 text-right text-xs">Notion</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {items.length === 0 && (
-                    <TableRow><TableCell colSpan={tableHeaders.length + 2} className="text-center text-muted-foreground py-6">Žádné položky</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={listColumns.length + 2} className="text-center text-muted-foreground py-6">Žádné položky</TableCell></TableRow>
                   )}
                   {items.map((it) => {
                     const isActive = activePage?.id === it.id;
                     const exportedAt = exportMap[it.id] ?? null;
                     return (
                       <TableRow key={it.id} className={isActive ? "bg-primary/5" : undefined}>
-                        {tableHeaders.map((h) => {
+                        {listColumns.map((col) => {
+                          if (col.kind === "revision") {
+                            return (
+                              <TableCell key="revision" className="px-3 py-1.5 text-muted-foreground">
+                                {revisionMap[it.id]?.trim() || "—"}
+                              </TableCell>
+                            );
+                          }
+                          const h = col.prop;
                           const value = it.properties[h] || "—";
                           if (h === titleProp) {
                             const fileNameKey = Object.keys(it.properties ?? {}).find(
@@ -1192,6 +1225,7 @@ const DocumentCreator = () => {
         onChange={async (next, title) => {
           await updateDocumentTitle(title);
           setMetadata(next);
+          if (activePage) setRevisionMap((prev) => ({ ...prev, [activePage.id]: next.revision }));
         }}
       />
 
