@@ -22,6 +22,13 @@
       "when": 1795013331909,
       "tag": "0002_restrict_symbols_bucket_read",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795013415822,
+      "tag": "0003_bind_notion_images_upload_owner",
+      "breakpoints": true
     }
   ]
 }

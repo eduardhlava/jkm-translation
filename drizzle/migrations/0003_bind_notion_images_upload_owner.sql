@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS "Authenticated upload notion-images" ON storage.objects;
+CREATE POLICY "Authenticated upload own notion-images" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'notion-images' AND owner_id = (select auth.uid()::text));
