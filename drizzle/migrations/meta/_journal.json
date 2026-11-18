@@ -15,6 +15,13 @@
       "when": 1794237352291,
       "tag": "0001_symbol_usage_inline",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795013331909,
+      "tag": "0002_restrict_symbols_bucket_read",
+      "breakpoints": true
     }
   ]
 }

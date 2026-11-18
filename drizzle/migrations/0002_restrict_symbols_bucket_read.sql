@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS "Public read symbols bucket" ON storage.objects;
+CREATE POLICY "Signed-in users read symbols bucket" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'symbols' AND auth.uid() IS NOT NULL);
